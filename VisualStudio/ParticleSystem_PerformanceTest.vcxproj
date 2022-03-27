@@ -18,6 +18,16 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\common\test_app.cpp" />
+    <ClCompile Include="..\src\windows\glad.c" />
+    <ClCompile Include="..\src\windows\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\common\logger.h" />
+    <ClInclude Include="..\src\common\test_app.h" />
+    <ClInclude Include="..\src\windows\logger.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -146,34 +156,6 @@
       <AdditionalDependencies>freetype.lib;glfw3.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\Particle\ParticleSystem.cpp" />
-    <ClCompile Include="src\Util\DollyController.cpp" />
-    <ClCompile Include="src\Util\Timing.cpp" />
-    <ClCompile Include="src\Util\Util.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\Device\KeyHandler.h" />
-    <ClInclude Include="src\glBasics\Camera.h" />
-    <ClInclude Include="src\glBasics\Material.h" />
-    <ClInclude Include="src\glBasics\Shader.h" />
-    <ClInclude Include="src\glBasics\Texture.h" />
-    <ClInclude Include="src\glBasics\Texture2D.h" />
-    <ClInclude Include="src\glBasics\Texture3D.h" />
-    <ClInclude Include="src\glBasics\TextRenderer.h" />
-    <ClInclude Include="src\Main.h" />
-    <ClInclude Include="src\Particle\Particle.h" />
-    <ClInclude Include="src\Particle\ParticleSystem.h" />
-    <ClInclude Include="src\Primitives\Mesh.h" />
-    <ClInclude Include="src\Primitives\Plane.h" />
-    <ClInclude Include="src\Util\DollyController.h" />
-    <ClInclude Include="src\Util\Ray.h" />
-    <ClInclude Include="src\Util\stb_image.h" />
-    <ClInclude Include="src\Util\Timing.h" />
-    <ClInclude Include="src\Util\Util.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

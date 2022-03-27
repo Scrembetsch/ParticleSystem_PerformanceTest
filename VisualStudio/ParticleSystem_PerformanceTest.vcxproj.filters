@@ -1,91 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="glBasics">
-      <UniqueIdentifier>{2c6a415b-bfb8-4d74-96d1-ee34834c36d2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Util">
-      <UniqueIdentifier>{0726c0ac-a73d-4bf6-91d4-ea9dee5ae239}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Primitives">
-      <UniqueIdentifier>{787e6169-9f5a-4227-8485-b24937dab8f8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Device">
-      <UniqueIdentifier>{b49f19c0-46ae-4320-a220-8c373ac51adc}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\Main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\src\common\test_app.cpp">
+      <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="src\glad.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\src\windows\main.cpp">
+      <Filter>windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\Util\Util.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Util\DollyController.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Util\Timing.cpp">
-      <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Particle\ParticleSystem.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\src\windows\glad.c">
+      <Filter>windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\glBasics\Camera.h">
-      <Filter>glBasics</Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{ce7d902a-40aa-49aa-b348-6d6d91ddbed0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="windows">
+      <UniqueIdentifier>{9b8bb770-d51a-4a3c-bf6f-dbc14173d06a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\common\test_app.h">
+      <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="src\glBasics\Shader.h">
-      <Filter>glBasics</Filter>
+    <ClInclude Include="..\src\common\logger.h">
+      <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="src\glBasics\Texture.h">
-      <Filter>glBasics</Filter>
+    <ClInclude Include="..\src\windows\logger.h">
+      <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\Main.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Util\stb_image.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Util\Util.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="src\glBasics\Material.h">
-      <Filter>glBasics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\glBasics\TextRenderer.h">
-      <Filter>glBasics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Device\KeyHandler.h">
-      <Filter>Device</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Util\DollyController.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Util\Timing.h">
-      <Filter>Util</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Primitives\Mesh.h">
-      <Filter>Primitives</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Primitives\Plane.h">
-      <Filter>Primitives</Filter>
-    </ClInclude>
-    <ClInclude Include="src\glBasics\Texture2D.h">
-      <Filter>glBasics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\glBasics\Texture3D.h">
-      <Filter>glBasics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Particle\Particle.h" />
-    <ClInclude Include="src\Particle\ParticleSystem.h" />
-    <ClInclude Include="src\Util\Ray.h" />
   </ItemGroup>
 </Project>

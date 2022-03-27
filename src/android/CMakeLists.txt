@@ -10,6 +10,7 @@ add_library(
         particlesystem_performancetest
         SHARED
         jni_bridge.cpp
+        ../common/test_app.cpp
 )
 
 find_library(
