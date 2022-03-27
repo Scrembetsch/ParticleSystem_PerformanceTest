@@ -1,6 +1,7 @@
-#include "../common/gl.h"
+#include "../common/gl/gl.h"
 #include "../common/logger.h"
 #include "../common/test_app.h"
+#include "device/android_file_handler.h"
 
 #include <cstring>
 #include <jni.h>
@@ -15,6 +16,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_at_tributsch_particle_1test_1opengl_1
         g_TestApp = nullptr;
     }
 
+    AndroidFileHandler::CreateReference(AAssetManager_fromJava(env, assetManager));
 //    g_AssetManager = AAssetManager_fromJava(env, assetManager);
 //    FileHandler::Init(g_AssetManager);
 

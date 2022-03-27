@@ -10,6 +10,15 @@
     <ClCompile Include="..\src\windows\glad.c">
       <Filter>windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\gl\gl_util.cpp">
+      <Filter>common\gl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\device\file_handler.cpp">
+      <Filter>common\device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\windows\device\windows_file_handler.cpp">
+      <Filter>windows\device</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -17,6 +26,18 @@
     </Filter>
     <Filter Include="windows">
       <UniqueIdentifier>{9b8bb770-d51a-4a3c-bf6f-dbc14173d06a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\gl">
+      <UniqueIdentifier>{70ad17d7-8824-43b9-ab21-14f841eecc72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\glm">
+      <UniqueIdentifier>{7250c56a-fa59-4f20-91b4-8e4874383dac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\device">
+      <UniqueIdentifier>{ff0978e0-a64a-40c8-acf1-3e90de0b506f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="windows\device">
+      <UniqueIdentifier>{a0c50597-90c6-480b-8116-11687372baf0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -26,8 +47,35 @@
     <ClInclude Include="..\src\common\logger.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\windows\logger.h">
-      <Filter>windows</Filter>
+    <ClInclude Include="..\src\common\glm\glm.hpp">
+      <Filter>common\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\camera.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\gl.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\gl_util.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\material.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\shader.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\texture.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\gl\texture_2d.h">
+      <Filter>common\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\device\file_handler.h">
+      <Filter>common\device</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\windows\device\windows_file_handler.h">
+      <Filter>windows\device</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

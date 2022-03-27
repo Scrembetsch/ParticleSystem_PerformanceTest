@@ -1,6 +1,8 @@
 #include "../common/test_app.h"
 #include "../common/logger.h"
-#include "../common/gl.h"
+#include "../common/gl/gl.h"
+
+#include "device/windows_file_handler.h"
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -84,6 +86,8 @@ int main(int argc, char** argv)
     }
     g_TestApp = new TestApp();
     g_TestApp->Init();
+
+    WindowsFileHandler::CreateReference();
 
     while (!glfwWindowShouldClose(window))
     {

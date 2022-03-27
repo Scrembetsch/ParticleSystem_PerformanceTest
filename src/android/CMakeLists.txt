@@ -10,6 +10,8 @@ add_library(
         particlesystem_performancetest
         SHARED
         jni_bridge.cpp
+        device/android_file_handler.cpp
+        ../common/device/file_handler.cpp
         ../common/test_app.cpp
 )
 
