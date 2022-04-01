@@ -1,5 +1,15 @@
 #include <cstdint>
 
+#include "particle_system/cpu_particle_system.h"
+#include "particle_system/cs_particle_system.h"
+#include "particle_system/tf_particle_system.h"
+
+#include "gl/camera.h"
+
+#define CPU 1
+#define CS  0
+#define TF  0
+
 class TestApp
 {
 public:
@@ -7,6 +17,29 @@ public:
 	~TestApp();
 
 	void Resize(uint32_t width, uint32_t height);
-	void Init();
+	bool Init();
 	void Step();
+
+	void ProcessLookInput(float deltaX, float deltaY);
+
+private:
+	std::chrono::time_point<std::chrono::system_clock> mLastFrameTime;
+	Camera mCamera;
+
+	float mWidth;
+	float mHeight;
+
+	int mFrameCount;
+	float mFrameTime;
+
+#if CPU
+	Shader mCpuShader;
+	CpuParticleSystem mCpuParticleSystem;
+#endif
+#if CS
+	CsParticleSystem mCsParticleSystem;
+#endif
+#if TF
+	TfParticleSystem mTfParticleSystem;
+#endif
 };

@@ -11,8 +11,12 @@ add_library(
         SHARED
         jni_bridge.cpp
         device/android_file_handler.cpp
-        ../common/device/file_handler.cpp
+        ../common/gl/gl_util.cpp
         ../common/test_app.cpp
+        ../common/particle_system/cpu_particle_system.cpp
+        ../common/particle_system/tf_particle_system.cpp
+        ../common/particle_system/cs_particle_system.cpp
+        ../common/util/random.cpp
 )
 
 find_library(

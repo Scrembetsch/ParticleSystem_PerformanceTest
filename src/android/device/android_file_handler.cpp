@@ -1,18 +1,28 @@
-#include "android_file_handler.h"
+#include "../../common/device/file_handler.h"
+
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+
 #include "../../common/logger.h"
 
-AAssetManager* AndroidFileHandler::sAssetManager;
+AAssetManager* sAssetManager;
+std::unique_ptr<FileHandler> FileHandler::sReference;
 
-void AndroidFileHandler::CreateReference(AAssetManager* assetManager)
+std::unique_ptr<FileHandler>& FileHandler::Instance()
 {
     if (sReference == nullptr)
     {
-        sReference = std::make_unique<AndroidFileHandler>();
-        sAssetManager = assetManager;
+        sReference = std::make_unique<FileHandler>();
     }
+    return sReference;
 }
 
-bool AndroidFileHandler::ReadFile(const std::string& path, std::string& data)
+void FileHandler::ManagerInit(void* dataManager)
+{
+    sAssetManager = static_cast<AAssetManager*>(dataManager);
+}
+
+bool FileHandler::ReadFile(const std::string& path, std::string& data)
 {
     AAsset* file = AAssetManager_open(sAssetManager, path.c_str(), AASSET_MODE_BUFFER);
 

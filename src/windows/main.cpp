@@ -1,12 +1,15 @@
 #include "../common/test_app.h"
 #include "../common/logger.h"
 #include "../common/gl/gl.h"
-
-#include "device/windows_file_handler.h"
+#include "../common/device/file_handler.h"
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
-TestApp* g_TestApp;
+TestApp* g_TestApp = nullptr;
+
+bool g_FirstMouse = true;
+float g_LastX = 0.0f;
+float g_LastY = 0.0f;
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -15,6 +18,23 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 
 void MouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
+    if (g_FirstMouse)
+    {
+        g_LastX = xpos;
+        g_LastY = ypos;
+        g_FirstMouse = false;
+    }
+
+    float xoffset = xpos - g_LastX;
+    float yoffset = g_LastY - ypos; // Reverse: y-coordinates go from bottom to top
+
+    g_LastX = xpos;
+    g_LastY = ypos;
+
+    if (g_TestApp != nullptr)
+    {
+        g_TestApp->ProcessLookInput(xoffset, yoffset);
+    }
 }
 
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -23,6 +43,10 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    if (key == GLFW_KEY_ESCAPE)
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
 }
 
 void MouseClickCallback(GLFWwindow* window, int button, int action, int mods)
@@ -34,7 +58,7 @@ void ProcessInput(GLFWwindow* window)
 }
 
 
-int SetupOpenGl(GLFWwindow*& window)
+int SetupOpenGl(GLFWwindow** window)
 {
     // GLFW Init & Config
     glfwInit();
@@ -47,22 +71,22 @@ int SetupOpenGl(GLFWwindow*& window)
 #endif
 
     // GLFW Window create
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Particle System - Performance Test", NULL, NULL);
-    if (window == nullptr)
+    *window = glfwCreateWindow(WIDTH, HEIGHT, "Particle System - Performance Test", NULL, NULL);
+    if (*window == nullptr)
     {
         LOGE("WIN_MAIN", "Failed to create GLFW window");
         glfwTerminate();
         return -1;
     }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-    glfwSetCursorPosCallback(window, MouseCallback);
-    glfwSetScrollCallback(window, ScrollCallback);
-    glfwSetKeyCallback(window, KeyCallback);
-    glfwSetMouseButtonCallback(window, MouseClickCallback);
+    glfwMakeContextCurrent(*window);
+    glfwSetFramebufferSizeCallback(*window, FramebufferSizeCallback);
+    glfwSetCursorPosCallback(*window, MouseCallback);
+    glfwSetScrollCallback(*window, ScrollCallback);
+    glfwSetKeyCallback(*window, KeyCallback);
+    glfwSetMouseButtonCallback(*window, MouseClickCallback);
 
     // Capture mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(*window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     // GLAD: Load all OpenGL Function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -80,20 +104,25 @@ int main(int argc, char** argv)
 #endif
 
     GLFWwindow* window = nullptr;
-    if (SetupOpenGl(window) != 0)
+    if (SetupOpenGl(&window) != 0)
     {
         return -1;
     }
+
+    FileHandler::Instance()->SetBasePath("../Android/app/src/main/assets/");
+
     g_TestApp = new TestApp();
     g_TestApp->Init();
-
-    WindowsFileHandler::CreateReference();
+    g_TestApp->Resize(WIDTH, HEIGHT);
 
     while (!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
         g_TestApp->Step();
+        glfwSwapBuffers(window);
     }
 
     delete g_TestApp;
+    glfwTerminate();
     return 0;
 }

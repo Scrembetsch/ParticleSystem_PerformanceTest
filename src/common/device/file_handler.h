@@ -5,13 +5,12 @@
 class FileHandler
 {
 public:
-	virtual ~FileHandler() = default;
-
-	static std::unique_ptr<FileHandler>& GetReference();
-
-	virtual bool ReadFile(const std::string& path, std::string& data) = 0;
+	static void ManagerInit(void* dataManager);
+	static std::unique_ptr<FileHandler>& Instance();
+	void SetBasePath(const std::string& basePath);
+	bool ReadFile(const std::string& path, std::string& data);
 
 protected:
-	FileHandler() = default;
 	static std::unique_ptr<FileHandler> sReference;
+	std::string mBasePath;
 };

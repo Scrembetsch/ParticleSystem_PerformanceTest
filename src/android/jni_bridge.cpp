@@ -1,14 +1,15 @@
 #include "../common/gl/gl.h"
 #include "../common/logger.h"
 #include "../common/test_app.h"
-#include "device/android_file_handler.h"
+#include "../common/device/file_handler.h"
 
 #include <cstring>
 #include <jni.h>
+#include <android/asset_manager_jni.h>
 
 TestApp* g_TestApp;
 
-extern "C" JNIEXPORT jboolean JNICALL Java_at_tributsch_particle_1test_1opengl_1es_JniBridge_Init(JNIEnv* env, jclass obj, jobject assetManager)
+extern "C" JNIEXPORT jboolean JNICALL Java_at_tributsch_particlesystem_1performancetest_JniBridge_Init(JNIEnv* env, jclass obj, jobject assetManager)
 {
     if (g_TestApp != nullptr)
     {
@@ -16,9 +17,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_at_tributsch_particle_1test_1opengl_1
         g_TestApp = nullptr;
     }
 
-    AndroidFileHandler::CreateReference(AAssetManager_fromJava(env, assetManager));
-//    g_AssetManager = AAssetManager_fromJava(env, assetManager);
-//    FileHandler::Init(g_AssetManager);
+    FileHandler::ManagerInit(AAssetManager_fromJava(env, assetManager));
 
     const char* versionStr = (const char*)glGetString(GL_VERSION);
     if (strstr(versionStr, "OpenGL ES 3."))
@@ -28,6 +27,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_at_tributsch_particle_1test_1opengl_1
         {
             return false;
         }
+        g_TestApp->Init();
     }
     else
     {
@@ -37,7 +37,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_at_tributsch_particle_1test_1opengl_1
     return true;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_at_tributsch_particle_1test_1opengl_1es_JniBridge_Resize(JNIEnv* env, jclass obj, jint width, jint height)
+extern "C" JNIEXPORT void JNICALL Java_at_tributsch_particlesystem_1performancetest_JniBridge_Resize(JNIEnv* env, jclass obj, jint width, jint height)
 {
     if (g_TestApp)
     {
@@ -45,7 +45,7 @@ extern "C" JNIEXPORT void JNICALL Java_at_tributsch_particle_1test_1opengl_1es_J
     }
 }
 
-extern "C" JNIEXPORT void JNICALL Java_at_tributsch_particle_1test_1opengl_1es_JniBridge_Step(JNIEnv* env, jclass obj)
+extern "C" JNIEXPORT void JNICALL Java_at_tributsch_particlesystem_1performancetest_JniBridge_Step(JNIEnv* env, jclass obj)
 {
     if (g_TestApp)
     {

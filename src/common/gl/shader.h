@@ -86,7 +86,7 @@ public:
         }
 
         std::string shaderCode;
-        FileHandler::GetReference().get()->ReadFile(path, shaderCode);
+        FileHandler::Instance().get()->ReadFile(path, shaderCode);
         std::string shaderTypeName = GetShaderTypeName(shaderType);
         uint32_t glShaderType = GetShaderGlType(shaderType);
         if(shaderCode.empty())
@@ -97,6 +97,11 @@ public:
 
         FindAndIncludeFiles(shaderCode);
         FindAndReplaceStrings(shaderCode, replaceParts);
+#if _WIN32
+        ReplaceStringPart(shaderCode, "VERSION", "460");
+#else
+        ReplaceStringPart(shaderCode, "VERSION", "320 es");
+#endif
 
         const char* shaderCodeAsCStr = shaderCode.c_str();
         mShaderLocations[shaderType] = glCreateShader(glShaderType);
@@ -346,7 +351,7 @@ private:
             std::string fileName = code.substr(fileBegin + 1, fileEnd - fileBegin - 1);
 
             std::string includeCode;
-            FileHandler::GetReference()->ReadFile(fileName, includeCode);
+            FileHandler::Instance()->ReadFile(fileName, includeCode);
 
             code.replace(code.begin() + pos, code.begin() + fileEnd + 1, includeCode);
         }

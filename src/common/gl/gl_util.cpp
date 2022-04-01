@@ -5,11 +5,28 @@
 
 bool GlUtil::CheckGlError(const char *functionName)
 {
-    GLint error = glGetError();
-    if(error != GL_NO_ERROR)
+    GLint error;
+    while ((error = glGetError()) != GL_NO_ERROR)
     {
-        LOGE("GL_UTIL", "GL error after %s(): 0x%08x\n", functionName, error);
-        PrintGlString("ERROR", error);
+        const char* errorName = "Error not found!";
+        switch (error)
+        {
+        case GL_INVALID_ENUM:
+            errorName = "INVALID ENUM";
+            break;
+
+        case GL_INVALID_VALUE:
+            errorName = "INVALID_VALUE";
+            break;
+
+        case GL_INVALID_OPERATION:
+            errorName = "INVALID OPERATION";
+            break;
+
+        default:
+            break;
+        }
+        LOGE("GL_UTIL", "GL error after %s(): 0x%08x, %s\n", functionName, error, errorName);
         return true;
     }
     return false;

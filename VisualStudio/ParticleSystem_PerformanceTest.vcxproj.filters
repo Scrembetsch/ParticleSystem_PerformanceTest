@@ -13,11 +13,20 @@
     <ClCompile Include="..\src\common\gl\gl_util.cpp">
       <Filter>common\gl</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\device\file_handler.cpp">
-      <Filter>common\device</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\windows\device\windows_file_handler.cpp">
       <Filter>windows\device</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cpu_particle_system.cpp">
+      <Filter>common\particle_system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\tf_particle_system.cpp">
+      <Filter>common\particle_system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp">
+      <Filter>common\particle_system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\util\random.cpp">
+      <Filter>common\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -38,6 +47,12 @@
     </Filter>
     <Filter Include="windows\device">
       <UniqueIdentifier>{a0c50597-90c6-480b-8116-11687372baf0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\particle_system">
+      <UniqueIdentifier>{dafbef83-beea-435c-bf2f-ec270258c6c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\util">
+      <UniqueIdentifier>{c92ad777-5fe6-42b6-9e6d-aefc52dcd55e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -74,8 +89,17 @@
     <ClInclude Include="..\src\common\device\file_handler.h">
       <Filter>common\device</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\windows\device\windows_file_handler.h">
-      <Filter>windows\device</Filter>
+    <ClInclude Include="..\src\common\particle_system\cpu_particle_system.h">
+      <Filter>common\particle_system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_particle_system.h">
+      <Filter>common\particle_system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_particle_system.h">
+      <Filter>common\particle_system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\util\random.h">
+      <Filter>common\util</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

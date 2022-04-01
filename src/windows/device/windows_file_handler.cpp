@@ -1,4 +1,4 @@
-#include "windows_file_handler.h"
+#include "../../common/device/file_handler.h"
 
 #include "../../common/logger.h"
 
@@ -6,15 +6,27 @@
 #include <iostream>
 #include <sstream>
 
-void WindowsFileHandler::CreateReference()
+std::unique_ptr<FileHandler> FileHandler::sReference;
+
+std::unique_ptr<FileHandler>& FileHandler::Instance()
 {
-	if (sReference == nullptr)
-	{
-		sReference = std::make_unique<WindowsFileHandler>();
-	}
+    if (sReference == nullptr)
+    {
+        sReference = std::make_unique<FileHandler>();
+    }
+    return sReference;
 }
 
-bool WindowsFileHandler::ReadFile(const std::string& path, std::string& data)
+void FileHandler::ManagerInit(void* dataManager)
+{
+}
+
+void FileHandler::SetBasePath(const std::string& basePath)
+{
+    mBasePath = basePath;
+}
+
+bool FileHandler::ReadFile(const std::string& path, std::string& data)
 {
     std::ifstream file;
 
@@ -24,7 +36,7 @@ bool WindowsFileHandler::ReadFile(const std::string& path, std::string& data)
     {
         if (!path.empty())
         {
-            file.open(path);
+            file.open(mBasePath + path);
             std::stringstream stream;
             stream << file.rdbuf();
             file.close();
@@ -34,7 +46,7 @@ bool WindowsFileHandler::ReadFile(const std::string& path, std::string& data)
     }
     catch (const std::ifstream::failure& e)
     {
-        LOGE("WIN_FILE", "Error reading file: %s\nError:", path.c_str(), e.what());
+        LOGE("WIN_FILE", "Error reading file: %s\nError:", (mBasePath + path).c_str(), e.what());
     }
     return false;
 }
