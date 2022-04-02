@@ -1,21 +1,14 @@
 #pragma once
 
-#include "../glm/glm.hpp"
+#include "cpu_i_module.h"
+
 #include "../util/random.h"
 
 #include <thread>
 #include <vector>
+#include "../gl/camera.h"
 
-struct Particle
-{
-    glm::vec3 Position;
-    glm::vec3 Velocity;
-    glm::vec4 Color;
-
-    float Lifetime = 0.0f;
-    float Active = false;
-    uint32_t Seed = 0;
-};
+class CpuModuleEmission;
 
 class CpuParticleSystem
 {
@@ -44,14 +37,32 @@ public:
     CpuParticleSystem();
     ~CpuParticleSystem();
 
-    bool Init() ;
+    bool Init();
 
-    void UpdateParticles(float deltaTime);
+    void UpdateParticles(float deltaTime, const glm::vec3& cameraPos);
     void RenderParticles();
 
+    void Emit(uint32_t numToGenerate);
+
+    bool AddModule(CpuIModule* cpuModule);
+    CpuModuleEmission* GetEmissionModule();
+
+    uint32_t GetCurrentParticles() const;
+
+    void SetMinLifetime(float minLifetime);
+    void SetMaxLifetime(float maxLifetime);
+
+    void SetMinStartVelocity(const glm::vec3& minVelocity);
+    void SetMaxStartVelocity(const glm::vec3& maxVelocity);
+
 protected:
-    void InitParticles();
+    void InitParticles(uint32_t initFrom, bool active);
     void BuildParticleVertexData();
+
+    void InitParticle(Particle& particle, bool active);
+
+    void SortParticles();
+
     static const uint32_t sBufferSize = 1;
     uint32_t mVao[sBufferSize];
     uint32_t mVbo[sBufferSize];
@@ -63,7 +74,14 @@ protected:
 
     Random mRandom;
 
+    float mMinLifetime;
+    float mMaxLifetime;
+
+    glm::vec3 mMinStartVelocity;
+    glm::vec3 mMaxStartVelocity;
+
     std::vector<float> mParticleRenderData;
     std::vector<Particle> mParticles;
     std::vector<ParticleThread> mParticleThreads;
+    std::vector<CpuIModule*> mModules;
 };

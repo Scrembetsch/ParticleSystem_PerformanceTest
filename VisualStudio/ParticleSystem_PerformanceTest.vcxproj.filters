@@ -16,9 +16,6 @@
     <ClCompile Include="..\src\windows\device\windows_file_handler.cpp">
       <Filter>windows\device</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\particle_system\cpu_particle_system.cpp">
-      <Filter>common\particle_system</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\common\particle_system\tf_particle_system.cpp">
       <Filter>common\particle_system</Filter>
     </ClCompile>
@@ -27,6 +24,18 @@
     </ClCompile>
     <ClCompile Include="..\src\common\util\random.cpp">
       <Filter>common\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cpu_particle_system.cpp">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cpu_module_emission.cpp">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cpu_module_velocity_over_lifetime.cpp">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cpu_module_color_over_lifetime.cpp">
+      <Filter>common\particle_system\cpu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -53,6 +62,9 @@
     </Filter>
     <Filter Include="common\util">
       <UniqueIdentifier>{c92ad777-5fe6-42b6-9e6d-aefc52dcd55e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\particle_system\cpu">
+      <UniqueIdentifier>{8a8a990b-eb31-4554-85ec-4d8ee72c27d9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -89,9 +101,6 @@
     <ClInclude Include="..\src\common\device\file_handler.h">
       <Filter>common\device</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\common\particle_system\cpu_particle_system.h">
-      <Filter>common\particle_system</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\common\particle_system\tf_particle_system.h">
       <Filter>common\particle_system</Filter>
     </ClInclude>
@@ -100,6 +109,24 @@
     </ClInclude>
     <ClInclude Include="..\src\common\util\random.h">
       <Filter>common\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cpu_particle_system.h">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cpu_i_module.h">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cpu_module_emission.h">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cpu_module_velocity_over_lifetime.h">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cpu_module_color_over_lifetime.h">
+      <Filter>common\particle_system\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cpu_particle.h">
+      <Filter>common\particle_system\cpu</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

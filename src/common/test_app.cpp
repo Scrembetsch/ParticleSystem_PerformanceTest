@@ -3,6 +3,9 @@
 #include "gl/gl.h"
 #include "gl/gl_util.h"
 
+#include "particle_system/cpu_module_velocity_over_lifetime.h"
+#include "particle_system/cpu_module_color_over_lifetime.h"
+
 TestApp::TestApp()
 	: mWidth(0.0f)
 	, mHeight(0.0f)
@@ -27,6 +30,14 @@ bool TestApp::Init()
 	bool success = true;
 #if CPU
 	success &= mCpuParticleSystem.Init();
+
+	mCpuParticleSystem.SetMinLifetime(5.0f);
+	mCpuParticleSystem.SetMaxLifetime(7.0f);
+	mCpuParticleSystem.SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mCpuParticleSystem.SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
+	mCpuParticleSystem.AddModule(new CpuModuleVelOverLife(&mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	mCpuParticleSystem.AddModule(new CpuModuleColorOverLife(&mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+
 	success &= mCpuShader.LoadAndCompile("shader/base.vs", Shader::ShaderType::SHADER_TYPE_VERTEX);
 	success &= mCpuShader.LoadAndCompile("shader/base.fs", Shader::ShaderType::SHADER_TYPE_FRAGMENT);
 	success &= mCpuShader.AttachLoadedShaders();
@@ -45,9 +56,8 @@ bool TestApp::Init()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	mCamera.Position = glm::vec3(-2.57005f, 16.0659f, -31.8907f);
+	mCamera.Position = glm::vec3(0.0f, 0.0f, -80.0f);
 	mCamera.Yaw = 90.0f;
-	mCamera.Pitch = -18.0f;
 	mCamera.UpdateCameraVectors();
 
 	mLastFrameTime = std::chrono::system_clock::now();
@@ -66,12 +76,15 @@ void TestApp::Step()
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	uint32_t particles = 0;
+
 #if CPU
-	mCpuParticleSystem.UpdateParticles(deltaTime);
+	mCpuParticleSystem.UpdateParticles(deltaTime, mCamera.Position);
 	mCpuShader.Use();
 	mCpuShader.SetMat4("uProjection", projection);
 	mCpuShader.SetMat4("uView", view);
 	mCpuParticleSystem.RenderParticles();
+	particles = mCpuParticleSystem.GetCurrentParticles();
 #endif
 #if CS
 	mCsParticleSystem.Update(deltaTime);
@@ -92,6 +105,7 @@ void TestApp::Step()
 	{
 		int fps = static_cast<int>(round(static_cast<float>(mFrameCount) / mFrameTime));
 		LOG("FRAME_TIME", "Fps: %d", fps);
+		LOG("PARTICLES", "Num Particles: %d", particles);
 
 		mFrameTime -= 0.5f;
 		mFrameCount = 0;
