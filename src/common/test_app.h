@@ -1,6 +1,6 @@
 #include <cstdint>
 
-#include "particle_system/cpu_particle_system.h"
+#include "particle_system/cpu_i_particle_system.h"
 #include "particle_system/cs_particle_system.h"
 #include "particle_system/tf_particle_system.h"
 
@@ -10,6 +10,11 @@
 #define CPU 1
 #define CS  0
 #define TF  0
+
+#if CPU
+	#define PARALLEL 1
+	#define INSTANCE 1
+#endif
 
 class TestApp
 {
@@ -37,12 +42,12 @@ private:
 #if CPU
 	Shader mCpuShader;
 	Texture2D mParticleTex;
-	CpuParticleSystem mCpuParticleSystem;
+	CpuIParticleSystem* mCpuParticleSystem;
 #endif
 #if CS
-	CsParticleSystem mCsParticleSystem;
+	CsParticleSystem* mCsParticleSystem;
 #endif
 #if TF
-	TfParticleSystem mTfParticleSystem;
+	TfParticleSystem* mTfParticleSystem;
 #endif
 };

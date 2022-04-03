@@ -1,0 +1,247 @@
+#include "cpu_serial_particle_system.h"
+#include "../gl/gl.h"
+#include "../gl/gl_util.h"
+#include "../logger.h"
+#include "cpu_module_emission.h"
+
+#define TX1 (0.0)
+#define TY1 (0.0)
+#define TX2 (1.0)
+#define TY2 (1.0)
+
+static float sBasePlaneVertexData[] =
+{
+	// Coord			// Color				// Tex Coord
+	-0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
+	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY1,
+	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2,
+	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
+	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY2,
+	 0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2
+};
+
+CpuSerialParticleSystem::CpuSerialParticleSystem(uint32_t maxParticles)
+	: mNumMaxParticles(maxParticles)
+	, mNumParticles(0)
+	, mVao(0)
+	, mVbo(0)
+{
+	mParticles.resize(mNumMaxParticles);
+	mParticleRenderData.resize(CpuRenderParticle::ParticleSize * mNumVertices * mNumMaxParticles);
+}
+
+CpuSerialParticleSystem::~CpuSerialParticleSystem()
+{
+	if (mVao != 0)
+	{
+		glDeleteVertexArrays(1, &mVao);
+	}
+	if (mVbo != 0)
+	{
+		glDeleteBuffers(1, &mVbo);
+	}
+	for (uint32_t i = 0; i < mModules.size(); i++)
+	{
+		delete mModules[i];
+	}
+}
+
+bool CpuSerialParticleSystem::Init()
+{
+	glGenVertexArrays(1, &mVao);
+	glGenBuffers(1, &mVbo);
+
+	uint32_t offset = 0;
+	glBindVertexArray(mVao);
+	glBindBuffer(GL_ARRAY_BUFFER, mVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mParticleRenderData.size(), &mParticleRenderData[0], GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, CpuRenderParticle::ParticleRealSize, (void*)offset);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, CpuRenderParticle::ParticleRealSize, (void*)(offset += CpuRenderParticle::PositionRealSize));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, CpuRenderParticle::ParticleRealSize, (void*)(offset += CpuRenderParticle::ColorRealSize));
+
+	glBindVertexArray(0);
+
+	InitParticles(0, false);
+	BuildParticleVertexData();
+	return true;
+}
+
+void CpuSerialParticleSystem::InitParticles(uint32_t initFrom, bool active)
+{
+	for (uint32_t i = initFrom; i < mNumMaxParticles; i++)
+	{
+		InitParticle(mParticles[i], active);
+	}
+}
+
+void CpuSerialParticleSystem::InitParticle(Particle& particle, bool active)
+{
+	particle.Active = active;
+
+	particle.Position.x = 0.0f;
+	particle.Position.y = 0.0f;
+	particle.Position.z = 0.0f;
+
+	particle.Velocity.x = mRandom.Rand(mMinStartVelocity.x, mMaxStartVelocity.x);
+	particle.Velocity.y = mRandom.Rand(mMinStartVelocity.y, mMaxStartVelocity.y);
+	particle.Velocity.z = mRandom.Rand(mMinStartVelocity.z, mMaxStartVelocity.z);
+
+	float lifetime = mRandom.Rand(mMinLifetime, mMaxLifetime);
+	particle.Lifetime = lifetime;
+	particle.BeginLifetime = lifetime;
+}
+
+void CpuSerialParticleSystem::BuildParticleVertexData()
+{
+	const uint32_t verticesPerParticle = mNumVertices;	// Currently no triangle strip
+
+	size_t particlesToDraw = 0;
+
+	for (size_t i = 0; i < mNumMaxParticles; i++)
+	{
+		size_t particleIndex = particlesToDraw * CpuRenderParticle::ParticleSize * verticesPerParticle;
+
+		if (mParticles[i].Active)
+		{
+			for (uint32_t j = 0; j < verticesPerParticle; j++)
+			{
+				size_t vertexIndex = j * CpuRenderParticle::ParticleSize;
+
+				//Position
+				mParticleRenderData[particleIndex + vertexIndex + 0] = mParticles[i].Position.x + sBasePlaneVertexData[vertexIndex + 0];
+				mParticleRenderData[particleIndex + vertexIndex + 1] = mParticles[i].Position.y + sBasePlaneVertexData[vertexIndex + 1];
+				mParticleRenderData[particleIndex + vertexIndex + 2] = mParticles[i].Position.z + sBasePlaneVertexData[vertexIndex + 2];
+
+				// Colors
+				mParticleRenderData[particleIndex + vertexIndex + 0 + CpuRenderParticle::PositionSize] = mParticles[i].Color.r;
+				mParticleRenderData[particleIndex + vertexIndex + 1 + CpuRenderParticle::PositionSize] = mParticles[i].Color.g;
+				mParticleRenderData[particleIndex + vertexIndex + 2 + CpuRenderParticle::PositionSize] = mParticles[i].Color.b;
+				mParticleRenderData[particleIndex + vertexIndex + 3 + CpuRenderParticle::PositionSize] = mParticles[i].Color.a;
+
+				// TexCoord
+				mParticleRenderData[particleIndex + vertexIndex + 0 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize] = sBasePlaneVertexData[vertexIndex + 0 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize];
+				mParticleRenderData[particleIndex + vertexIndex + 1 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize] = sBasePlaneVertexData[vertexIndex + 1 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize];
+			}
+
+			++particlesToDraw;
+			if (particlesToDraw == mNumParticles)
+			{
+				break;
+			}
+		}
+	}
+
+	if (mNumParticles > 0)
+	{
+		glBindVertexArray(mVao);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, CpuRenderParticle::ParticleRealSize * mNumParticles * verticesPerParticle, &mParticleRenderData[0]);
+	}
+}
+
+void CpuSerialParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
+{
+	//Emit particles
+	for (uint32_t j = 0; j < mModules.size(); j++)
+	{
+		mModules[j]->PreRun(deltaTime);
+	}
+
+	// Update all particles
+	for (uint32_t i = 0; i < mNumMaxParticles; i++)
+	{
+		mParticles[i].CameraDistance = glm::distance2(mParticles[i].Position, cameraPos);
+
+		mParticles[i].Lifetime -= deltaTime;
+		if (mParticles[i].Lifetime <= 0.0f
+			&& mParticles[i].Active)
+		{
+			mParticles[i].Lifetime = 0.0f;
+			mParticles[i].Active = false;
+			mParticles[i].CameraDistance = -1.0f;
+			mNumParticles--;
+		}
+
+		for (uint32_t j = 0; j < mModules.size(); j++)
+		{
+			mModules[j]->UpdateParticle(deltaTime, mParticles[i]);
+		}
+	}
+
+	SortParticles();
+
+	// Write data to array
+	BuildParticleVertexData();
+}
+
+void CpuSerialParticleSystem::SortParticles()
+{
+	std::sort(mParticles.begin(), mParticles.end());
+}
+
+void CpuSerialParticleSystem::SetMinLifetime(float minLifetime)
+{
+	mMinLifetime = minLifetime;
+}
+
+void CpuSerialParticleSystem::SetMaxLifetime(float maxLifetime)
+{
+	mMaxLifetime = maxLifetime;
+}
+
+void CpuSerialParticleSystem::SetMinStartVelocity(const glm::vec3& minVelocity)
+{
+	mMinStartVelocity = minVelocity;
+}
+
+void CpuSerialParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
+{
+	mMaxStartVelocity = maxVelocity;
+}
+
+bool CpuSerialParticleSystem::AddModule(CpuIModule* cpuModule)
+{
+	mModules.emplace_back(cpuModule);
+	return true;
+}
+
+uint32_t CpuSerialParticleSystem::GetCurrentParticles() const
+{
+	return mNumParticles;
+}
+
+void CpuSerialParticleSystem::Emit(uint32_t numToGenerate)
+{
+	uint32_t generatedParticles = 0;
+
+	// Todo can be improved -> Remembering last known inserted location is slower (from around 28 fps  to 21 fps)
+	for (uint32_t i = 0; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
+	{
+		if (mParticles[i].Active)
+		{
+			continue;
+		}
+		InitParticle(mParticles[i], true);
+		generatedParticles++;
+	}
+	mNumParticles += generatedParticles;
+}
+
+void CpuSerialParticleSystem::RenderParticles()
+{
+	if (mNumParticles > 0)
+	{
+		glEnable(GL_BLEND);
+		glDepthMask(GL_FALSE);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glBindVertexArray(mVao);
+		glDrawArrays(GL_TRIANGLES, 0, mNumParticles * mNumVertices);
+		glBindVertexArray(0);
+
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+	}
+}

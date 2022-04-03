@@ -1,13 +1,13 @@
 #include "cpu_module_velocity_over_lifetime.h"
 
-#include "cpu_particle_system.h"
+#include "cpu_i_particle_system.h"
 
-CpuModuleVelOverLife::CpuModuleVelOverLife(CpuParticleSystem* particleSystem)
+CpuModuleVelOverLife::CpuModuleVelOverLife(CpuIParticleSystem* particleSystem)
 	: CpuModuleVelOverLife(particleSystem, glm::vec3(0.0f), glm::vec3(0.0f))
 {
 }
 
-CpuModuleVelOverLife::CpuModuleVelOverLife(CpuParticleSystem* particleSystem, const glm::vec3& velBegin, const glm::vec3& velEnd)
+CpuModuleVelOverLife::CpuModuleVelOverLife(CpuIParticleSystem* particleSystem, const glm::vec3& velBegin, const glm::vec3& velEnd)
 	: CpuIModule(particleSystem)
 	, VelocityBegin(velBegin)
 	, VelocityEnd(velEnd)

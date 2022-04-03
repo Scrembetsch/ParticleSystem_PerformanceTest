@@ -1,13 +1,13 @@
 #include "cpu_module_color_over_lifetime.h"
 
-#include "cpu_particle_system.h"
+#include "cpu_i_particle_system.h"
 
-CpuModuleColorOverLife::CpuModuleColorOverLife(CpuParticleSystem* particleSystem)
+CpuModuleColorOverLife::CpuModuleColorOverLife(CpuIParticleSystem* particleSystem)
 	: CpuModuleColorOverLife(particleSystem, glm::vec4(0.0f), glm::vec4(0.0f))
 {
 }
 
-CpuModuleColorOverLife::CpuModuleColorOverLife(CpuParticleSystem* particleSystem, const glm::vec4& colorBegin, const glm::vec4& colorEnd)
+CpuModuleColorOverLife::CpuModuleColorOverLife(CpuIParticleSystem* particleSystem, const glm::vec4& colorBegin, const glm::vec4& colorEnd)
 	: CpuIModule(particleSystem)
 	, ColorBegin(colorBegin)
 	, ColorEnd(colorEnd)

@@ -1,13 +1,13 @@
 #include "cpu_module_emission.h"
 
-#include "cpu_particle_system.h"
+#include "cpu_i_particle_system.h"
 
-CpuModuleEmission::CpuModuleEmission(CpuParticleSystem* particleSystem)
+CpuModuleEmission::CpuModuleEmission(CpuIParticleSystem* particleSystem)
 	: CpuModuleEmission(particleSystem, 0.0f)
 {
 }
 
-CpuModuleEmission::CpuModuleEmission(CpuParticleSystem* particleSystem, float emitRate)
+CpuModuleEmission::CpuModuleEmission(CpuIParticleSystem* particleSystem, float emitRate)
 	: CpuIModule(particleSystem)
 	, EmitRate(emitRate)
 	, mCurrentGenerateOffset(0.0f)

@@ -4,12 +4,12 @@
 
 #include <vector>
 
-class CpuParticleSystem;
+class CpuIParticleSystem;
 
 class CpuIModule
 {
 public:
-	CpuIModule(CpuParticleSystem* particleSystem)
+	CpuIModule(CpuIParticleSystem* particleSystem)
 		: ParticleSystem(particleSystem)
 	{
 	}
@@ -18,6 +18,6 @@ public:
 	virtual void UpdateParticle(float deltaTime, Particle& particle) = 0;
 
 	bool Active = true;
-	CpuParticleSystem* ParticleSystem;
+	CpuIParticleSystem* ParticleSystem;
 	int32_t SortId;
 };

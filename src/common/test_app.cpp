@@ -3,6 +3,12 @@
 #include "gl/gl.h"
 #include "gl/gl_util.h"
 
+#include "particle_system/cpu_serial_particle_system.h"
+#include "particle_system/cpu_serial_instance_particle_system.h"
+#include "particle_system/cpu_parallel_particle_system.h"
+#include "particle_system/cpu_parallel_instance_particle_system.h"
+
+#include "particle_system/cpu_module_emission.h"
 #include "particle_system/cpu_module_velocity_over_lifetime.h"
 #include "particle_system/cpu_module_color_over_lifetime.h"
 
@@ -38,17 +44,42 @@ bool TestApp::Init()
 
 	bool success = true;
 #if CPU
-	success &= mCpuParticleSystem.Init();
+	mCpuParticleSystem = new
+	#if PARALLEL
+		#if INSTANCE
+			CpuParallelInstanceParticleSystem
+		#else
+			CpuParallelParticleSystem
+		#endif
+	#else
+		#if INSTANCE
+			CpuSerialInstanceParticleSystem
+		#else
+			CpuSerialParticleSystem
+		#endif
+	#endif
+		(500000
+	#if PARALLEL
+			, std::thread::hardware_concurrency()
+	#endif
+			);
+	success &= mCpuParticleSystem->Init();
 
-	mCpuParticleSystem.SetMinLifetime(5.0f);
-	mCpuParticleSystem.SetMaxLifetime(7.0f);
-	mCpuParticleSystem.SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
-	mCpuParticleSystem.SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
-	mCpuParticleSystem.AddModule(new CpuModuleVelOverLife(&mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-	mCpuParticleSystem.AddModule(new CpuModuleColorOverLife(&mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+	mCpuParticleSystem->SetMinLifetime(5.0f);
+	mCpuParticleSystem->SetMaxLifetime(7.0f);
+	mCpuParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mCpuParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
+	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, 50000));
+	mCpuParticleSystem->AddModule(new CpuModuleVelOverLife(mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	mCpuParticleSystem->AddModule(new CpuModuleColorOverLife(mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 
+#if INSTANCE
+	success &= mCpuShader.LoadAndCompile("shader/instance.vs", Shader::ShaderType::SHADER_TYPE_VERTEX);
+	success &= mCpuShader.LoadAndCompile("shader/instance.fs", Shader::ShaderType::SHADER_TYPE_FRAGMENT, replaceMap);
+#else
 	success &= mCpuShader.LoadAndCompile("shader/base.vs", Shader::ShaderType::SHADER_TYPE_VERTEX);
 	success &= mCpuShader.LoadAndCompile("shader/base.fs", Shader::ShaderType::SHADER_TYPE_FRAGMENT, replaceMap);
+#endif
 	success &= mCpuShader.AttachLoadedShaders();
 	success &= mCpuShader.Link();
 
@@ -92,13 +123,13 @@ void TestApp::Step()
 	uint32_t particles = 0;
 
 #if CPU
-	mCpuParticleSystem.UpdateParticles(deltaTime, mCamera.Position);
+	mCpuParticleSystem->UpdateParticles(deltaTime, mCamera.Position);
 	mCpuShader.Use();
 	mCpuShader.SetMat4("uProjection", projection);
 	mCpuShader.SetMat4("uView", view);
 	mParticleTex.Use(&mCpuShader);
-	mCpuParticleSystem.RenderParticles();
-	particles = mCpuParticleSystem.GetCurrentParticles();
+	mCpuParticleSystem->RenderParticles();
+	particles = mCpuParticleSystem->GetCurrentParticles();
 #endif
 #if CS
 	mCsParticleSystem.Update(deltaTime);

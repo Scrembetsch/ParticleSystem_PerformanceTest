@@ -38,3 +38,17 @@ struct CpuRenderParticle
     static const uint32_t ParticleSize = PositionSize + ColorSize + TexCoordSize;
     static const uint32_t ParticleRealSize = PositionRealSize + ColorRealSize + TexCoordRealSize;
 };
+
+struct CpuInstanceRenderParticle
+{
+    glm::vec3 Position;
+    glm::vec4 Color;
+
+    static const uint32_t PositionSize = sizeof(Position) / sizeof(float);
+    static const uint32_t PositionRealSize = sizeof(Position);
+    static const uint32_t ColorSize = sizeof(Color) / sizeof(float);
+    static const uint32_t ColorRealSize = sizeof(Color);
+
+    static const uint32_t ParticleSize = PositionSize + ColorSize;
+    static const uint32_t ParticleRealSize = PositionRealSize + ColorRealSize;
+};

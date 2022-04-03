@@ -5,8 +5,6 @@ project("particlesystem_performancetest")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -frtti -fexceptions -Wall")
 set(OPENGL_LIB GLESv3)
-set(LLVM_ENABLE_RTTI ON)
-set(LLVM_ENABLE_EH ON)
 
 add_library(
         particlesystem_performancetest
@@ -15,7 +13,9 @@ add_library(
         device/android_file_handler.cpp
         ../common/gl/gl_util.cpp
         ../common/test_app.cpp
-        ../common/particle_system/cpu_particle_system.cpp
+        ../common/particle_system/cpu_serial_particle_system.cpp
+        ../common/particle_system/cpu_serial_instance_particle_system.cpp
+        ../common/particle_system/cpu_parallel_particle_system.cpp
         ../common/particle_system/tf_particle_system.cpp
         ../common/particle_system/cs_particle_system.cpp
         ../common/util/random.cpp

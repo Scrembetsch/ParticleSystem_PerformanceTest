@@ -5,8 +5,8 @@
 class CpuModuleEmission : public CpuIModule
 {
 public:
-	CpuModuleEmission(CpuParticleSystem* particleSystem);
-	CpuModuleEmission(CpuParticleSystem* particleSystem, float emitRate);
+	CpuModuleEmission(CpuIParticleSystem* particleSystem);
+	CpuModuleEmission(CpuIParticleSystem* particleSystem, float emitRate);
 
 	float EmitRate;
 

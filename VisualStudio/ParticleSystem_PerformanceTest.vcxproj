@@ -20,10 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\common\gl\gl_util.cpp" />
+    <ClCompile Include="..\src\common\particle_system\cpu_parallel_instance_particle_system.cpp" />
+    <ClCompile Include="..\src\common\particle_system\cpu_serial_instance_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_module_color_over_lifetime.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_module_emission.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_module_velocity_over_lifetime.cpp" />
-    <ClCompile Include="..\src\common\particle_system\cpu_particle_system.cpp" />
+    <ClCompile Include="..\src\common\particle_system\cpu_parallel_particle_system.cpp" />
+    <ClCompile Include="..\src\common\particle_system\cpu_serial_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\tf_particle_system.cpp" />
     <ClCompile Include="..\src\common\test_app.cpp" />
@@ -43,12 +46,16 @@
     <ClInclude Include="..\src\common\gl\texture.h" />
     <ClInclude Include="..\src\common\gl\texture_2d.h" />
     <ClInclude Include="..\src\common\logger.h" />
+    <ClInclude Include="..\src\common\particle_system\cpu_parallel_instance_particle_system.h" />
+    <ClInclude Include="..\src\common\particle_system\cpu_serial_instance_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_i_module.h" />
+    <ClInclude Include="..\src\common\particle_system\cpu_i_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_module_color_over_lifetime.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_module_emission.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_module_velocity_over_lifetime.h" />
+    <ClInclude Include="..\src\common\particle_system\cpu_parallel_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_particle.h" />
-    <ClInclude Include="..\src\common\particle_system\cpu_particle_system.h" />
+    <ClInclude Include="..\src\common\particle_system\cpu_serial_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\cs_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\tf_particle_system.h" />
     <ClInclude Include="..\src\common\test_app.h" />
