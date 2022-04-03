@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 3.18.1)
 project("particlesystem_performancetest")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fno-rtti -fno-exceptions -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -frtti -fexceptions -Wall")
 set(OPENGL_LIB GLESv3)
+set(LLVM_ENABLE_RTTI ON)
+set(LLVM_ENABLE_EH ON)
 
 add_library(
         particlesystem_performancetest
@@ -17,6 +19,10 @@ add_library(
         ../common/particle_system/tf_particle_system.cpp
         ../common/particle_system/cs_particle_system.cpp
         ../common/util/random.cpp
+
+        ../common/particle_system/cpu_module_color_over_lifetime.cpp
+        ../common/particle_system/cpu_module_velocity_over_lifetime.cpp
+        ../common/particle_system/cpu_module_emission.cpp
 )
 
 find_library(

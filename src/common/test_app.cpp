@@ -27,6 +27,15 @@ void TestApp::Resize(uint32_t width, uint32_t height)
 
 bool TestApp::Init()
 {
+	std::vector<std::pair<std::string, std::string>> replaceMap;
+#ifdef _WIN32
+	replaceMap.push_back(std::make_pair("DECL_TEX0", "layout (binding = 0) uniform sampler2D uDiffuseMap;"));
+	replaceMap.push_back(std::make_pair("USE_TEX0", "uDiffuseMap"));
+#else
+	replaceMap.push_back(std::make_pair("DECL_TEX0", "uniform sampler2D uDiffuseMap;"));
+	replaceMap.push_back(std::make_pair("USE_TEX0", "uDiffuseMap"));
+#endif
+
 	bool success = true;
 #if CPU
 	success &= mCpuParticleSystem.Init();
@@ -39,9 +48,13 @@ bool TestApp::Init()
 	mCpuParticleSystem.AddModule(new CpuModuleColorOverLife(&mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 
 	success &= mCpuShader.LoadAndCompile("shader/base.vs", Shader::ShaderType::SHADER_TYPE_VERTEX);
-	success &= mCpuShader.LoadAndCompile("shader/base.fs", Shader::ShaderType::SHADER_TYPE_FRAGMENT);
+	success &= mCpuShader.LoadAndCompile("shader/base.fs", Shader::ShaderType::SHADER_TYPE_FRAGMENT, replaceMap);
 	success &= mCpuShader.AttachLoadedShaders();
 	success &= mCpuShader.Link();
+
+	mParticleTex.mTex = GlUtil::LoadTexture("textures/particle.png");
+	mParticleTex.mTexLocation = GL_TEXTURE0;
+	mParticleTex.mTexName = "uDiffuseMap";
 #endif
 #if CS
 	success &= mCsParticleSystem.Init();
@@ -83,6 +96,7 @@ void TestApp::Step()
 	mCpuShader.Use();
 	mCpuShader.SetMat4("uProjection", projection);
 	mCpuShader.SetMat4("uView", view);
+	mParticleTex.Use(&mCpuShader);
 	mCpuParticleSystem.RenderParticles();
 	particles = mCpuParticleSystem.GetCurrentParticles();
 #endif
@@ -117,4 +131,9 @@ void TestApp::Step()
 void TestApp::ProcessLookInput(float deltaX, float deltaY)
 {
 	mCamera.ProcessMouseMovement(deltaX, deltaY);
+}
+
+void TestApp::Zoom(float zoom)
+{
+	mCamera.Zoom += zoom;
 }

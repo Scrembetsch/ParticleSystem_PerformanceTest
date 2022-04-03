@@ -5,6 +5,7 @@
 #include "particle_system/tf_particle_system.h"
 
 #include "gl/camera.h"
+#include "gl/texture_2d.h"
 
 #define CPU 1
 #define CS  0
@@ -21,6 +22,7 @@ public:
 	void Step();
 
 	void ProcessLookInput(float deltaX, float deltaY);
+	void Zoom(float zoom);
 
 private:
 	std::chrono::time_point<std::chrono::system_clock> mLastFrameTime;
@@ -34,6 +36,7 @@ private:
 
 #if CPU
 	Shader mCpuShader;
+	Texture2D mParticleTex;
 	CpuParticleSystem mCpuParticleSystem;
 #endif
 #if CS

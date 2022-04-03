@@ -26,6 +26,29 @@ void FileHandler::SetBasePath(const std::string& basePath)
     mBasePath = basePath;
 }
 
+bool FileHandler::ReadFile(const std::string& path, char** data, size_t& size)
+{
+    std::ifstream file(mBasePath + path, std::ios::binary);
+
+    if (!file.is_open())
+    {
+        return false;
+    }
+
+    file.unsetf(std::ios::skipws);
+
+    file.seekg(0, std::ios::end);
+    size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    delete[] * data;
+    *data = new char[size + 1];
+
+    file.read(*data, size);
+
+    return true;
+}
+
 bool FileHandler::ReadFile(const std::string& path, std::string& data)
 {
     std::ifstream file;

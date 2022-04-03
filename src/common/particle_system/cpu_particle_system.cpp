@@ -11,13 +11,13 @@
 
 static float sBasePlaneVertexData[] =
 {
-	// Coord				// Color
-	-0.5, -0.5,  0.0,		1.0, 1.0, 1.0, 1.0,
-	 0.5, -0.5,  0.0,		1.0, 1.0, 1.0, 1.0,
-	-0.5,  0.5,  0.0,		1.0, 1.0, 1.0, 1.0,
-	 0.5, -0.5,  0.0,		1.0, 1.0, 1.0, 1.0,
-	-0.5,  0.5,  0.0,		1.0, 1.0, 1.0, 1.0,
-	 0.5,  0.5,  0.0,		1.0, 1.0, 1.0, 1.0
+	// Coord			// Color				// Tex Coord
+	-0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
+	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY1,
+	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2,
+	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
+	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY2,
+	 0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2
 };
 
 uint32_t numVertices = 6;
@@ -77,9 +77,9 @@ CpuParticleSystem::CpuParticleSystem()
 	, mCurrentBuffer(0)
 {
 	mParticles.resize(mNumMaxParticles);
-	mParticleRenderData.resize(sizeof(float) * 7 * numVertices * mNumMaxParticles);
+	mParticleRenderData.resize(CpuRenderParticle::ParticleSize * numVertices * mNumMaxParticles);
 
-	mModules.push_back(new CpuModuleEmission(this, 10000));
+	mModules.push_back(new CpuModuleEmission(this, 20));
 }
 
 CpuParticleSystem::~CpuParticleSystem()
@@ -110,9 +110,11 @@ bool CpuParticleSystem::Init()
 		glBindBuffer(GL_ARRAY_BUFFER, mVbo[i]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mParticleRenderData.size(), &mParticleRenderData[0], GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) + sizeof(glm::vec4), (void*)offset);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, CpuRenderParticle::ParticleRealSize, (void*)offset);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec3) + sizeof(glm::vec4), (void*)(offset += sizeof(glm::vec3)));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, CpuRenderParticle::ParticleRealSize, (void*)(offset += CpuRenderParticle::PositionRealSize));
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, CpuRenderParticle::ParticleRealSize, (void*)(offset += CpuRenderParticle::ColorRealSize));
 
 		glBindVertexArray(0);
 	}
@@ -149,23 +151,19 @@ void CpuParticleSystem::InitParticle(Particle& particle, bool active)
 
 void CpuParticleSystem::BuildParticleVertexData()
 {
-	const uint32_t posSize = 3;
-	const uint32_t colorSize = 4;
-
-	const uint32_t vertexDataPerParticle = posSize + colorSize;
 	const uint32_t verticesPerParticle = numVertices;	// Currently no triangle strip
 
 	size_t particlesToDraw = 0;
 
 	for (size_t i = 0; i < mNumMaxParticles; i++)
 	{
-		size_t particleIndex = particlesToDraw * vertexDataPerParticle * verticesPerParticle;
+		size_t particleIndex = particlesToDraw * CpuRenderParticle::ParticleSize * verticesPerParticle;
 
 		if (mParticles[i].Active)
 		{
 			for (uint32_t j = 0; j < verticesPerParticle; j++)
 			{
-				size_t vertexIndex = j * vertexDataPerParticle;
+				size_t vertexIndex = j * CpuRenderParticle::ParticleSize;
 
 				//Position
 				mParticleRenderData[particleIndex + vertexIndex + 0] = mParticles[i].Position.x + sBasePlaneVertexData[vertexIndex + 0];
@@ -173,10 +171,14 @@ void CpuParticleSystem::BuildParticleVertexData()
 				mParticleRenderData[particleIndex + vertexIndex + 2] = mParticles[i].Position.z + sBasePlaneVertexData[vertexIndex + 2];
 
 				// Colors
-				mParticleRenderData[particleIndex + vertexIndex + 0 + posSize] = mParticles[i].Color.r * sBasePlaneVertexData[vertexIndex + 0 + posSize];
-				mParticleRenderData[particleIndex + vertexIndex + 1 + posSize] = mParticles[i].Color.g * sBasePlaneVertexData[vertexIndex + 1 + posSize];
-				mParticleRenderData[particleIndex + vertexIndex + 2 + posSize] = mParticles[i].Color.b * sBasePlaneVertexData[vertexIndex + 2 + posSize];
-				mParticleRenderData[particleIndex + vertexIndex + 3 + posSize] = mParticles[i].Color.a * sBasePlaneVertexData[vertexIndex + 3 + posSize];
+				mParticleRenderData[particleIndex + vertexIndex + 0 + CpuRenderParticle::PositionSize] = mParticles[i].Color.r * sBasePlaneVertexData[vertexIndex + 0 + CpuRenderParticle::PositionSize];
+				mParticleRenderData[particleIndex + vertexIndex + 1 + CpuRenderParticle::PositionSize] = mParticles[i].Color.g * sBasePlaneVertexData[vertexIndex + 1 + CpuRenderParticle::PositionSize];
+				mParticleRenderData[particleIndex + vertexIndex + 2 + CpuRenderParticle::PositionSize] = mParticles[i].Color.b * sBasePlaneVertexData[vertexIndex + 2 + CpuRenderParticle::PositionSize];
+				mParticleRenderData[particleIndex + vertexIndex + 3 + CpuRenderParticle::PositionSize] = mParticles[i].Color.a * sBasePlaneVertexData[vertexIndex + 3 + CpuRenderParticle::PositionSize];
+
+				// TexCoord
+				mParticleRenderData[particleIndex + vertexIndex + 0 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize] = sBasePlaneVertexData[vertexIndex + 0 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize];
+				mParticleRenderData[particleIndex + vertexIndex + 1 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize] = sBasePlaneVertexData[vertexIndex + 1 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize];
 			}
 
 			++particlesToDraw;
@@ -191,7 +193,7 @@ void CpuParticleSystem::BuildParticleVertexData()
 	{
 		mCurrentBuffer = (mCurrentBuffer + 1) % sBufferSize;
 		glBindVertexArray(mVao[mCurrentBuffer]);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * mNumParticles * vertexDataPerParticle * verticesPerParticle, &mParticleRenderData[0]);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, CpuRenderParticle::ParticleRealSize * mNumParticles * verticesPerParticle, &mParticleRenderData[0]);
 	}
 }
 
@@ -255,14 +257,8 @@ void CpuParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
 
 bool CpuParticleSystem::AddModule(CpuIModule* cpuModule)
 {
-	if (dynamic_cast<CpuModuleEmission*>(cpuModule) != nullptr)
-	{
-		return false;
-	}
-	else
-	{
-		mModules.push_back(cpuModule);
-	}
+	mModules.emplace_back(cpuModule);
+	return true;
 }
 
 CpuModuleEmission* CpuParticleSystem::GetEmissionModule()

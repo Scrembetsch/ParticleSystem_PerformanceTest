@@ -21,3 +21,20 @@ struct Particle
         return this->CameraDistance > other.CameraDistance;
     }
 };
+
+struct CpuRenderParticle
+{
+    glm::vec3 Position;
+    glm::vec4 Color;
+    glm::vec2 TexCoord;
+
+    static const uint32_t PositionSize = sizeof(Position) / sizeof(float);
+    static const uint32_t PositionRealSize = sizeof(Position);
+    static const uint32_t ColorSize = sizeof(Color) / sizeof(float);
+    static const uint32_t ColorRealSize = sizeof(Color);
+    static const uint32_t TexCoordSize = sizeof(TexCoord) / sizeof(float);
+    static const uint32_t TexCoordRealSize = sizeof(TexCoord);
+
+    static const uint32_t ParticleSize = PositionSize + ColorSize + TexCoordSize;
+    static const uint32_t ParticleRealSize = PositionRealSize + ColorRealSize + TexCoordRealSize;
+};

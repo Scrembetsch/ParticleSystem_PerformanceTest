@@ -22,7 +22,7 @@ void FileHandler::ManagerInit(void* dataManager)
     sAssetManager = static_cast<AAssetManager*>(dataManager);
 }
 
-bool FileHandler::ReadFile(const std::string& path, std::string& data)
+bool FileHandler::ReadFile(const std::string& path, char** data, size_t& size)
 {
     AAsset* file = AAssetManager_open(sAssetManager, path.c_str(), AASSET_MODE_BUFFER);
 
@@ -33,18 +33,30 @@ bool FileHandler::ReadFile(const std::string& path, std::string& data)
     }
 
     // Get the file length
-    size_t fileLength = AAsset_getLength(file);
+    size = AAsset_getLength(file);
 
+    delete[] *data;
     // Allocate memory to read your file
-    char* fileContent = new char[fileLength + 1];
+    *data = new char[size + 1];
 
     // Read your file
-    AAsset_read(file, fileContent, fileLength);
+    AAsset_read(file, *data, size);
     // For safety you can add a 0 terminating character at the end of your file ...
-    fileContent[fileLength] = '\0';
+    (*data)[size] = '\0';
+    return true;
+}
 
-    data = fileContent;
-    delete[] fileContent;
+bool FileHandler::ReadFile(const std::string& path, std::string& data)
+{
+    char* fileData = nullptr;
+    size_t size = 0;
+    if(!ReadFile(path, &fileData, size))
+    {
+        return false;
+    }
+
+    data = reinterpret_cast<char*>(fileData);
+    delete[] fileData;
 
     return true;
 }
