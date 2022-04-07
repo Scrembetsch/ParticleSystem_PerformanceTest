@@ -19,9 +19,9 @@ static float sBasePlaneVertexData[] =
 	-0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
 	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY1,
 	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2,
-	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
-	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY2,
-	 0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2
+	 0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY1,
+	-0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY2,
+	 0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY2
 };
 
 void CpuParallelParticleSystem::Worker::Init(std::vector<CpuIModule*>* modules, std::vector<Particle>* particles, uint32_t threadIndex)

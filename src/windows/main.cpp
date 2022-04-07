@@ -39,7 +39,7 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos)
 
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    g_TestApp->Zoom(static_cast<float>(yoffset));
+    g_TestApp->Zoom(static_cast<float>(-yoffset));
 }
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

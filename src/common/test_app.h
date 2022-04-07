@@ -12,7 +12,7 @@
 #define TF  0
 
 #if CPU
-	#define PARALLEL 1
+	#define PARALLEL 0
 	#define INSTANCE 1
 #endif
 
