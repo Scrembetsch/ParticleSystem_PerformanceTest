@@ -12,27 +12,49 @@ class CpuModuleEmission;
 
 class CpuIParticleSystem
 {
+protected:
+    static const uint32_t mNumVertices = 6;
+
 public:
-    CpuIParticleSystem() = default;
-    virtual ~CpuIParticleSystem() = default;
+    CpuIParticleSystem(uint32_t maxParticles);
+    virtual ~CpuIParticleSystem();
 
     virtual bool Init() = 0;
 
     virtual void UpdateParticles(float deltaTime, const glm::vec3& cameraPos) = 0;
     virtual void RenderParticles() = 0;
 
-    virtual void Emit(uint32_t numToGenerate) = 0;
+    virtual void Emit(uint32_t numToGenerate);
 
-    virtual bool AddModule(CpuIModule* cpuModule) = 0;
+    virtual bool AddModule(CpuIModule* cpuModule);
 
-    virtual uint32_t GetCurrentParticles() const = 0;
+    virtual size_t GetCurrentParticles() const;
 
-    virtual void SetMinLifetime(float minLifetime) = 0;
-    virtual void SetMaxLifetime(float maxLifetime) = 0;
+    virtual void SetMinLifetime(float minLifetime);
+    virtual void SetMaxLifetime(float maxLifetime);
 
-    virtual void SetMinStartVelocity(const glm::vec3& minVelocity) = 0;
-    virtual void SetMaxStartVelocity(const glm::vec3& maxVelocity) = 0;
+    virtual void SetMinStartVelocity(const glm::vec3& minVelocity);
+    virtual void SetMaxStartVelocity(const glm::vec3& maxVelocity);
 
 protected:
-    static const uint32_t mNumVertices = 6;
+    virtual void InitParticles(uint32_t initFrom, bool active);
+
+    virtual void InitParticle(Particle& particle, bool active);
+
+    virtual void SortParticles();
+
+    size_t mNumMaxParticles;
+    size_t mNumParticles;
+
+    Random mRandom;
+
+    float mMinLifetime;
+    float mMaxLifetime;
+
+    glm::vec3 mMinStartVelocity;
+    glm::vec3 mMaxStartVelocity;
+
+    std::vector<float> mParticleRenderData;
+    std::vector<Particle> mParticles;
+    std::vector<CpuIModule*> mModules;
 };

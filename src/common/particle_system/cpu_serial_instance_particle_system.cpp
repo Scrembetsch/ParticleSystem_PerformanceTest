@@ -21,8 +21,7 @@ static float sBasePlaneVertexPositions[] =
 };
 
 CpuSerialInstanceParticleSystem::CpuSerialInstanceParticleSystem(uint32_t maxParticles)
-	: mNumMaxParticles(maxParticles)
-	, mNumParticles(0)
+	: CpuIParticleSystem(maxParticles)
 	, mVao(0)
 	, mVboParticlePosition(0)
 	, mVboParticleData(0)
@@ -82,33 +81,7 @@ bool CpuSerialInstanceParticleSystem::Init()
 	glBindVertexArray(0);
 
 	InitParticles(0, false);
-	BuildParticleVertexData();
 	return true;
-}
-
-void CpuSerialInstanceParticleSystem::InitParticles(uint32_t initFrom, bool active)
-{
-	for (uint32_t i = initFrom; i < mNumMaxParticles; i++)
-	{
-		InitParticle(mParticles[i], active);
-	}
-}
-
-void CpuSerialInstanceParticleSystem::InitParticle(Particle& particle, bool active)
-{
-	particle.Active = active;
-
-	particle.Position.x = 0.0f;
-	particle.Position.y = 0.0f;
-	particle.Position.z = 0.0f;
-
-	particle.Velocity.x = mRandom.Rand(mMinStartVelocity.x, mMaxStartVelocity.x);
-	particle.Velocity.y = mRandom.Rand(mMinStartVelocity.y, mMaxStartVelocity.y);
-	particle.Velocity.z = mRandom.Rand(mMinStartVelocity.z, mMaxStartVelocity.z);
-
-	float lifetime = mRandom.Rand(mMinLifetime, mMaxLifetime);
-	particle.Lifetime = lifetime;
-	particle.BeginLifetime = lifetime;
 }
 
 void CpuSerialInstanceParticleSystem::BuildParticleVertexData()
@@ -181,58 +154,6 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 
 	// Write data to array
 	BuildParticleVertexData();
-}
-
-void CpuSerialInstanceParticleSystem::SortParticles()
-{
-	std::sort(mParticles.begin(), mParticles.end());
-}
-
-void CpuSerialInstanceParticleSystem::SetMinLifetime(float minLifetime)
-{
-	mMinLifetime = minLifetime;
-}
-
-void CpuSerialInstanceParticleSystem::SetMaxLifetime(float maxLifetime)
-{
-	mMaxLifetime = maxLifetime;
-}
-
-void CpuSerialInstanceParticleSystem::SetMinStartVelocity(const glm::vec3& minVelocity)
-{
-	mMinStartVelocity = minVelocity;
-}
-
-void CpuSerialInstanceParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
-{
-	mMaxStartVelocity = maxVelocity;
-}
-
-bool CpuSerialInstanceParticleSystem::AddModule(CpuIModule* cpuModule)
-{
-	mModules.emplace_back(cpuModule);
-	return true;
-}
-
-uint32_t CpuSerialInstanceParticleSystem::GetCurrentParticles() const
-{
-	return mNumParticles;
-}
-
-void CpuSerialInstanceParticleSystem::Emit(uint32_t numToGenerate)
-{
-	// Todo can be improved
-	uint32_t generatedParticles = 0;
-	for (uint32_t i = 0; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
-	{
-		if (mParticles[i].Active)
-		{
-			continue;
-		}
-		InitParticle(mParticles[i], true);
-		generatedParticles++;
-	}
-	mNumParticles += generatedParticles;
 }
 
 void CpuSerialInstanceParticleSystem::RenderParticles()

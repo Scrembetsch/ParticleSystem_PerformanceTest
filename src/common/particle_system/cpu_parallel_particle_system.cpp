@@ -91,8 +91,7 @@ uint32_t CpuParallelParticleSystem::Worker::GetRemovedParticles() const
 }
 
 CpuParallelParticleSystem::CpuParallelParticleSystem(uint32_t maxParticles, uint32_t threads)
-	: mNumMaxParticles(maxParticles)
-	, mNumParticles(0)
+	: CpuIParticleSystem(maxParticles)
 	, mVao(0)
 	, mVbo(0)
 {
@@ -116,10 +115,6 @@ CpuParallelParticleSystem::~CpuParallelParticleSystem()
 	{
 		glDeleteBuffers(1, &mVbo);
 	}
-	for (uint32_t i = 0; i < mModules.size(); i++)
-	{
-		delete mModules[i];
-	}
 }
 
 bool CpuParallelParticleSystem::Init()
@@ -141,33 +136,7 @@ bool CpuParallelParticleSystem::Init()
 	glBindVertexArray(0);
 
 	InitParticles(0, false);
-	BuildParticleVertexData();
 	return true;
-}
-
-void CpuParallelParticleSystem::InitParticles(uint32_t initFrom, bool active)
-{
-	for (uint32_t i = initFrom; i < mNumMaxParticles; i++)
-	{
-		InitParticle(mParticles[i], active);
-	}
-}
-
-void CpuParallelParticleSystem::InitParticle(Particle& particle, bool active)
-{
-	particle.Active = active;
-
-	particle.Position.x = 0.0f;
-	particle.Position.y = 0.0f;
-	particle.Position.z = 0.0f;
-
-	particle.Velocity.x = mRandom.Rand(mMinStartVelocity.x, mMaxStartVelocity.x);
-	particle.Velocity.y = mRandom.Rand(mMinStartVelocity.y, mMaxStartVelocity.y);
-	particle.Velocity.z = mRandom.Rand(mMinStartVelocity.z, mMaxStartVelocity.z);
-
-	float lifetime = mRandom.Rand(mMinLifetime, mMaxLifetime);
-	particle.Lifetime = lifetime;
-	particle.BeginLifetime = lifetime;
 }
 
 void CpuParallelParticleSystem::BuildParticleVertexData()
@@ -252,58 +221,6 @@ void CpuParallelParticleSystem::UpdateParticles(float deltaTime, const glm::vec3
 	BuildParticleVertexData();
 }
 
-void CpuParallelParticleSystem::SortParticles()
-{
-	std::sort(mParticles.begin(), mParticles.end());
-}
-
-void CpuParallelParticleSystem::SetMinLifetime(float minLifetime)
-{
-	mMinLifetime = minLifetime;
-}
-
-void CpuParallelParticleSystem::SetMaxLifetime(float maxLifetime)
-{
-	mMaxLifetime = maxLifetime;
-}
-
-void CpuParallelParticleSystem::SetMinStartVelocity(const glm::vec3& minVelocity)
-{
-	mMinStartVelocity = minVelocity;
-}
-
-void CpuParallelParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
-{
-	mMaxStartVelocity = maxVelocity;
-}
-
-bool CpuParallelParticleSystem::AddModule(CpuIModule* cpuModule)
-{
-	mModules.emplace_back(cpuModule);
-	return true;
-}
-
-uint32_t CpuParallelParticleSystem::GetCurrentParticles() const
-{
-	return mNumParticles;
-}
-
-void CpuParallelParticleSystem::Emit(uint32_t numToGenerate)
-{
-	// Todo can be improved
-	uint32_t generatedParticles = 0;
-	for (uint32_t i = 0; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
-	{
-		if (mParticles[i].Active)
-		{
-			continue;
-		}
-		InitParticle(mParticles[i], true);
-		generatedParticles++;
-	}
-	mNumParticles += generatedParticles;
-}
-
 void CpuParallelParticleSystem::RenderParticles()
 {
 	if (mNumParticles > 0)
@@ -319,5 +236,5 @@ void CpuParallelParticleSystem::RenderParticles()
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
-	GlUtil::CheckGlError("Draw");
+	CHECK_GL_ERROR("Draw");
 }

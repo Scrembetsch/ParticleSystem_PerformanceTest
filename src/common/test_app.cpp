@@ -13,9 +13,7 @@
 #include "particle_system/cpu_module_color_over_lifetime.h"
 
 TestApp::TestApp()
-	: mWidth(0.0f)
-	, mHeight(0.0f)
-	, mFrameCount(0)
+	: mFrameCount(0)
 	, mFrameTime(0.0f)
 {
 }
@@ -26,8 +24,8 @@ TestApp::~TestApp()
 
 void TestApp::Resize(uint32_t width, uint32_t height)
 {
-	mWidth = width;
-	mHeight = height;
+	mCamera.ViewWidth = width;
+	mCamera.ViewHeight = height;
 	glViewport(0, 0, width, height);
 }
 
@@ -44,6 +42,13 @@ bool TestApp::Init()
 
 	bool success = true;
 #if CPU
+#ifdef _DEBUG
+	uint32_t numParticles = 20;
+	float numGenerate = 2;
+#else
+	uint32_t numParticles = 500000;
+	float numGenerate = 50000;
+#endif
 	mCpuParticleSystem = new
 	#if PARALLEL
 		#if INSTANCE
@@ -58,7 +63,7 @@ bool TestApp::Init()
 			CpuSerialParticleSystem
 		#endif
 	#endif
-		(500000
+		(numParticles
 	#if PARALLEL
 			, std::thread::hardware_concurrency()
 	#endif
@@ -69,7 +74,7 @@ bool TestApp::Init()
 	mCpuParticleSystem->SetMaxLifetime(7.0f);
 	mCpuParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
 	mCpuParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
-	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, 50000));
+	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, numGenerate));
 	mCpuParticleSystem->AddModule(new CpuModuleVelOverLife(mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mCpuParticleSystem->AddModule(new CpuModuleColorOverLife(mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 
@@ -114,7 +119,7 @@ void TestApp::Step()
 	std::chrono::duration<float> elapsedSeconds = now - mLastFrameTime;
 	float deltaTime = elapsedSeconds.count();
 
-	glm::mat4 projection = glm::perspective(glm::radians(mCamera.Zoom), mWidth / mHeight, 0.1f, 200.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(mCamera.Zoom), mCamera.ViewWidth / mCamera.ViewHeight, 0.1f, 200.0f);
 	glm::mat4 view = mCamera.GetViewMatrix();
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -142,7 +147,7 @@ void TestApp::Step()
 	mTfParticleSystem.RenderParticles();
 #endif
 
-	GlUtil::CheckGlError("Step");
+	CHECK_GL_ERROR("Step");
 
 	mFrameTime += deltaTime;
 	mFrameCount++;

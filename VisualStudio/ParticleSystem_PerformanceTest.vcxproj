@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\common\gl\gl_util.cpp" />
+    <ClCompile Include="..\src\common\particle_system\cpu_i_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_parallel_instance_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_serial_instance_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_module_color_over_lifetime.cpp" />

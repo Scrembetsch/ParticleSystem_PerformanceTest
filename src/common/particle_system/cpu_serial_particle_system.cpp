@@ -21,8 +21,7 @@ static float sBasePlaneVertexData[] =
 };
 
 CpuSerialParticleSystem::CpuSerialParticleSystem(uint32_t maxParticles)
-	: mNumMaxParticles(maxParticles)
-	, mNumParticles(0)
+	: CpuIParticleSystem(maxParticles)
 	, mVao(0)
 	, mVbo(0)
 {
@@ -65,33 +64,7 @@ bool CpuSerialParticleSystem::Init()
 	glBindVertexArray(0);
 
 	InitParticles(0, false);
-	BuildParticleVertexData();
 	return true;
-}
-
-void CpuSerialParticleSystem::InitParticles(uint32_t initFrom, bool active)
-{
-	for (uint32_t i = initFrom; i < mNumMaxParticles; i++)
-	{
-		InitParticle(mParticles[i], active);
-	}
-}
-
-void CpuSerialParticleSystem::InitParticle(Particle& particle, bool active)
-{
-	particle.Active = active;
-
-	particle.Position.x = 0.0f;
-	particle.Position.y = 0.0f;
-	particle.Position.z = 0.0f;
-
-	particle.Velocity.x = mRandom.Rand(mMinStartVelocity.x, mMaxStartVelocity.x);
-	particle.Velocity.y = mRandom.Rand(mMinStartVelocity.y, mMaxStartVelocity.y);
-	particle.Velocity.z = mRandom.Rand(mMinStartVelocity.z, mMaxStartVelocity.z);
-
-	float lifetime = mRandom.Rand(mMinLifetime, mMaxLifetime);
-	particle.Lifetime = lifetime;
-	particle.BeginLifetime = lifetime;
 }
 
 void CpuSerialParticleSystem::BuildParticleVertexData()
@@ -174,59 +147,6 @@ void CpuSerialParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& 
 
 	// Write data to array
 	BuildParticleVertexData();
-}
-
-void CpuSerialParticleSystem::SortParticles()
-{
-	std::sort(mParticles.begin(), mParticles.end());
-}
-
-void CpuSerialParticleSystem::SetMinLifetime(float minLifetime)
-{
-	mMinLifetime = minLifetime;
-}
-
-void CpuSerialParticleSystem::SetMaxLifetime(float maxLifetime)
-{
-	mMaxLifetime = maxLifetime;
-}
-
-void CpuSerialParticleSystem::SetMinStartVelocity(const glm::vec3& minVelocity)
-{
-	mMinStartVelocity = minVelocity;
-}
-
-void CpuSerialParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
-{
-	mMaxStartVelocity = maxVelocity;
-}
-
-bool CpuSerialParticleSystem::AddModule(CpuIModule* cpuModule)
-{
-	mModules.emplace_back(cpuModule);
-	return true;
-}
-
-uint32_t CpuSerialParticleSystem::GetCurrentParticles() const
-{
-	return mNumParticles;
-}
-
-void CpuSerialParticleSystem::Emit(uint32_t numToGenerate)
-{
-	uint32_t generatedParticles = 0;
-
-	// Todo can be improved -> Remembering last known inserted location is slower (from around 28 fps  to 21 fps)
-	for (uint32_t i = 0; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
-	{
-		if (mParticles[i].Active)
-		{
-			continue;
-		}
-		InitParticle(mParticles[i], true);
-		generatedParticles++;
-	}
-	mNumParticles += generatedParticles;
 }
 
 void CpuSerialParticleSystem::RenderParticles()

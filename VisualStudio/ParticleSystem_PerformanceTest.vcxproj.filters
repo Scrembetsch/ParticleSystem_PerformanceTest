@@ -16,9 +16,6 @@
     <ClCompile Include="..\src\windows\device\windows_file_handler.cpp">
       <Filter>windows\device</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\particle_system\tf_particle_system.cpp">
-      <Filter>common\particle_system</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp">
       <Filter>common\particle_system</Filter>
     </ClCompile>
@@ -44,6 +41,12 @@
       <Filter>common\particle_system\cpu\systems</Filter>
     </ClCompile>
     <ClCompile Include="..\src\common\particle_system\cpu_parallel_instance_particle_system.cpp">
+      <Filter>common\particle_system\cpu\systems</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\tf_particle_system.cpp">
+      <Filter>common\particle_system\tf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cpu_i_particle_system.cpp">
       <Filter>common\particle_system\cpu\systems</Filter>
     </ClCompile>
   </ItemGroup>
@@ -81,6 +84,9 @@
     <Filter Include="common\particle_system\cpu\systems">
       <UniqueIdentifier>{4f2676fd-3d04-4e3d-ade8-9d74988dc359}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common\particle_system\tf">
+      <UniqueIdentifier>{ff8d07c7-c1d5-4f50-a520-2984df2d8e84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\common\test_app.h">
@@ -115,9 +121,6 @@
     </ClInclude>
     <ClInclude Include="..\src\common\device\file_handler.h">
       <Filter>common\device</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\particle_system\tf_particle_system.h">
-      <Filter>common\particle_system</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\cs_particle_system.h">
       <Filter>common\particle_system</Filter>
@@ -154,6 +157,9 @@
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\cpu_parallel_instance_particle_system.h">
       <Filter>common\particle_system\cpu\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_particle_system.h">
+      <Filter>common\particle_system\tf</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

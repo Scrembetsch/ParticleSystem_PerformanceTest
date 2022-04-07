@@ -13,7 +13,7 @@
 
 #if CPU
 	#define PARALLEL 0
-	#define INSTANCE 1
+	#define INSTANCE 0
 #endif
 
 class TestApp
@@ -32,9 +32,6 @@ public:
 private:
 	std::chrono::time_point<std::chrono::system_clock> mLastFrameTime;
 	Camera mCamera;
-
-	float mWidth;
-	float mHeight;
 
 	int mFrameCount;
 	float mFrameTime;
