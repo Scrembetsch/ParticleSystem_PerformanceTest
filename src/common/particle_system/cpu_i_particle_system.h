@@ -26,7 +26,7 @@ public:
 
     virtual void Emit(uint32_t numToGenerate);
 
-    virtual bool AddModule(CpuIModule* cpuModule);
+    virtual bool AddModule(CpuIModule* psModule);
 
     virtual size_t GetCurrentParticles() const;
 
@@ -38,7 +38,6 @@ public:
 
 protected:
     virtual void InitParticles(uint32_t initFrom, bool active);
-
     virtual void InitParticle(Particle& particle, bool active);
 
     virtual void SortParticles();

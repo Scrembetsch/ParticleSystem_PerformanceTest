@@ -1,6 +1,7 @@
 #pragma once
 
 #include "texture.h"
+#include "gl_util.h"
 
 class Texture2D : public Texture
 {
@@ -32,11 +33,18 @@ public:
                 location = overrideLocation;
             }
             glActiveTexture(location);
+            CHECK_GL_ERROR();
+
             if (shader != nullptr)
             {
                 shader->SetInt(mTexName, location - GL_TEXTURE0);
+                CHECK_GL_ERROR();
+
             }
             glBindTexture(GL_TEXTURE_2D, mTex);
+            CHECK_GL_ERROR();
+
         }
+        CHECK_GL_ERROR();
     }
 };

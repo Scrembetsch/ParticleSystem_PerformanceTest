@@ -48,6 +48,7 @@ CpuSerialInstanceParticleSystem::~CpuSerialInstanceParticleSystem()
 	{
 		delete mModules[i];
 	}
+	CHECK_GL_ERROR();
 }
 
 bool CpuSerialInstanceParticleSystem::Init()
@@ -80,6 +81,7 @@ bool CpuSerialInstanceParticleSystem::Init()
 
 	glBindVertexArray(0);
 
+	CHECK_GL_ERROR();
 	InitParticles(0, false);
 	return true;
 }
@@ -119,6 +121,7 @@ void CpuSerialInstanceParticleSystem::BuildParticleVertexData()
 		glBindBuffer(GL_ARRAY_BUFFER, mVboParticleData);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, CpuInstanceRenderParticle::ParticleRealSize * mNumParticles, &mParticleRenderData[0]);
 	}
+	CHECK_GL_ERROR();
 }
 
 void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
@@ -148,6 +151,7 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 		{
 			mModules[j]->UpdateParticle(deltaTime, mParticles[i]);
 		}
+		mParticles[i].Position += mParticles[i].Velocity * deltaTime;
 	}
 
 	SortParticles();
@@ -171,4 +175,5 @@ void CpuSerialInstanceParticleSystem::RenderParticles()
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
+	CHECK_GL_ERROR();
 }

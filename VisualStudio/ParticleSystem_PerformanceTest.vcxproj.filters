@@ -49,6 +49,15 @@
     <ClCompile Include="..\src\common\particle_system\cpu_i_particle_system.cpp">
       <Filter>common\particle_system\cpu\systems</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\tf_module_emission.cpp">
+      <Filter>common\particle_system\tf\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\tf_module_velocity_over_lifetime.cpp">
+      <Filter>common\particle_system\tf\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\tf_module_color_over_lifetime.cpp">
+      <Filter>common\particle_system\tf\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -86,6 +95,9 @@
     </Filter>
     <Filter Include="common\particle_system\tf">
       <UniqueIdentifier>{ff8d07c7-c1d5-4f50-a520-2984df2d8e84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\particle_system\tf\modules">
+      <UniqueIdentifier>{d467bea9-e7f9-4859-bb16-b8ac0cae0a2e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +172,21 @@
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\tf_particle_system.h">
       <Filter>common\particle_system\tf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_particle.h">
+      <Filter>common\particle_system\tf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_i_module.h">
+      <Filter>common\particle_system\tf\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_module_emission.h">
+      <Filter>common\particle_system\tf\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_module_velocity_over_lifetime.h">
+      <Filter>common\particle_system\tf\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_module_color_over_lifetime.h">
+      <Filter>common\particle_system\tf\modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

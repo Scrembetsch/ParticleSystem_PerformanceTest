@@ -28,5 +28,4 @@ void CpuModuleVelOverLife::UpdateParticle(float deltaTime, Particle& particle)
 	glm::vec3 vel = VelocityBegin + t * (VelocityEnd - VelocityBegin);
 
 	particle.Velocity += vel * deltaTime;
-	particle.Position += particle.Velocity * deltaTime;
 }

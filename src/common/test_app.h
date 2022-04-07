@@ -7,9 +7,9 @@
 #include "gl/camera.h"
 #include "gl/texture_2d.h"
 
-#define CPU 1
+#define CPU 0
 #define CS  0
-#define TF  0
+#define TF  1
 
 #if CPU
 	#define PARALLEL 0
@@ -36,9 +36,10 @@ private:
 	int mFrameCount;
 	float mFrameTime;
 
+	Texture2D mParticleTex;
+
 #if CPU
 	Shader mCpuShader;
-	Texture2D mParticleTex;
 	CpuIParticleSystem* mCpuParticleSystem;
 #endif
 #if CS

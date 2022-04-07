@@ -2,7 +2,7 @@
 
 layout(points) in;
 layout(points) out;
-layout(max_vertices = 10) out;
+layout(max_vertices = 100) out;
 
 precision mediump float;
 
@@ -10,26 +10,22 @@ precision mediump float;
 
 in vec3 vPositionPass[];
 in vec3 vVelocityPass[];
-in vec3 vColorPass[];
+in vec4 vColorPass[];
 in float vLifeTimePass[];
-in float vSizePass[];
+in float vLifeTimeBeginPass[];
 in float vTypePass[];
 
 // All that we send further
 out vec3 vPositionOut;
 out vec3 vVelocityOut;
-out vec3 vColorOut;
+out vec4 vColorOut;
 out float vLifeTimeOut;
-out float vSizeOut;
+out float vLifeTimeBeginOut;
 out float vTypeOut;
 
 uniform vec3 uPosition; // Position where new particles are spawned
-uniform vec3 uGravity; // Gravity vector for particles - updates velocity of particles 
 uniform vec3 uVelocityMin; // Velocity of new particle - from min to (min+range)
 uniform vec3 uVelocityRange;
-
-uniform vec3 uColor;
-uniform float uSize; 
 
 uniform float uLifeTimeMin;
 uniform float uLifeTimeRange; // Life of new particle - from min to (min+range)
@@ -38,7 +34,7 @@ uniform float uTimeStep; // Time passed since last frame
 uniform vec3 uRandomSeed; // Seed number for our random number function
 vec3 lLocalSeed;
 
-uniform int uNumToGenerate; // How many particles will be generated next time, if greater than zero, particles are generated
+MODULE_UNIFORMS
 
 // This function returns random number from zero to one
 float randZeroOne()
@@ -52,46 +48,47 @@ float randZeroOne()
     return fRes;
 }
 
+void InitParticle()
+{
+  vPositionOut = uPosition;
+  vVelocityOut = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
+  vLifeTimeOut = uLifeTimeMin + uLifeTimeRange * randZeroOne();
+  vLifeTimeBeginOut = vLifeTimeOut;
+  vColorOut = vec4(1.0);
+  vTypeOut = 1.0;
+
+  EmitVertex();
+  EndPrimitive();
+}
+
+MODULE_METHODS
+
 void main()
 {
   lLocalSeed = uRandomSeed;
   
   vPositionOut = vPositionPass[0];
   vVelocityOut = vVelocityPass[0];
-  if(vTypePass[0] != 0.0)
-  {
-    vPositionOut += vVelocityOut * uTimeStep;
-  }
-  if(vTypePass[0] != 0.0)
-  {
-    vVelocityOut += uGravity * uTimeStep;
-  }
-
+  vLifeTimeBeginOut = vLifeTimeBeginPass[0];
+  vTypeOut = vTypePass[0];
   vColorOut = vColorPass[0];
   vLifeTimeOut = vLifeTimePass[0] - uTimeStep;
-  vSizeOut = vSizePass[0];
-  vTypeOut = vTypePass[0];
 
-  if(vTypeOut == 0.0)
+  if(vTypeOut != 0.0
+    && vLifeTimeOut <= 0.0)
   {
-    EmitVertex();
-    EndPrimitive();
-    
-    for(int i = 0; i < uNumToGenerate; i++)
-    {
-      vPositionOut = uPosition;
-      vVelocityOut = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
-      vColorOut = uColor;
-      vLifeTimeOut = uLifeTimeMin + uLifeTimeRange * randZeroOne();
-      vSizeOut = uSize;
-      vTypeOut = 1.0;
-      EmitVertex();
-      EndPrimitive();
-    }
+    return;
   }
-  else if(vLifeTimeOut > 0.0)
+
+  MODULE_CALLS
+
+  if(vTypePass[0] == 0.0)
   {
-      EmitVertex();
-      EndPrimitive(); 
+    return;
   }
+
+  vPositionOut += vVelocityOut * uTimeStep;
+
+  EmitVertex();
+  EndPrimitive();
 }

@@ -40,9 +40,9 @@ void CpuIParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
 	mMaxStartVelocity = maxVelocity;
 }
 
-bool CpuIParticleSystem::AddModule(CpuIModule* cpuModule)
+bool CpuIParticleSystem::AddModule(CpuIModule* psModule)
 {
-	mModules.emplace_back(cpuModule);
+	mModules.emplace_back(psModule);
 	return true;
 }
 

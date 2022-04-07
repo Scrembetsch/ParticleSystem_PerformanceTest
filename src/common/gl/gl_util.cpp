@@ -31,7 +31,7 @@ bool GlUtil::CheckGlError(const char *functionName)
         default:
             break;
         }
-        LOGE("GL_UTIL", "GL error after %s(): 0x%08x, %s\n", functionName, error, errorName);
+        LOG("GL_UTIL", "GL error after %s(): 0x%08x, %s\n", functionName, error, errorName);
         return true;
     }
     return false;

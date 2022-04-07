@@ -1,42 +1,39 @@
 #pragma once
 
 #include "../gl/shader.h"
+#include "../gl/camera.h"
 #include "../util/random.h"
+
+#include "tf_particle.h"
+#include "tf_i_module.h"
 
 class TfParticleSystem
 {
 private:
-    struct Particle
-    {
-        glm::vec3 Position;
-        glm::vec3 Velocity;
-        glm::vec3 Color;
-        float LifeTime;
-        float Size;
-        float Type;
-    };
 public:
-    TfParticleSystem();
+    TfParticleSystem(uint32_t maxParticles);
     ~TfParticleSystem();
 
     bool Init();
 
-    void UpdateParticles(float timeStep);
+    void UpdateParticles(float timeStep, const glm::vec3& cameraPos);
+    void PrepareRender(Camera* camera);
     void RenderParticles();
 
-    void SetGeneratorProperties(const glm::vec3& position, const glm::vec3& velocityMin, const glm::vec3& velocityMax, const glm::vec3& gravity, const glm::vec3 color, float minLifeTime, float maxLifeTime, float size, float spawnTime, int numToGenerate);
-    void SetGeneratorPosition(const glm::vec3& position);
-    uint32_t GetNumParticles() const;
+    virtual bool AddModule(TfIModule* psModule);
 
-    void SetMatrices(const glm::mat4& projection, const glm::mat4& viewMat, const glm::vec3& view, const glm::vec3& upVector);
+    virtual uint32_t GetCurrentParticles() const;
 
-    float mNextGenerationTime;
+    virtual void SetMinLifetime(float minLifetime);
+    virtual void SetMaxLifetime(float maxLifetime);
 
-    Shader mRenderShader;
-    Shader mUpdateShader;
+    virtual void SetMinStartVelocity(const glm::vec3& minVelocity);
+    virtual void SetMaxStartVelocity(const glm::vec3& maxVelocity);
+
+    virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
+    Shader* GetRenderShader();
 private:
-    static const uint32_t sBufferSize = 2;
-    static const uint32_t sMaxParticles = 100000;
+    static const uint32_t sBufferSize = 2U;
 
     uint32_t mTransformFeedbackBuffer;
 
@@ -46,6 +43,8 @@ private:
     uint32_t mQuery;
 
     uint32_t mCurrentReadBuffer;
+
+    uint32_t mNumMaxParticles;
     uint32_t mNumParticles;
 
     glm::mat4 mProjection;
@@ -53,19 +52,17 @@ private:
     glm::vec3 mQuad1;
     glm::vec3 mQuad2;
 
-    float mElapsedTime;
+    Random mRandom;
 
-    glm::vec3 mPosition;
-    glm::vec3 mVelocityMin;
-    glm::vec3 mVelocityRange;
-    glm::vec3 mGravity;
-    glm::vec3 mColor;
+    float mMinLifetime;
+    float mMaxLifetime;
 
-    float mLifeTimeMin;
-    float mLifeTimeRange;
-    float mSize;
+    glm::vec3 mMinStartVelocity;
+    glm::vec3 mMaxStartVelocity;
 
-    int mNumToGenerate;
+    Shader mRenderShader;
+    Shader mUpdateShader;
 
-    Random mRng;
+    std::vector<TfIModule*> mModules;
+    std::vector<std::pair<std::string, std::string>> mRenderFsMap;
 };

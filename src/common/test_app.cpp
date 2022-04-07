@@ -12,6 +12,18 @@
 #include "particle_system/cpu_module_velocity_over_lifetime.h"
 #include "particle_system/cpu_module_color_over_lifetime.h"
 
+#include "particle_system/tf_module_emission.h"
+#include "particle_system/tf_module_velocity_over_lifetime.h"
+#include "particle_system/tf_module_color_over_lifetime.h"
+
+#ifdef _DEBUG
+	uint32_t numParticles = 1000;
+	float numGenerate = 100;
+#else
+	uint32_t numParticles = 500000;
+	float numGenerate = 5000;
+#endif
+
 TestApp::TestApp()
 	: mFrameCount(0)
 	, mFrameTime(0.0f)
@@ -31,24 +43,21 @@ void TestApp::Resize(uint32_t width, uint32_t height)
 
 bool TestApp::Init()
 {
+	mParticleTex.mTex = GlUtil::LoadTexture("textures/particle.png");
+	mParticleTex.mTexLocation = GL_TEXTURE0;
+	mParticleTex.mTexName = "uDiffuseMap";
+
 	std::vector<std::pair<std::string, std::string>> replaceMap;
 #ifdef _WIN32
-	replaceMap.push_back(std::make_pair("DECL_TEX0", "layout (binding = 0) uniform sampler2D uDiffuseMap;"));
-	replaceMap.push_back(std::make_pair("USE_TEX0", "uDiffuseMap"));
+	replaceMap.emplace_back("DECL_TEX0", "layout (binding = 0) uniform sampler2D uDiffuseMap;");
+	replaceMap.emplace_back("USE_TEX0", "uDiffuseMap");
 #else
-	replaceMap.push_back(std::make_pair("DECL_TEX0", "uniform sampler2D uDiffuseMap;"));
-	replaceMap.push_back(std::make_pair("USE_TEX0", "uDiffuseMap"));
+	replaceMap.emplace_back("DECL_TEX0", "uniform sampler2D uDiffuseMap;");
+	replaceMap.emplace_back("USE_TEX0", "uDiffuseMap");
 #endif
 
 	bool success = true;
 #if CPU
-#ifdef _DEBUG
-	uint32_t numParticles = 20;
-	float numGenerate = 2;
-#else
-	uint32_t numParticles = 500000;
-	float numGenerate = 50000;
-#endif
 	mCpuParticleSystem = new
 	#if PARALLEL
 		#if INSTANCE
@@ -87,16 +96,22 @@ bool TestApp::Init()
 #endif
 	success &= mCpuShader.AttachLoadedShaders();
 	success &= mCpuShader.Link();
-
-	mParticleTex.mTex = GlUtil::LoadTexture("textures/particle.png");
-	mParticleTex.mTexLocation = GL_TEXTURE0;
-	mParticleTex.mTexName = "uDiffuseMap";
 #endif
 #if CS
 	success &= mCsParticleSystem.Init();
 #endif
 #if TF
-	success &= mTfParticleSystem.Init();
+	mTfParticleSystem = new TfParticleSystem(numParticles);
+
+	mTfParticleSystem->SetMinLifetime(5.0f);
+	mTfParticleSystem->SetMaxLifetime(7.0f);
+	mTfParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mTfParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
+	mTfParticleSystem->SetRenderFragReplaceMap(replaceMap);
+	mTfParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, numGenerate));
+	mTfParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	mTfParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+	success &= mTfParticleSystem->Init();
 #endif
 
 	glEnable(GL_DEPTH_TEST);
@@ -135,19 +150,23 @@ void TestApp::Step()
 	mParticleTex.Use(&mCpuShader);
 	mCpuParticleSystem->RenderParticles();
 	particles = mCpuParticleSystem->GetCurrentParticles();
+	CHECK_GL_ERROR();
 #endif
 #if CS
 	mCsParticleSystem.Update(deltaTime);
 	mCsParticleSystem.PrepareRender(projection, view, mCamera.Up, mCamera.Front);
 	mCsParticleSystem.Render();
+	CHECK_GL_ERROR();
 #endif
 #if TF
-	mTfParticleSystem.UpdateParticles(deltaTime);
-	mTfParticleSystem.SetMatrices(projection, view, mCamera.Front, mCamera.Up);
-	mTfParticleSystem.RenderParticles();
+	mTfParticleSystem->UpdateParticles(deltaTime, mCamera.Position);
+	mTfParticleSystem->GetRenderShader()->Use();
+	mParticleTex.Use(mTfParticleSystem->GetRenderShader());
+	mTfParticleSystem->PrepareRender(&mCamera);
+	mTfParticleSystem->RenderParticles();
+	particles = mTfParticleSystem->GetCurrentParticles();
+	CHECK_GL_ERROR();
 #endif
-
-	CHECK_GL_ERROR("Step");
 
 	mFrameTime += deltaTime;
 	mFrameCount++;

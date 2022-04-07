@@ -43,6 +43,7 @@ CpuSerialParticleSystem::~CpuSerialParticleSystem()
 	{
 		delete mModules[i];
 	}
+	CHECK_GL_ERROR();
 }
 
 bool CpuSerialParticleSystem::Init()
@@ -63,6 +64,7 @@ bool CpuSerialParticleSystem::Init()
 
 	glBindVertexArray(0);
 
+	CHECK_GL_ERROR();
 	InitParticles(0, false);
 	return true;
 }
@@ -112,6 +114,7 @@ void CpuSerialParticleSystem::BuildParticleVertexData()
 		glBindVertexArray(mVao);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, CpuRenderParticle::ParticleRealSize * mNumParticles * verticesPerParticle, &mParticleRenderData[0]);
 	}
+	CHECK_GL_ERROR();
 }
 
 void CpuSerialParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
@@ -141,6 +144,7 @@ void CpuSerialParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& 
 		{
 			mModules[j]->UpdateParticle(deltaTime, mParticles[i]);
 		}
+		mParticles[i].Position += mParticles[i].Velocity * deltaTime;
 	}
 
 	SortParticles();
@@ -164,4 +168,5 @@ void CpuSerialParticleSystem::RenderParticles()
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
+	CHECK_GL_ERROR();
 }

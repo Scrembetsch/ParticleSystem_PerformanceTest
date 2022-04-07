@@ -167,6 +167,7 @@ public:
         {
             return false;
         }
+        mLinked = true;
         return true;
     }
 

@@ -13,6 +13,7 @@ add_library(
         device/android_file_handler.cpp
         ../common/gl/gl_util.cpp
         ../common/test_app.cpp
+        ../common/particle_system/cpu_i_particle_system.cpp
         ../common/particle_system/cpu_serial_particle_system.cpp
         ../common/particle_system/cpu_serial_instance_particle_system.cpp
         ../common/particle_system/cpu_parallel_particle_system.cpp
@@ -23,6 +24,10 @@ add_library(
         ../common/particle_system/cpu_module_color_over_lifetime.cpp
         ../common/particle_system/cpu_module_velocity_over_lifetime.cpp
         ../common/particle_system/cpu_module_emission.cpp
+
+        ../common/particle_system/tf_module_color_over_lifetime.cpp
+        ../common/particle_system/tf_module_velocity_over_lifetime.cpp
+        ../common/particle_system/tf_module_emission.cpp
 )
 
 find_library(
