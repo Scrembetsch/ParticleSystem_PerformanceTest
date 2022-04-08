@@ -20,8 +20,8 @@
 	uint32_t numParticles = 1000;
 	float numGenerate = 100;
 #else
-	uint32_t numParticles = 500000;
-	float numGenerate = 5000;
+	uint32_t numParticles = 1000000;
+	float numGenerate = 20000;
 #endif
 
 TestApp::TestApp()
@@ -97,9 +97,6 @@ bool TestApp::Init()
 	success &= mCpuShader.AttachLoadedShaders();
 	success &= mCpuShader.Link();
 #endif
-#if CS
-	success &= mCsParticleSystem.Init();
-#endif
 #if TF
 	mTfParticleSystem = new TfParticleSystem(numParticles);
 
@@ -112,6 +109,19 @@ bool TestApp::Init()
 	mTfParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mTfParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 	success &= mTfParticleSystem->Init();
+#endif
+#if CS
+	mCsParticleSystem = new CsParticleSystem(numParticles, 128);
+
+	mCsParticleSystem->SetMinLifetime(5.0f);
+	mCsParticleSystem->SetMaxLifetime(7.0f);
+	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mCsParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
+	mCsParticleSystem->SetRenderFragReplaceMap(replaceMap);
+	//mCsParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, numGenerate));
+	//mCsParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	//mCsParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+	success &= mCsParticleSystem->Init();
 #endif
 
 	glEnable(GL_DEPTH_TEST);
@@ -153,9 +163,9 @@ void TestApp::Step()
 	CHECK_GL_ERROR();
 #endif
 #if CS
-	mCsParticleSystem.Update(deltaTime);
-	mCsParticleSystem.PrepareRender(projection, view, mCamera.Up, mCamera.Front);
-	mCsParticleSystem.Render();
+	mCsParticleSystem->UpdateParticles(deltaTime, mCamera.Position);
+	mCsParticleSystem->PrepareRender(&mCamera);
+	mCsParticleSystem->RenderParticles();
 	CHECK_GL_ERROR();
 #endif
 #if TF

@@ -4,7 +4,7 @@ precision mediump float;
 
 layout(std140, binding=4) buffer Position
 {
-    vec4 Positions[];
+    vec3 Positions[];
 };
 
 uniform mat4 uProjection;

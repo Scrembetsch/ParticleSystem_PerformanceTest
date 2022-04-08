@@ -6,12 +6,12 @@ layout(LOCAL_WORK_GROUP_SIZE) in;
 
 layout(std140, binding=4) buffer Position
 {
-    vec4 Positions[];
+    vec3 Positions[];
 };
 
 layout(std140, binding=5) buffer Velocity
 {
-    vec4 Velocities[];
+    vec3 Velocities[];
 };
 
 layout(std140, binding=6) buffer Color

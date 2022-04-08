@@ -16,9 +16,6 @@
     <ClCompile Include="..\src\windows\device\windows_file_handler.cpp">
       <Filter>windows\device</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp">
-      <Filter>common\particle_system</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\common\util\random.cpp">
       <Filter>common\util</Filter>
     </ClCompile>
@@ -57,6 +54,9 @@
     </ClCompile>
     <ClCompile Include="..\src\common\particle_system\tf_module_color_over_lifetime.cpp">
       <Filter>common\particle_system\tf\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp">
+      <Filter>common\particle_system\cs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -99,6 +99,9 @@
     <Filter Include="common\particle_system\tf\modules">
       <UniqueIdentifier>{d467bea9-e7f9-4859-bb16-b8ac0cae0a2e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common\particle_system\cs">
+      <UniqueIdentifier>{4cbb83cf-56c2-4cf0-b2ed-40eb593cb32e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\common\test_app.h">
@@ -133,9 +136,6 @@
     </ClInclude>
     <ClInclude Include="..\src\common\device\file_handler.h">
       <Filter>common\device</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\common\particle_system\cs_particle_system.h">
-      <Filter>common\particle_system</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\util\random.h">
       <Filter>common\util</Filter>
@@ -187,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\tf_module_color_over_lifetime.h">
       <Filter>common\particle_system\tf\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_particle_system.h">
+      <Filter>common\particle_system\cs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
