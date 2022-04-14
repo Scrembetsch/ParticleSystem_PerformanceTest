@@ -9,5 +9,5 @@ void main()
 {           
   // vec4 vTexColor = texture2D(uSampler, vTexCoord);
   // oColor = vTexColor;
-  oColor = vec4(1.0);
+  oColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

@@ -30,11 +30,15 @@ public:
 	virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
 	Shader* GetRenderShader();
 private:
+	void ResetGenerateCounter();
+
 	uint32_t mVao;
 
+	uint32_t mAtomicBuffer;
 	uint32_t mPosSsbo;
 	uint32_t mVelSsbo;
 	uint32_t mColSsbo;
+	uint32_t mLifeSsbo;
 
 	uint32_t mNumMaxParticles;
 	uint32_t mNumParticles;

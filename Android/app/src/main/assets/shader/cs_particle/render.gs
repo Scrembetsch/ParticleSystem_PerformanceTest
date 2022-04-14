@@ -11,10 +11,17 @@ uniform vec3 uQuad2;
 layout(points) in;
 layout(triangle_strip, max_vertices = 4) out;
 
+in float vLifetimePass[];
+
 out vec2 vTexCoord;
 
 void main()
 {
+  if(vLifetimePass[0] < 0.0)
+  {
+    return;
+  }
+
   const float fSize = 0.2;
   vec3 vPosOld = gl_in[0].gl_Position.xyz;
   mat4 mVP = uProjection * uView;

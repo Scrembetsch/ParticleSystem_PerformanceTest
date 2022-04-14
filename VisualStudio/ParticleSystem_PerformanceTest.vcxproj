@@ -60,6 +60,7 @@
     <ClInclude Include="..\src\common\particle_system\cpu_parallel_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_particle.h" />
     <ClInclude Include="..\src\common\particle_system\cpu_serial_particle_system.h" />
+    <ClInclude Include="..\src\common\particle_system\cs_particle.h" />
     <ClInclude Include="..\src\common\particle_system\cs_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\tf_i_module.h" />
     <ClInclude Include="..\src\common\particle_system\tf_module_color_over_lifetime.h" />

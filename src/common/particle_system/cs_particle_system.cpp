@@ -7,21 +7,25 @@ glGenBuffers(1, &val);  \
 glBindBuffer(GL_SHADER_STORAGE_BUFFER, val); \
 glBufferData(GL_SHADER_STORAGE_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW); \
 glEnableVertexAttribArray(attribPtr); \
-glVertexAttribPointer(attribPtr, attribSize, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0); \
+glVertexAttribPointer(attribPtr, attribSize, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0) \
 
 #define INIT_BUFFER_BEGIN(size, type) \
-{type* buffer = static_cast<type*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(type), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
-for (uint32_t i = 0; i < mNumMaxParticles; i++) \
-{
+{ \
+    type* buffer = static_cast<type*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(type), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
+    for (uint32_t i = 0; i < mNumMaxParticles; i++) \
+    {
 #define INIT_BUFFER_END() \
+    } \
 } \
-glUnmapBuffer(GL_SHADER_STORAGE_BUFFER); }\
+glUnmapBuffer(GL_SHADER_STORAGE_BUFFER)
 
 CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     : mVao(0)
+    , mAtomicBuffer(0)
     , mPosSsbo(0)
     , mVelSsbo(0)
     , mColSsbo(0)
+    , mLifeSsbo(0)
     , mNumMaxParticles(maxParticles)
     , mNumParticles(0)
     , mLocalWorkGroupSize(groupSize, 1, 1)
@@ -38,6 +42,11 @@ CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
 
 CsParticleSystem::~CsParticleSystem()
 {
+    if (mAtomicBuffer != 0)
+    {
+        glDeleteBuffers(1, &mAtomicBuffer);
+        mAtomicBuffer = 0;
+    }
     if (mPosSsbo != 0)
     {
         glDeleteBuffers(1, &mPosSsbo);
@@ -53,6 +62,11 @@ CsParticleSystem::~CsParticleSystem()
         glDeleteBuffers(1, &mColSsbo);
         mColSsbo = 0;
     }
+    if (mLifeSsbo != 0)
+    {
+        glDeleteBuffers(1, &mLifeSsbo);
+        mLifeSsbo = 0;
+    }
     if (mVao != 0)
     {
         glDeleteVertexArrays(1, &mVao);
@@ -62,60 +76,43 @@ CsParticleSystem::~CsParticleSystem()
 
 bool CsParticleSystem::Init()
 {
-    GLint bufMask = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-
     glGenVertexArrays(1, &mVao);
     glBindVertexArray(mVao);
 
-    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, glm::vec3, 4, 3);
+    glGenBuffers(1, &mAtomicBuffer);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
+    glVertexAttribPointer(0, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
+    ResetGenerateCounter();
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, glm::vec3, 1, 3);
     INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec3)
         buffer[i].x = 0.0f;
         buffer[i].y = 0.0f;
         buffer[i].z = 0.0f;
     INIT_BUFFER_END();
 
-    //glGenBuffers(1, &mPosSsbo);
-    //glBindBuffer(GL_SHADER_STORAGE_BUFFER, mPosSsbo);
-    //glBufferData(GL_SHADER_STORAGE_BUFFER, mNumMaxParticles * sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
+    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, glm::vec3, 2, 3);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec3)
+        buffer[i].x = sin(mRandom.Rand01() * 3.14f);
+        buffer[i].y = cos(mRandom.Rand01() * 3.14f);
+        buffer[i].z = sin(mRandom.Rand01() * 3.14f);
+    INIT_BUFFER_END();
 
-    //glEnableVertexAttribArray(4);
-    //glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    CREATE_BUFFER(mColSsbo, mNumMaxParticles, glm::vec4, 3, 4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
+        buffer[i].r = mRandom.Rand01();
+        buffer[i].g = mRandom.Rand01();
+        buffer[i].b = mRandom.Rand01();
+        buffer[i].a = 1.0f;
+    INIT_BUFFER_END();
 
-    //glm::vec3* points = static_cast<glm::vec3*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec3), bufMask));
-    //for (int i = 0; i < mNumMaxParticles; i++)
-    //{
-    //    points[i].x = 0.0f;
-    //    points[i].y = 0.0f;
-    //    points[i].z = 0.0f;
-    //}
-    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glGenBuffers(1, &mVelSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mVelSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, mNumMaxParticles * sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
-
-    glm::vec3* vels = static_cast<glm::vec3*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec3), bufMask));
-    for (int i = 0; i < mNumMaxParticles; i++)
-    {
-        vels[i].x = sin(mRandom.Rand01() * 3.14f);
-        vels[i].y = cos(mRandom.Rand01() * 3.14f);
-        vels[i].z = sin(mRandom.Rand01() * 3.14f);
-    }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glGenBuffers(1, &mColSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, mNumMaxParticles * sizeof(glm::vec4), NULL, GL_STATIC_DRAW);
-
-    glm::vec4* cols = static_cast<glm::vec4*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec4), bufMask));
-    for (int i = 0; i < mNumMaxParticles; i++)
-    {
-        cols[i].x = mRandom.Rand01();
-        cols[i].y = mRandom.Rand01();
-        cols[i].z = mRandom.Rand01();
-        cols[i].w = 1.0f;
-    }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, glm::vec2, 4, 2);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec2)
+        buffer[i][0] = 0.0f;
+        buffer[i][1] = 0.0f;
+    INIT_BUFFER_END();
 
     std::stringstream ss;
     ss << "local_size_x = " << mLocalWorkGroupSize.x << ", ";
@@ -123,10 +120,9 @@ bool CsParticleSystem::Init()
     ss << "local_size_z = " << mLocalWorkGroupSize.z;
 
     std::vector<std::pair<std::string, std::string>> replaceParts;
-    replaceParts.emplace_back(std::pair<std::string, std::string>("LOCAL_WORK_GROUP_SIZE", ss.str()));
+    replaceParts.emplace_back("LOCAL_WORK_GROUP_SIZE", ss.str());
 
     bool success = true;
-
     success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
     success &= mComputeShader.AttachLoadedShaders();
     success &= mComputeShader.Link();
@@ -141,25 +137,35 @@ bool CsParticleSystem::Init()
 
 void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
 {
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mPosSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, mVelSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, mColSsbo);
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
+    ResetGenerateCounter();
+    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mAtomicBuffer);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mPosSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mVelSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
 
     mComputeShader.Use();
     mComputeShader.SetFloat("uDeltaTime", deltaTime);
+    mComputeShader.SetUInt("uNumToGenerate", 1);
+
     glDispatchCompute(mNumMaxParticles / mLocalWorkGroupSize.x, 1, 1);
 
     glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
-    //GLint bufMask = GL_MAP_READ_BIT;
-
-    //glm::vec4* points = static_cast<glm::vec4*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, cMaxParticles * sizeof(glm::vec4), bufMask));
-    //for (int i = 0; i < 5; i++)
-    //{
-    //    glm::vec4 newPoint = mProj * mView * points[i];
-    //    LOG("CS", "%g, %g, %g", newPoint.x, newPoint.y, newPoint.z);
-    //}
-    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    GLint bufMask = GL_MAP_READ_BIT;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColSsbo);
+    auto* buffer = static_cast<glm::vec4*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec4), bufMask));
+    for (int i = 0; i < 5; i++)
+    {
+        glm::vec4 newBuf = *buffer;
+        //LOG("CS", "%g, %g", newBuf.x, newBuf.y);
+        //LOG("CS", "%g, %g, %g", newBuf.x, newBuf.y, newBuf.z);
+        //LOG("CS", "%g, %g, %g, %g", newBuf.x, newBuf.y, newBuf.z, newBuf.a);
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
 void CsParticleSystem::PrepareRender(Camera* camera)
@@ -184,9 +190,7 @@ void CsParticleSystem::RenderParticles()
     mRenderShader.SetVec3("uQuad2", mQuad2);
 
     glBindVertexArray(mVao);
-    glBindBuffer(GL_ARRAY_BUFFER, mPosSsbo);
     glDrawArrays(GL_POINTS, 0, mNumMaxParticles);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
@@ -225,4 +229,11 @@ void CsParticleSystem::SetRenderFragReplaceMap(const std::vector<std::pair<std::
 Shader* CsParticleSystem::GetRenderShader()
 {
     return &mRenderShader;
+}
+
+void CsParticleSystem::ResetGenerateCounter()
+{
+    uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
+    atomicPtr[0] = 0;
+    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 }

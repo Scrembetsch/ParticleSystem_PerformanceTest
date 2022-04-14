@@ -17,10 +17,10 @@
 #include "particle_system/tf_module_color_over_lifetime.h"
 
 #ifdef _DEBUG
-	uint32_t numParticles = 1000;
+	uint32_t numParticles = 128;
 	float numGenerate = 100;
 #else
-	uint32_t numParticles = 1000000;
+	uint32_t numParticles = 1024 * 1024;
 	float numGenerate = 20000;
 #endif
 

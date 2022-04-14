@@ -3,8 +3,15 @@
 #include "../common/gl/gl.h"
 #include "../common/device/file_handler.h"
 
+#define SMALL_WINDOW 1
+
+#if SMALL_WINDOW
+const int WIDTH = 1280;
+const int HEIGHT = 720;
+#else
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
+#endif
 TestApp* g_TestApp = nullptr;
 
 bool g_FirstMouse = true;
@@ -113,7 +120,10 @@ int main(int argc, char** argv)
     FileHandler::Instance()->SetBasePath("../Android/app/src/main/assets/");
 
     g_TestApp = new TestApp();
-    g_TestApp->Init();
+    if (!g_TestApp->Init())
+    {
+        glfwSetWindowShouldClose(window, true);
+    }
     g_TestApp->Resize(WIDTH, HEIGHT);
 
     while (!glfwWindowShouldClose(window))
