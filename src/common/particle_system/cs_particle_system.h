@@ -29,8 +29,16 @@ public:
 
 	virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
 	Shader* GetRenderShader();
+
+	float EmitRate;
+
 private:
 	void ResetGenerateCounter();
+	void Sort();
+	void SortLocalBms(uint32_t n, uint32_t h);
+	void SortBigFlip(uint32_t n, uint32_t h);
+	void SortLocalDisperse(uint32_t n, uint32_t h);
+	void SortBigDisperse(uint32_t n, uint32_t h);
 
 	uint32_t mVao;
 
@@ -43,7 +51,7 @@ private:
 	uint32_t mNumMaxParticles;
 	uint32_t mNumParticles;
 
-	glm::vec3 mLocalWorkGroupSize;
+	glm::uvec3 mLocalWorkGroupSize;
 
 	glm::mat4 mProjection;
 	glm::mat4 mView;
@@ -59,7 +67,10 @@ private:
 	glm::vec3 mMaxStartVelocity;
 
 	Shader mComputeShader;
+	Shader mSortShader;
 	Shader mRenderShader;
 
 	std::vector<std::pair<std::string, std::string>> mRenderFsMap;
+
+	float mCurrentGenerateOffset;
 };

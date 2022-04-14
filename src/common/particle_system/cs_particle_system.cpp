@@ -1,4 +1,5 @@
 #include "cs_particle_system.h"
+#include "../gl/gl_util.h"
 
 #include <sstream>
 
@@ -19,6 +20,8 @@ glVertexAttribPointer(attribPtr, attribSize, GL_FLOAT, GL_FALSE, sizeof(type), (
 } \
 glUnmapBuffer(GL_SHADER_STORAGE_BUFFER)
 
+uint32_t atomicSize = sizeof(uint32_t) * 2;
+
 CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     : mVao(0)
     , mAtomicBuffer(0)
@@ -37,6 +40,7 @@ CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     , mMaxLifetime(0.0f)
     , mMinStartVelocity(0.0f)
     , mMaxStartVelocity(0.0f)
+    , mCurrentGenerateOffset(0.0f)
 {
 }
 
@@ -81,9 +85,10 @@ bool CsParticleSystem::Init()
 
     glGenBuffers(1, &mAtomicBuffer);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
-    glVertexAttribPointer(0, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, (atomicSize / sizeof(uint32_t)), GL_UNSIGNED_INT, GL_FALSE, atomicSize, 0);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, atomicSize, nullptr, GL_DYNAMIC_DRAW);
     ResetGenerateCounter();
+
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
     CREATE_BUFFER(mPosSsbo, mNumMaxParticles, glm::vec3, 1, 3);
@@ -115,17 +120,18 @@ bool CsParticleSystem::Init()
     INIT_BUFFER_END();
 
     std::stringstream ss;
-    ss << "local_size_x = " << mLocalWorkGroupSize.x << ", ";
-    ss << "local_size_y = " << mLocalWorkGroupSize.y << ", ";
-    ss << "local_size_z = " << mLocalWorkGroupSize.z;
+    ss << mLocalWorkGroupSize.x;
 
     std::vector<std::pair<std::string, std::string>> replaceParts;
-    replaceParts.emplace_back("LOCAL_WORK_GROUP_SIZE", ss.str());
+    replaceParts.emplace_back("LOCAL_SIZE_X", ss.str());
 
     bool success = true;
     success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
     success &= mComputeShader.AttachLoadedShaders();
     success &= mComputeShader.Link();
+    success &= mSortShader.LoadAndCompile("shader/cs_particle/sort.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
+    success &= mSortShader.AttachLoadedShaders();
+    success &= mSortShader.Link();
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.vs", Shader::SHADER_TYPE_VERTEX);
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.gs", Shader::SHADER_TYPE_GEOMETRY);
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
@@ -137,6 +143,7 @@ bool CsParticleSystem::Init()
 
 void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
 {
+
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
     ResetGenerateCounter();
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
@@ -147,25 +154,133 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
 
+    float timeForParticle = 1.0f / EmitRate;
+
+    mCurrentGenerateOffset += deltaTime;
+    uint32_t numToGenerate = 0;
+
+    // Todo: Could improve
+    while (mCurrentGenerateOffset >= timeForParticle)
+    {
+        numToGenerate++;
+        mCurrentGenerateOffset -= timeForParticle;
+    }
+
     mComputeShader.Use();
     mComputeShader.SetFloat("uDeltaTime", deltaTime);
-    mComputeShader.SetUInt("uNumToGenerate", 1);
+    mComputeShader.SetUInt("uNumToGenerate", numToGenerate);
+
+    GLint bufMask = GL_MAP_READ_BIT;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLifeSsbo);
+    auto* buffer = static_cast<glm::vec2*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec2), bufMask));
+    for (int i = 0; i < mNumMaxParticles; i++)
+    {
+        auto newBuf = *buffer;
+        //if (newBuf.x > 0.0f)
+        {
+            LOG("Before", " % d, % g, % g", i, newBuf.x, newBuf.y);
+        }
+        //LOG("CS", "%g, %g, %g", newBuf.x, newBuf.y, newBuf.z);
+        //LOG("CS", "%g, %g, %g, %g", newBuf.x, newBuf.y, newBuf.z, newBuf.a);
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
     glDispatchCompute(mNumMaxParticles / mLocalWorkGroupSize.x, 1, 1);
 
     glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
-    GLint bufMask = GL_MAP_READ_BIT;
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mColSsbo);
-    auto* buffer = static_cast<glm::vec4*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec4), bufMask));
-    for (int i = 0; i < 5; i++)
+    uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, atomicSize, GL_MAP_READ_BIT));
+    mNumParticles = atomicPtr[1];
+    LOG("Particles", "NUmGen: %d, Part: %d", atomicPtr[0], atomicPtr[1]);
+    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+
+    //Sort();
+
+    //GLint bufMask = GL_MAP_READ_BIT;
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLifeSsbo);
+    buffer = static_cast<glm::vec2*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec2), bufMask));
+    for (int i = 0; i < mNumMaxParticles; i++)
     {
-        glm::vec4 newBuf = *buffer;
-        //LOG("CS", "%g, %g", newBuf.x, newBuf.y);
+        auto newBuf = *buffer;
+        //if (newBuf.x > 0.0f)
+        {
+            LOG("After", "%d, %g, %g", i, newBuf.x, newBuf.y);
+        }
         //LOG("CS", "%g, %g, %g", newBuf.x, newBuf.y, newBuf.z);
         //LOG("CS", "%g, %g, %g, %g", newBuf.x, newBuf.y, newBuf.z, newBuf.a);
     }
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void CsParticleSystem::Sort()
+{
+    mSortShader.Use();
+    uint32_t h = mLocalWorkGroupSize.x * 2;
+
+    SortLocalBms(mNumMaxParticles, h);
+
+    // we must now double h, as this happens before every flip
+    h *= 2;
+
+    for (; h <= mNumMaxParticles; h *= 2) {
+
+        SortBigFlip(mNumMaxParticles, h);
+
+        for (uint32_t hh = h / 2; hh > 1; hh /= 2) {
+
+            if (hh <= mLocalWorkGroupSize.x * 2) {
+                SortLocalDisperse(mNumMaxParticles, hh);
+                break;
+            }
+            else {
+                SortBigDisperse(mNumMaxParticles, hh);
+            }
+        }
+    }
+}
+
+void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
+{
+    mSortShader.SetUInt("uAlgorithm", 0);
+    mSortShader.SetUInt("uN", n);
+    mSortShader.SetUInt("uH", h);
+
+    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void CsParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
+{
+    mSortShader.SetUInt("uAlgorithm", 1);
+    mSortShader.SetUInt("uN", n);
+    mSortShader.SetUInt("uH", h);
+
+    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void CsParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
+{
+    mSortShader.SetUInt("uAlgorithm", 2);
+    mSortShader.SetUInt("uN", n);
+    mSortShader.SetUInt("uH", h);
+
+    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void CsParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
+{
+    mSortShader.SetUInt("uAlgorithm", 3);
+    mSortShader.SetUInt("uN", n);
+    mSortShader.SetUInt("uH", h);
+
+    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void CsParticleSystem::PrepareRender(Camera* camera)
@@ -233,7 +348,8 @@ Shader* CsParticleSystem::GetRenderShader()
 
 void CsParticleSystem::ResetGenerateCounter()
 {
-    uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
+    uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, atomicSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
     atomicPtr[0] = 0;
+    atomicPtr[1] = 0;
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 }

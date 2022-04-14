@@ -2,9 +2,10 @@
 
 precision mediump float;
 
-layout(LOCAL_WORK_GROUP_SIZE) in;
+layout(local_size_x = LOCAL_SIZE_X) in;
 
 layout(binding = 0) uniform atomic_uint NumGenerated;
+layout(binding = 0) uniform atomic_uint MaxParticles;
 
 layout(std140, binding=1) buffer Position
 {
@@ -55,20 +56,20 @@ void InitParticle()
 void main()
 {
     uint gid = gl_GlobalInvocationID.x;
-    lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
 
-    Colors[gid].rg = vec2(uNumToGenerate, atomicCounter(NumGenerated));
-    Colors[gid].ba = vec2(0.0);
+    lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
 
     if(Lifetimes[gid].x <= 0.0)
     {
-        if(uNumToGenerate > atomicCounter(NumGenerated)
-            && uNumToGenerate > atomicCounterIncrement(NumGenerated))
+        if(atomicCounterIncrement(NumGenerated) < uNumToGenerate)
         {
+            atomicCounterIncrement(MaxParticles);
             InitParticle();
         }
         return;
     }
+
+    atomicCounterIncrement(MaxParticles);
 
     const vec3 cGravity = vec3(0.0, 0.0, 0.0);
 
@@ -78,8 +79,18 @@ void main()
     vec3 pp = p + v * uDeltaTime + 0.5 * uDeltaTime * uDeltaTime * cGravity;
     vec3 vp = v + cGravity * uDeltaTime;
 
-    Positions[gid].xyz = pp;
-    Velocities[gid].xyz = vp;
+    vec2 lt = Lifetimes[gid];
 
-    Lifetimes[gid].x -= uDeltaTime;
+    lt.x -= uDeltaTime;
+
+    Positions[gid] = pp;
+    Velocities[gid] = vp;
+
+    Lifetimes[gid] = lt;
+    // Colors[gid].r = atomicCounter(MaxParticles) / 1000000;
+    // Colors[gid].g = atomicCounter(NumGenerated) / 100000;
+    // // Colors[gid].gb = vec2(0.0f);
+    // Colors[gid].b = 0.0f;
+    // Colors[gid].a = 1.0f;
+    Colors[gid] = vec4(1.0f);
 }

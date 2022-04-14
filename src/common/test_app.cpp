@@ -17,11 +17,11 @@
 #include "particle_system/tf_module_color_over_lifetime.h"
 
 #ifdef _DEBUG
-	uint32_t numParticles = 128;
-	float numGenerate = 100;
+	uint32_t numParticles = 2;
+	float numGenerate = 1;
 #else
 	uint32_t numParticles = 1024 * 1024;
-	float numGenerate = 20000;
+	float numGenerate = 100000;
 #endif
 
 TestApp::TestApp()
@@ -111,13 +111,14 @@ bool TestApp::Init()
 	success &= mTfParticleSystem->Init();
 #endif
 #if CS
-	mCsParticleSystem = new CsParticleSystem(numParticles, 128);
+	mCsParticleSystem = new CsParticleSystem(numParticles, 1);
 
 	mCsParticleSystem->SetMinLifetime(5.0f);
 	mCsParticleSystem->SetMaxLifetime(7.0f);
 	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
 	mCsParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mCsParticleSystem->SetRenderFragReplaceMap(replaceMap);
+	mCsParticleSystem->EmitRate = numGenerate;
 	//mCsParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, numGenerate));
 	//mCsParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	//mCsParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
@@ -164,8 +165,11 @@ void TestApp::Step()
 #endif
 #if CS
 	mCsParticleSystem->UpdateParticles(deltaTime, mCamera.Position);
+	mCsParticleSystem->GetRenderShader()->Use();
+	mParticleTex.Use(mCsParticleSystem->GetRenderShader());
 	mCsParticleSystem->PrepareRender(&mCamera);
 	mCsParticleSystem->RenderParticles();
+	particles = mCsParticleSystem->GetCurrentParticles();
 	CHECK_GL_ERROR();
 #endif
 #if TF

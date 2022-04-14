@@ -65,4 +65,12 @@ private:
 
     std::vector<TfIModule*> mModules;
     std::vector<std::pair<std::string, std::string>> mRenderFsMap;
+
+    glm::vec3 mLocalWorkGroupSize;
+    Shader mSortShader;
+    void Sort();
+    void SortLocalBms(uint32_t n, uint32_t h);
+    void SortBigFlip(uint32_t n, uint32_t h);
+    void SortLocalDisperse(uint32_t n, uint32_t h);
+    void SortBigDisperse(uint32_t n, uint32_t h);
 };

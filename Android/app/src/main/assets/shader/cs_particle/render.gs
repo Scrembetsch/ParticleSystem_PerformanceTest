@@ -12,20 +12,24 @@ layout(points) in;
 layout(triangle_strip, max_vertices = 4) out;
 
 in float vLifetimePass[];
+in vec4 vColorPass[];
 
 out vec2 vTexCoord;
+out vec4 vColor;
 
 void main()
 {
-  if(vLifetimePass[0] < 0.0)
+  if(vLifetimePass[0] <= 0.0)
   {
     return;
   }
 
-  const float fSize = 0.2;
+  const float fSize = 0.5;
   vec3 vPosOld = gl_in[0].gl_Position.xyz;
   mat4 mVP = uProjection * uView;
       
+  vColor = vColorPass[0];
+
   vec3 vPos = vPosOld + (-uQuad1 - uQuad2) * fSize;
   vTexCoord = vec2(0.0, 0.0);
   gl_Position = mVP * vec4(vPos, 1.0);

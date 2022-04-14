@@ -2,12 +2,14 @@
 
 precision mediump float;
 
-// in vec2 vTexCoord;
+DECL_TEX0
+
+in vec2 vTexCoord;
+in vec4 vColor;
 out vec4 oColor;
 
 void main()
 {           
-  // vec4 vTexColor = texture2D(uSampler, vTexCoord);
-  // oColor = vTexColor;
-  oColor = vec4(1.0, 0.0, 0.0, 1.0);
+  vec4 vTexColor = texture(USE_TEX0, vTexCoord);
+  oColor = vTexColor * vColor;
 }
