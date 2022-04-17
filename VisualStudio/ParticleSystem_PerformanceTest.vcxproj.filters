@@ -58,6 +58,9 @@
     <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp">
       <Filter>common\particle_system\cs</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\tf_full_emit_particle_system.cpp">
+      <Filter>common\particle_system\tf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -193,6 +196,12 @@
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\cs_particle.h">
       <Filter>common\particle_system\cs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\defines.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\tf_full_emit_particle_system.h">
+      <Filter>common\particle_system\tf</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

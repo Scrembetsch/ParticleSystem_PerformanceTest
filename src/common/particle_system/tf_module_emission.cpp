@@ -6,11 +6,20 @@ static const std::string sMethodCall = { "EmissionModule();\n" };
 static const std::string sMethod = {
 "void EmissionModule()\n"
 "{\n"
-"  if (vTypeOut == 0.0)\n"
+"  if (vTypeOut != 0.0)\n"
 "  {\n"
 "    EmitVertex();\n"
 "    EndPrimitive();\n"
-"    for (int i = 0; i < uNumToGenerate && i < MAX_OUTPUT_VERTICES; i++)\n"
+"    float numToEmit = 0.0;\n"
+"    if(vTypeOut < uEmitParams.y)\n"
+"    {\n"
+"        numToEmit = uEmitParams.x;\n"
+"    }\n"
+"    else if(vTypeOut == uEmitParams.y)\n"
+"    {\n"
+"        numToEmit = uEmitParams.z;\n"
+"    }\n"
+"    for (float i = 0; i < numToEmit && i < MAX_OUTPUT_VERTICES; i++)\n"
 "    {\n"
 "      InitParticle();\n"
 "    }\n"
@@ -18,7 +27,7 @@ static const std::string sMethod = {
 "}\n"
 };
 
-static const char sUniforms[] = "uniform int uNumToGenerate;\n";
+static const char sUniforms[] = "uniform vec3 uEmitParams;\n";
 
 TfModuleEmission::TfModuleEmission(TfParticleSystem* particleSystem)
 	: TfModuleEmission(particleSystem, 0.0f)
@@ -75,5 +84,31 @@ void TfModuleEmission::ApplyUniforms(float deltaTime, Shader* shader)
 		mCurrentGenerateOffset -= timeForOneCpuParticle;
 	}
 
-	shader->SetInt("uNumToGenerate", numToGenerate);
+	glm::vec3 emitParams(0);
+	if (numToGenerate == 0)
+	{
+		// Just to jump over this case
+	}
+	else if (numToGenerate <= ParticleSystem->GetMaxVerticesPerEmitter())
+	{
+		emitParams.x = 0;
+		emitParams.y = 1;
+		emitParams.z = numToGenerate;
+	}
+	else
+	{
+		emitParams.x = ParticleSystem->GetMaxVerticesPerEmitter();
+		for (uint32_t i = 0; i < ParticleSystem->GetEmitters(); i++)
+		{
+			if (numToGenerate < ParticleSystem->GetMaxVerticesPerEmitter())
+			{
+				emitParams.y = (i + 1);
+				emitParams.z = numToGenerate;
+				break;
+			}
+			numToGenerate -= emitParams.x;
+		}
+	}
+
+	shader->SetVec3("uEmitParams", emitParams);
 }

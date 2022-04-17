@@ -9,7 +9,7 @@
 #define TX2 (1.0)
 #define TY2 (1.0)
 
-static float sBasePlaneVertexData[] =
+static const float sBasePlaneVertexData[] =
 {
 	// Coord			// Color				// Tex Coord
 	-0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
@@ -39,7 +39,7 @@ CpuSerialParticleSystem::~CpuSerialParticleSystem()
 	{
 		glDeleteBuffers(1, &mVbo);
 	}
-	for (uint32_t i = 0; i < mModules.size(); i++)
+	for (size_t i = 0; i < mModules.size(); i++)
 	{
 		delete mModules[i];
 	}
@@ -51,7 +51,7 @@ bool CpuSerialParticleSystem::Init()
 	glGenVertexArrays(1, &mVao);
 	glGenBuffers(1, &mVbo);
 
-	uint32_t offset = 0;
+	size_t offset = 0;
 	glBindVertexArray(mVao);
 	glBindBuffer(GL_ARRAY_BUFFER, mVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mParticleRenderData.size(), &mParticleRenderData[0], GL_DYNAMIC_DRAW);
@@ -147,8 +147,9 @@ void CpuSerialParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& 
 		mParticles[i].Position += mParticles[i].Velocity * deltaTime;
 	}
 
+#if SORT
 	SortParticles();
-
+#endif
 	// Write data to array
 	BuildParticleVertexData();
 }

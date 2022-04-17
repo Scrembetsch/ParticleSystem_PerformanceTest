@@ -12,7 +12,6 @@ CpuModuleVelOverLife::CpuModuleVelOverLife(CpuIParticleSystem* particleSystem, c
 	, VelocityBegin(velBegin)
 	, VelocityEnd(velEnd)
 {
-	SortId = 1;
 }
 
 void CpuModuleVelOverLife::PreRun(float deltaTime)

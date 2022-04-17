@@ -12,7 +12,6 @@ CpuModuleColorOverLife::CpuModuleColorOverLife(CpuIParticleSystem* particleSyste
 	, ColorBegin(colorBegin)
 	, ColorEnd(colorEnd)
 {
-	SortId = 1;
 }
 
 void CpuModuleColorOverLife::PreRun(float deltaTime)

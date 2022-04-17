@@ -3,16 +3,16 @@
 
 #include <sstream>
 
-#define CREATE_BUFFER(val, size, attribPtr) \
+#define CREATE_BUFFER(val, size, attribPtr, type) \
 glGenBuffers(1, &val);  \
 glBindBuffer(GL_SHADER_STORAGE_BUFFER, val); \
-glBufferData(GL_SHADER_STORAGE_BUFFER, size * sizeof(glm::vec4), NULL, GL_STATIC_DRAW); \
+glBufferData(GL_SHADER_STORAGE_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW); \
 glEnableVertexAttribArray(attribPtr); \
-glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), (void*)0) \
+glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0) \
 
-#define INIT_BUFFER_BEGIN(size) \
+#define INIT_BUFFER_BEGIN(size, type) \
 { \
-    glm::vec4* buffer = static_cast<glm::vec4*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(glm::vec4), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
+    type* buffer = static_cast<type*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(type), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
     for (uint32_t i = 0; i < mNumMaxParticles; i++) \
     {
 #define INIT_BUFFER_END() \
@@ -27,6 +27,7 @@ CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     , mVelSsbo(0)
     , mColSsbo(0)
     , mLifeSsbo(0)
+    , mIndexSsbo(0)
     , mNumMaxParticles(maxParticles)
     , mNumParticles(0)
     , mLocalWorkGroupSize(groupSize, 1, 1)
@@ -69,6 +70,11 @@ CsParticleSystem::~CsParticleSystem()
         glDeleteBuffers(1, &mLifeSsbo);
         mLifeSsbo = 0;
     }
+    if (mIndexSsbo != 0)
+    {
+        glDeleteBuffers(1, &mIndexSsbo);
+        mIndexSsbo = 0;
+    }
     if (mVao != 0)
     {
         glDeleteVertexArrays(1, &mVao);
@@ -88,26 +94,33 @@ bool CsParticleSystem::Init()
     ResetGenerateCounter();
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
-    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, 1);
-    INIT_BUFFER_BEGIN(mNumMaxParticles)
+    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, 1, glm::vec4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
         buffer[i] = glm::vec4(0.0f);
         buffer[i].w = 1.0f;
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, 2);
-    INIT_BUFFER_BEGIN(mNumMaxParticles)
+    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, 2, glm::vec4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
         buffer[i] = glm::vec4(0.0f);
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mColSsbo, mNumMaxParticles, 3);
-    INIT_BUFFER_BEGIN(mNumMaxParticles)
+    CREATE_BUFFER(mColSsbo, mNumMaxParticles, 3, glm::vec4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
         buffer[i] = glm::vec4(1.0f);
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles)
+    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4, glm::vec4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
         buffer[i] = glm::vec4(0.0f);
     INIT_BUFFER_END();
+
+#if SORT
+    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, glm::uvec4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::uvec4)
+        buffer[i] = glm::uvec4(0.0f);
+    INIT_BUFFER_END();
+#endif
 
     CHECK_GL_ERROR();
 
@@ -116,6 +129,18 @@ bool CsParticleSystem::Init()
     replaceParts.emplace_back("DISPATCH_SIZE", std::to_string(GetDispatchSize()));
     replaceParts.emplace_back("ATOMIC_OFFSET1", std::to_string(GetDispatchSize() * sizeof(uint32_t)));
 
+#if SORT
+    replaceParts.emplace_back("INDEX_BUFFER_DECL", "layout(std140, binding = 5) buffer Index{ uvec4 Indices[]; };\n");
+    replaceParts.emplace_back("INDEX_BUFFER_ID", "uint id = Indices[gl_VertexID].x;\n");
+    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "Indices[index].x = gid;\n");
+    replaceParts.emplace_back("SORTED_VERTICES_ID", "");
+#else
+    replaceParts.emplace_back("INDEX_BUFFER_DECL", "");
+    replaceParts.emplace_back("INDEX_BUFFER_ID", "");
+    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "");
+    replaceParts.emplace_back("SORTED_VERTICES_ID", "uint id = gl_VertexID;\n");
+#endif
+
     bool success = true;
     success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
     success &= mComputeShader.AttachLoadedShaders();
@@ -123,7 +148,7 @@ bool CsParticleSystem::Init()
     success &= mSortShader.LoadAndCompile("shader/cs_particle/sort.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
     success &= mSortShader.AttachLoadedShaders();
     success &= mSortShader.Link();
-    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.vs", Shader::SHADER_TYPE_VERTEX);
+    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.gs", Shader::SHADER_TYPE_GEOMETRY);
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
     success &= mRenderShader.AttachLoadedShaders();
@@ -146,6 +171,10 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mVelSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
+#if SORT
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, mIndexSsbo);
+#endif
+
     CHECK_GL_ERROR();
 
     float timeForParticle = 1.0f / EmitRate;
@@ -175,25 +204,48 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     ReadGeneratedParticles();
 
+#if SORT
     Sort();
+#endif
+
     CHECK_GL_ERROR();
+}
+
+void CsParticleSystem::PrepareRender(Camera* camera)
+{
+    mProjection = glm::perspective(glm::radians(camera->Zoom), camera->ViewWidth / camera->ViewHeight, 0.1f, 200.0f);
+    mView = camera->GetViewMatrix();
+
+    mQuad1 = glm::normalize(glm::cross(camera->Front, camera->Up));
+    mQuad2 = glm::normalize(glm::cross(camera->Front, mQuad1));
+}
+
+void CsParticleSystem::RenderParticles()
+{
+    glEnable(GL_BLEND);
+    glDepthMask(GL_FALSE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    mRenderShader.Use();
+    mRenderShader.SetMat4("uProjection", mProjection);
+    mRenderShader.SetMat4("uView", mView);
+    mRenderShader.SetVec3("uQuad1", mQuad1);
+    mRenderShader.SetVec3("uQuad2", mQuad2);
+
+    glBindVertexArray(mVao);
+    glDrawArrays(GL_POINTS, 0, mNumParticles);
+
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
 
 void CsParticleSystem::ReadGeneratedParticles()
 {
-    const uint32_t size = GetAtomicSize() / 2;
-    const uint32_t offset = GetAtomicSize() / 2;
-    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, offset * sizeof(uint32_t), size * sizeof(uint32_t), GL_MAP_READ_BIT));
+    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_READ_BIT));
 
-    uint32_t currentParticles = 0;
-    for (uint32_t i = 0; i < size; i++)
-    {
-        currentParticles += atomicPtr[i];
-    }
+    mNumParticles = atomicPtr[1];
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     CHECK_GL_ERROR();
-
-    mNumParticles = currentParticles;
 }
 
 void CsParticleSystem::Sort()
@@ -267,34 +319,6 @@ void CsParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void CsParticleSystem::PrepareRender(Camera* camera)
-{
-    mProjection = glm::perspective(glm::radians(camera->Zoom), camera->ViewWidth / camera->ViewHeight, 0.1f, 200.0f);
-    mView = camera->GetViewMatrix();
-
-    mQuad1 = glm::normalize(glm::cross(camera->Front, camera->Up));
-    mQuad2 = glm::normalize(glm::cross(camera->Front, mQuad1));
-}
-
-void CsParticleSystem::RenderParticles()
-{
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    mRenderShader.Use();
-    mRenderShader.SetMat4("uProjection", mProjection);
-    mRenderShader.SetMat4("uView", mView);
-    mRenderShader.SetVec3("uQuad1", mQuad1);
-    mRenderShader.SetVec3("uQuad2", mQuad2);
-
-    glBindVertexArray(mVao);
-    glDrawArrays(GL_POINTS, 0, mNumMaxParticles);
-
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-}
-
 uint32_t CsParticleSystem::GetCurrentParticles() const
 {
     return mNumParticles;
@@ -345,40 +369,10 @@ void CsParticleSystem::SetNumToGenerate(uint32_t numToGenerate)
         CHECK_GL_ERROR();
         return;
     }
-    uint32_t firstPossibleId = 0;
-    uint32_t groupsMaxParticles = 0;
 
-    // Find first index, where particles can be generated
-    for (uint32_t i = 0; i < GetDispatchSize(); i++)
-    {
-        groupsMaxParticles += mLocalWorkGroupSize.x;
-        if (mNumParticles > groupsMaxParticles)
-        {
-            continue;
-        }
-        firstPossibleId = i + 1;
-        break;
-    }
+    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
 
-    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, (GetDispatchSize()) * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
-
-    uint32_t numToGenerateForWorker = groupsMaxParticles - mNumParticles;
-    numToGenerateForWorker = std::min(numToGenerateForWorker, numToGenerate);
-
-    atomicPtr[firstPossibleId] = numToGenerateForWorker;
-    numToGenerate -= numToGenerateForWorker;
-
-    for (uint32_t i = firstPossibleId + 1; i < GetDispatchSize(); i++)
-    {
-        if (numToGenerate == 0)
-        {
-            break;
-        }
-
-        numToGenerateForWorker = std::min(mLocalWorkGroupSize.x, numToGenerate);
-        atomicPtr[i] = numToGenerateForWorker;
-        numToGenerate -= numToGenerateForWorker;
-    }
+    atomicPtr[0] = numToGenerate;
 
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -393,5 +387,5 @@ uint32_t CsParticleSystem::GetDispatchSize() const
 
 uint32_t CsParticleSystem::GetAtomicSize() const
 {
-    return GetDispatchSize() * 2;
+    return 1 * 2;
 }

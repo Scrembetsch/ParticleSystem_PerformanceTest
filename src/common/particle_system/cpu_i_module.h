@@ -9,15 +9,15 @@ class CpuIParticleSystem;
 class CpuIModule
 {
 public:
-	CpuIModule(CpuIParticleSystem* particleSystem)
+	explicit CpuIModule(CpuIParticleSystem* particleSystem)
 		: ParticleSystem(particleSystem)
 	{
 	}
+	virtual ~CpuIModule() = default;
 
 	virtual void PreRun(float deltaTime) = 0;
 	virtual void UpdateParticle(float deltaTime, Particle& particle) = 0;
 
 	bool Active = true;
 	CpuIParticleSystem* ParticleSystem;
-	int32_t SortId;
 };

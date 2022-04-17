@@ -10,6 +10,8 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
     , mCurrentReadBuffer(0)
     , mNumMaxParticles(maxParticles)
     , mNumParticles(0)
+    , mMaxVertices(0)
+    , mNumEmitters(0)
     , mProjection(0)
     , mView(0)
     , mQuad1(0)
@@ -25,7 +27,14 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
         mVbos[i] = 0;
         mVaos[i] = 0;
     }
-    glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES, &mMaxVertices);
+
+    int32_t maxVertices = 0;
+    int32_t maxComponents = 0;
+    glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES, &maxVertices);
+    glGetIntegerv(GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS, &maxComponents);
+
+    int32_t maxVerticesByComponentLimit = maxComponents / (sizeof(TfParticle) / sizeof(float));
+    mMaxVertices = std::min(maxVertices, maxVerticesByComponentLimit);
 }
 
 TfParticleSystem::~TfParticleSystem()
@@ -134,15 +143,20 @@ bool TfParticleSystem::Init()
     glGenBuffers(sBufferSize, mVbos);
     glGenVertexArrays(sBufferSize, mVaos);
 
-    TfParticle initParticle;
-    initParticle.Type = 0.0f;
+    mNumEmitters = static_cast<uint32_t>(std::ceil(static_cast<float>(mNumMaxParticles) / static_cast<float>(mMaxVertices)));
+
+    TfParticle* initParticles = new TfParticle[mNumEmitters];
+    for (uint32_t i = 0; i < mNumEmitters; i++)
+    {
+        initParticles[i].Type = (i + 1);
+    }
 
     for (uint32_t i = 0; i < sBufferSize; i++)
     {
         glBindVertexArray(mVaos[i]);
         glBindBuffer(GL_ARRAY_BUFFER, mVbos[i]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(TfParticle) * mNumMaxParticles, nullptr, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(TfParticle), &initParticle);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(TfParticle) * mNumEmitters, initParticles);
 
         for (uint32_t j = 0; j < varyingSize; j++)
         {
@@ -158,7 +172,9 @@ bool TfParticleSystem::Init()
     }
     glBindVertexArray(0);
     mCurrentReadBuffer = 0;
-    mNumParticles = 1;
+    mNumParticles = mNumEmitters;
+
+    //delete[] mNumEmitters;
 
     CHECK_GL_ERROR();
     return true;
@@ -216,7 +232,9 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
 
     CHECK_GL_ERROR();
 
+#if SORT
     Sort();
+#endif
 }
 
 void TfParticleSystem::Sort()
@@ -352,4 +370,14 @@ void TfParticleSystem::SetRenderFragReplaceMap(const std::vector<std::pair<std::
 Shader* TfParticleSystem::GetRenderShader()
 {
     return &mRenderShader;
+}
+
+int32_t TfParticleSystem::GetMaxVerticesPerEmitter() const
+{
+    return mMaxVertices;
+}
+
+uint32_t TfParticleSystem::GetEmitters() const
+{
+    return mNumEmitters;
 }

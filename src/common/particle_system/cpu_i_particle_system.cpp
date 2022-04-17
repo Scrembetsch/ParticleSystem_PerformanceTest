@@ -46,7 +46,7 @@ bool CpuIParticleSystem::AddModule(CpuIModule* psModule)
 	return true;
 }
 
-size_t CpuIParticleSystem::GetCurrentParticles() const
+uint32_t CpuIParticleSystem::GetCurrentParticles() const
 {
 	return mNumParticles;
 }

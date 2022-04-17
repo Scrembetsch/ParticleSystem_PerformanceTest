@@ -3,6 +3,7 @@
 #include "../gl/shader.h"
 #include "../gl/camera.h"
 #include "../util/random.h"
+#include "../defines.h"
 
 #include "tf_particle.h"
 #include "tf_i_module.h"
@@ -12,11 +13,11 @@ class TfParticleSystem
 private:
 public:
     TfParticleSystem(uint32_t maxParticles);
-    ~TfParticleSystem();
+    virtual ~TfParticleSystem();
 
-    bool Init();
+    virtual bool Init();
 
-    void UpdateParticles(float timeStep, const glm::vec3& cameraPos);
+    virtual void UpdateParticles(float timeStep, const glm::vec3& cameraPos);
     void PrepareRender(Camera* camera);
     void RenderParticles();
 
@@ -33,9 +34,11 @@ public:
     virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
     Shader* GetRenderShader();
 
-private:
+    int32_t GetMaxVerticesPerEmitter() const;
+    uint32_t GetEmitters() const;
+
+protected:
     static const uint32_t sBufferSize = 2U;
-    int32_t mMaxVertices;
 
     uint32_t mTransformFeedbackBuffer;
 
@@ -48,6 +51,9 @@ private:
 
     uint32_t mNumMaxParticles;
     uint32_t mNumParticles;
+
+    int32_t mMaxVertices;
+    uint32_t mNumEmitters;
 
     glm::mat4 mProjection;
     glm::mat4 mView;

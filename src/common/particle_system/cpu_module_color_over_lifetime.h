@@ -5,7 +5,7 @@
 class CpuModuleColorOverLife : public CpuIModule
 {
 public:
-	CpuModuleColorOverLife(CpuIParticleSystem* particleSystem);
+	explicit CpuModuleColorOverLife(CpuIParticleSystem* particleSystem);
 	CpuModuleColorOverLife(CpuIParticleSystem* particleSystem, const glm::vec4& colBegin, const glm::vec4& colEnd);
 
 	void PreRun(float deltaTime) override;

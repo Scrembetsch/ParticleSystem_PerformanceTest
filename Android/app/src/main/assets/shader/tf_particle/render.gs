@@ -19,7 +19,7 @@ out vec4 vColor;
 
 void main()
 {
-  if(vTypePass[0] == 0.0)
+  if(vTypePass[0] != 0.0)
   {
     return;
   }

@@ -29,6 +29,7 @@
     <ClCompile Include="..\src\common\particle_system\cpu_parallel_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cpu_serial_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp" />
+    <ClCompile Include="..\src\common\particle_system\tf_full_emit_particle_system.cpp" />
     <ClCompile Include="..\src\common\particle_system\tf_module_color_over_lifetime.cpp" />
     <ClCompile Include="..\src\common\particle_system\tf_module_emission.cpp" />
     <ClCompile Include="..\src\common\particle_system\tf_module_velocity_over_lifetime.cpp" />
@@ -40,6 +41,7 @@
     <ClCompile Include="..\src\windows\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\common\defines.h" />
     <ClInclude Include="..\src\common\device\file_handler.h" />
     <ClInclude Include="..\src\common\glm\glm.hpp" />
     <ClInclude Include="..\src\common\gl\camera.h" />
@@ -62,6 +64,7 @@
     <ClInclude Include="..\src\common\particle_system\cpu_serial_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\cs_particle.h" />
     <ClInclude Include="..\src\common\particle_system\cs_particle_system.h" />
+    <ClInclude Include="..\src\common\particle_system\tf_full_emit_particle_system.h" />
     <ClInclude Include="..\src\common\particle_system\tf_i_module.h" />
     <ClInclude Include="..\src\common\particle_system\tf_module_color_over_lifetime.h" />
     <ClInclude Include="..\src\common\particle_system\tf_module_emission.h" />

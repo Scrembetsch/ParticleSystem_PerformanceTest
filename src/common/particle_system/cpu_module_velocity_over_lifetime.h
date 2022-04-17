@@ -5,7 +5,7 @@
 class CpuModuleVelOverLife : public CpuIModule
 {
 public:
-	CpuModuleVelOverLife(CpuIParticleSystem* particleSystem);
+	explicit CpuModuleVelOverLife(CpuIParticleSystem* particleSystem);
 	CpuModuleVelOverLife(CpuIParticleSystem* particleSystem, const glm::vec3& velBegin, const glm::vec3& velEnd);
 
 	void PreRun(float deltaTime) override;

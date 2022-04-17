@@ -8,6 +8,8 @@
 #include "particle_system/cpu_parallel_particle_system.h"
 #include "particle_system/cpu_parallel_instance_particle_system.h"
 
+#include "particle_system/tf_full_emit_particle_system.h"
+
 #include "particle_system/cpu_module_emission.h"
 #include "particle_system/cpu_module_velocity_over_lifetime.h"
 #include "particle_system/cpu_module_color_over_lifetime.h"
@@ -16,30 +18,16 @@
 #include "particle_system/tf_module_velocity_over_lifetime.h"
 #include "particle_system/tf_module_color_over_lifetime.h"
 
-#ifdef _DEBUG
-	uint32_t numParticles = 1024 * 1024;
-	float numGenerate = 1;
-	uint32_t workGroupSize = 256;
-#else
-	uint32_t numParticles = 1024 * 1024;
-	float numGenerate = 100000;
-	uint32_t workGroupSize = 256;
-#endif
-
 TestApp::TestApp()
 	: mFrameCount(0)
 	, mFrameTime(0.0f)
 {
 }
 
-TestApp::~TestApp()
-{
-}
-
 void TestApp::Resize(uint32_t width, uint32_t height)
 {
-	mCamera.ViewWidth = width;
-	mCamera.ViewHeight = height;
+	mCamera.ViewWidth = static_cast<float>(width);
+	mCamera.ViewHeight = static_cast<float>(height);
 	glViewport(0, 0, width, height);
 }
 
@@ -74,9 +62,9 @@ bool TestApp::Init()
 			CpuSerialParticleSystem
 		#endif
 	#endif
-		(numParticles
+		(MAX_PARTICLES
 	#if PARALLEL
-			, std::thread::hardware_concurrency()
+			, NUM_CPU_THREADS
 	#endif
 			);
 	success &= mCpuParticleSystem->Init();
@@ -85,7 +73,7 @@ bool TestApp::Init()
 	mCpuParticleSystem->SetMaxLifetime(7.0f);
 	mCpuParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
 	mCpuParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
-	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, numGenerate));
+	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, sNumToGenerate));
 	mCpuParticleSystem->AddModule(new CpuModuleVelOverLife(mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mCpuParticleSystem->AddModule(new CpuModuleColorOverLife(mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 
@@ -100,27 +88,27 @@ bool TestApp::Init()
 	success &= mCpuShader.Link();
 #endif
 #if TF
-	mTfParticleSystem = new TfParticleSystem(numParticles);
+	mTfParticleSystem = new TfParticleSystem(MAX_PARTICLES);
 
 	mTfParticleSystem->SetMinLifetime(5.0f);
 	mTfParticleSystem->SetMaxLifetime(7.0f);
 	mTfParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
 	mTfParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mTfParticleSystem->SetRenderFragReplaceMap(replaceMap);
-	mTfParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, numGenerate));
+	mTfParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, NUM_TO_GENERATE));
 	mTfParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mTfParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 	success &= mTfParticleSystem->Init();
 #endif
 #if CS
-	mCsParticleSystem = new CsParticleSystem(numParticles, workGroupSize);
+	mCsParticleSystem = new CsParticleSystem(MAX_PARTICLES, WORK_GROUP_SIZE);
 
 	mCsParticleSystem->SetMinLifetime(5.0f);
 	mCsParticleSystem->SetMaxLifetime(7.0f);
 	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
 	mCsParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mCsParticleSystem->SetRenderFragReplaceMap(replaceMap);
-	mCsParticleSystem->EmitRate = numGenerate;
+	mCsParticleSystem->EmitRate = NUM_TO_GENERATE;
 	//mCsParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, numGenerate));
 	//mCsParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	//mCsParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));

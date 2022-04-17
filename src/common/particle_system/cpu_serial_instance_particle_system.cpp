@@ -9,7 +9,7 @@
 #define TX2 (1.0)
 #define TY2 (1.0)
 
-static float sBasePlaneVertexPositions[] =
+static const float sBasePlaneVertexPositions[] =
 {
 	// Coord			// Tex Coord
 	-0.5, -0.5,  0.0,	TX1, TY1,
@@ -44,7 +44,7 @@ CpuSerialInstanceParticleSystem::~CpuSerialInstanceParticleSystem()
 	{
 		glDeleteBuffers(1, &mVboParticleData);
 	}
-	for (uint32_t i = 0; i < mModules.size(); i++)
+	for (size_t i = 0; i < mModules.size(); i++)
 	{
 		delete mModules[i];
 	}
@@ -60,20 +60,19 @@ bool CpuSerialInstanceParticleSystem::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, mVboParticleData);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mParticleRenderData.size(), &mParticleRenderData[0], GL_STREAM_DRAW);
 
-	uint32_t offset = 0;
 	glBindVertexArray(mVao);
 	glBindBuffer(GL_ARRAY_BUFFER, mVboParticlePosition);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(sBasePlaneVertexPositions), sBasePlaneVertexPositions, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)offset);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3));
 
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, mVboParticleData);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)offset);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)0);
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)(offset += CpuInstanceRenderParticle::PositionRealSize));
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)(CpuInstanceRenderParticle::PositionRealSize));
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glVertexAttribDivisor(2, 1);
@@ -154,7 +153,9 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 		mParticles[i].Position += mParticles[i].Velocity * deltaTime;
 	}
 
+#if SORT
 	SortParticles();
+#endif
 
 	// Write data to array
 	BuildParticleVertexData();

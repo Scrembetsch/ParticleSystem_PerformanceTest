@@ -60,6 +60,9 @@ public:
         }
     }
 
+    Shader(const Shader& other) = delete;
+    Shader(Shader&& other) = delete;
+
     GLuint GetId() const
     {
         return mId;
@@ -384,8 +387,8 @@ private:
 
     void FindAndReplaceStrings(std::string& code, const std::vector<std::pair<std::string, std::string>>& replaceParts)
     {
-        uint32_t size = replaceParts.size();
-        for(uint32_t i = 0; i < size; i++)
+        size_t size = replaceParts.size();
+        for(size_t i = 0; i < size; i++)
         {
             ReplaceStringPart(code, replaceParts[i].first, replaceParts[i].second);
         }
@@ -394,7 +397,6 @@ private:
     GLint GetLocation(const std::string& name) const
     {
         GLint location = glGetUniformLocation(mId, name.c_str());
-        //assert(location != -1);
         return location;
     }
 };

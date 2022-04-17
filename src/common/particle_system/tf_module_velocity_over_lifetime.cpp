@@ -5,7 +5,7 @@
 static const char sMethodCall[] = "VelOverLifeModule();";
 static const char sMethod[] = "void VelOverLifeModule()\n"
 "{\n"
-"  if(vTypeOut != 0.0)\n"
+"  if(vTypeOut == 0.0)\n"
 "  {\n"
 "    float t = 1.0 - (vLifeTimeOut / vLifeTimeBeginOut);\n"
 "    vec3 vel = uVelocityBegin + t * (uVelocityEnd - uVelocityBegin);\n"

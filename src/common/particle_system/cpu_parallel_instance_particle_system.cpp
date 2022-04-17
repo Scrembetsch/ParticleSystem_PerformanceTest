@@ -13,7 +13,7 @@
 #define TX2 (1.0)
 #define TY2 (1.0)
 
-static float sBasePlaneVertexPositions[] =
+static const float sBasePlaneVertexPositions[] =
 {
 	// Coord			// Tex Coord
 	-0.5, -0.5,  0.0,	TX1, TY1,
@@ -38,7 +38,7 @@ void CpuParallelInstanceParticleSystem::Worker::StartUpdateParticles(size_t star
 	mEndIndex = endIndex;
 	mCameraPos = cameraPos;
 	mDeltaTime = deltaTime;
-	//LOGE("Thread", "Thread #%d working on: %d to %d", mThreadId, mStartIndex, mEndIndex);
+
 	mWorkerThread = std::thread([this]
 		{
 			UpdateParticles();
@@ -49,7 +49,7 @@ void CpuParallelInstanceParticleSystem::Worker::StartUpdateParticles(size_t star
 	if (dw == 0)
 	{
 		DWORD dwErr = GetLastError();
-		LOGE("ParticleWorker", "SetThreadAffinityMask failed, GLE=%llu)", dwErr);
+		LOGE("ParticleWorker", "SetThreadAffinityMask failed, GLE=%lu)", dwErr);
 	}
 #endif
 }
@@ -137,20 +137,19 @@ bool CpuParallelInstanceParticleSystem::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, mVboParticleData);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mParticleRenderData.size(), &mParticleRenderData[0], GL_STREAM_DRAW);
 
-	uint32_t offset = 0;
 	glBindVertexArray(mVao);
 	glBindBuffer(GL_ARRAY_BUFFER, mVboParticlePosition);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(sBasePlaneVertexPositions), sBasePlaneVertexPositions, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)offset);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3));
 
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, mVboParticleData);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)offset);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)0);
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)(offset += CpuInstanceRenderParticle::PositionRealSize));
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, CpuInstanceRenderParticle::ParticleRealSize, (void*)(CpuInstanceRenderParticle::PositionRealSize));
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glVertexAttribDivisor(2, 1);
@@ -209,12 +208,13 @@ void CpuParallelInstanceParticleSystem::UpdateParticles(float deltaTime, const g
 	}
 
 	// Update all particles
-	uint32_t particlesPerCore = mNumMaxParticles / mWorkers.size();
+	uint32_t workerSize = static_cast<uint32_t>(mWorkers.size());
+	uint32_t particlesPerCore = mNumMaxParticles / workerSize;
 	uint32_t assignedParticles = 0;
-	for (uint32_t i = 0; i < mWorkers.size(); i++)
+	for (uint32_t i = 0; i < workerSize; i++)
 	{
 		uint32_t particlesToAssign = particlesPerCore;
-		if (i == mWorkers.size() - 1
+		if (i == workerSize - 1
 			&& (assignedParticles + particlesToAssign) != mNumMaxParticles)
 		{
 			particlesToAssign = mNumMaxParticles - assignedParticles;
@@ -223,13 +223,15 @@ void CpuParallelInstanceParticleSystem::UpdateParticles(float deltaTime, const g
 		mWorkers[i].StartUpdateParticles(assignedParticles, assignedParticles + particlesToAssign, cameraPos, deltaTime);
 		assignedParticles += particlesToAssign;
 	}
-	for (uint32_t i = 0; i < mWorkers.size(); i++)
+	for (uint32_t i = 0; i < workerSize; i++)
 	{
 		mWorkers[i].Join();
 		mNumParticles -= mWorkers[i].GetRemovedParticles();
 	}
 
+#if SORT
 	SortParticles();
+#endif
 
 	// Write data to array
 	BuildParticleVertexData();

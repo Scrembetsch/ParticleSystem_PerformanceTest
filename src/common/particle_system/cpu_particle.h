@@ -28,15 +28,15 @@ struct CpuRenderParticle
     glm::vec4 Color;
     glm::vec2 TexCoord;
 
-    static const uint32_t PositionSize = sizeof(Position) / sizeof(float);
-    static const uint32_t PositionRealSize = sizeof(Position);
-    static const uint32_t ColorSize = sizeof(Color) / sizeof(float);
-    static const uint32_t ColorRealSize = sizeof(Color);
-    static const uint32_t TexCoordSize = sizeof(TexCoord) / sizeof(float);
-    static const uint32_t TexCoordRealSize = sizeof(TexCoord);
+    static const size_t PositionSize = sizeof(Position) / sizeof(float);
+    static const size_t PositionRealSize = sizeof(Position);
+    static const size_t ColorSize = sizeof(Color) / sizeof(float);
+    static const size_t ColorRealSize = sizeof(Color);
+    static const size_t TexCoordSize = sizeof(TexCoord) / sizeof(float);
+    static const size_t TexCoordRealSize = sizeof(TexCoord);
 
-    static const uint32_t ParticleSize = PositionSize + ColorSize + TexCoordSize;
-    static const uint32_t ParticleRealSize = PositionRealSize + ColorRealSize + TexCoordRealSize;
+    static const size_t ParticleSize = PositionSize + ColorSize + TexCoordSize;
+    static const size_t ParticleRealSize = PositionRealSize + ColorRealSize + TexCoordRealSize;
 };
 
 struct CpuInstanceRenderParticle
@@ -44,11 +44,11 @@ struct CpuInstanceRenderParticle
     glm::vec3 Position;
     glm::vec4 Color;
 
-    static const uint32_t PositionSize = sizeof(Position) / sizeof(float);
-    static const uint32_t PositionRealSize = sizeof(Position);
-    static const uint32_t ColorSize = sizeof(Color) / sizeof(float);
-    static const uint32_t ColorRealSize = sizeof(Color);
+    static const size_t PositionSize = sizeof(Position) / sizeof(float);
+    static const size_t PositionRealSize = sizeof(Position);
+    static const size_t ColorSize = sizeof(Color) / sizeof(float);
+    static const size_t ColorRealSize = sizeof(Color);
 
-    static const uint32_t ParticleSize = PositionSize + ColorSize;
-    static const uint32_t ParticleRealSize = PositionRealSize + ColorRealSize;
+    static const size_t ParticleSize = PositionSize + ColorSize;
+    static const size_t ParticleRealSize = PositionRealSize + ColorRealSize;
 };

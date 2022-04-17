@@ -4,12 +4,6 @@
 
 struct TfParticle
 {
-    enum Type
-    {
-        GENRATOR = 0,
-        PARTICLE = 1
-    };
-
     glm::vec3 Position = glm::vec3(0.0);
     glm::vec3 Velocity = glm::vec3(0.0);
     glm::vec4 Color = glm::vec4(1.0);

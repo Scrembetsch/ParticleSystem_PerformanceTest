@@ -4,8 +4,11 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
-layout(binding = 0) uniform atomic_uint NumToGenerate[DISPATCH_SIZE];
-layout(binding = 0, offset = ATOMIC_OFFSET1) uniform atomic_uint NumAlive[DISPATCH_SIZE];
+layout(binding = 0) uniform atomic_uint NumToGenerate;
+layout(binding = 0) uniform atomic_uint NumAlive;
+
+// layout(binding = 0) uniform atomic_uint NumToGenerate[DISPATCH_SIZE];
+// layout(binding = 0, offset = ATOMIC_OFFSET1) uniform atomic_uint NumAlive[DISPATCH_SIZE];
 
 // Buffer always uses vec4
 layout(std140, binding=1) buffer Position
@@ -27,6 +30,8 @@ layout(std140, binding=4) buffer Lifetime
 {
     vec4 Lifetimes[];
 };
+
+INDEX_BUFFER_DECL
 
 uniform float uDeltaTime;
 
@@ -54,22 +59,22 @@ void InitParticle(uint id)
 void main()
 {
     uint gid = gl_GlobalInvocationID.x;
-    uint lid = gl_LocalInvocationID.x;
-    uint groupid = gl_WorkGroupID.x;
 
     lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
 
     if(Lifetimes[gid].x <= 0.0)
     {
-        if(atomicCounterDecrement(NumToGenerate[groupid]) < (-1U / 2U))
+        if(atomicCounterDecrement(NumToGenerate) < (-1U / 2U))
         {
-            atomicCounterIncrement(NumAlive[groupid]);
             InitParticle(gid);
         }
-        return;
+        else
+        {
+            return;
+        }
     }
-    atomicCounterIncrement(NumAlive[groupid]);
-
+    uint index = atomicCounterIncrement(NumAlive);
+    INDEX_BUFFER_SET_ID
     const vec3 cGravity = vec3(0.0, 0.0, 0.0);
 
     vec3 p = Positions[gid].xyz;

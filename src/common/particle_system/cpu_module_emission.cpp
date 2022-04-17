@@ -12,7 +12,6 @@ CpuModuleEmission::CpuModuleEmission(CpuIParticleSystem* particleSystem, float e
 	, EmitRate(emitRate)
 	, mCurrentGenerateOffset(0.0f)
 {
-	SortId = 0;
 }
 
 void CpuModuleEmission::PreRun(float deltaTime)

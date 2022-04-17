@@ -1,7 +1,7 @@
 #pragma once
-
 #include "cpu_i_module.h"
 
+#include "../defines.h"
 #include "../util/random.h"
 
 #include <thread>
@@ -16,7 +16,7 @@ protected:
     static const uint32_t mNumVertices = 6;
 
 public:
-    CpuIParticleSystem(uint32_t maxParticles);
+    explicit CpuIParticleSystem(uint32_t maxParticles);
     virtual ~CpuIParticleSystem();
 
     virtual bool Init() = 0;
@@ -28,7 +28,7 @@ public:
 
     virtual bool AddModule(CpuIModule* psModule);
 
-    virtual size_t GetCurrentParticles() const;
+    virtual uint32_t GetCurrentParticles() const;
 
     virtual void SetMinLifetime(float minLifetime);
     virtual void SetMaxLifetime(float maxLifetime);
@@ -42,8 +42,8 @@ protected:
 
     virtual void SortParticles();
 
-    size_t mNumMaxParticles;
-    size_t mNumParticles;
+    uint32_t mNumMaxParticles;
+    uint32_t mNumParticles;
 
     Random mRandom;
 

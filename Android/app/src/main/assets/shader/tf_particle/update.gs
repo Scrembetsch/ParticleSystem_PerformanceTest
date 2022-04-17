@@ -14,7 +14,6 @@ in vec4 vColorPass[];
 in float vLifeTimePass[];
 in float vLifeTimeBeginPass[];
 in float vTypePass[];
-in uint vIdPass[];
 
 // All that we send further
 out vec3 vPositionOut;
@@ -56,7 +55,7 @@ void InitParticle()
   vLifeTimeOut = uLifeTimeMin + uLifeTimeRange * randZeroOne();
   vLifeTimeBeginOut = vLifeTimeOut;
   vColorOut = vec4(1.0);
-  vTypeOut = 1.0;
+  vTypeOut = 0.0;
 
   EmitVertex();
   EndPrimitive();
@@ -75,7 +74,7 @@ void main()
   vColorOut = vColorPass[0];
   vLifeTimeOut = vLifeTimePass[0] - uTimeStep;
 
-  if(vTypeOut != 0.0
+  if(vTypeOut == 0.0
     && vLifeTimeOut <= 0.0)
   {
     return;
@@ -83,7 +82,7 @@ void main()
 
   MODULE_CALLS
 
-  if(vTypePass[0] == 0.0)
+  if(vTypePass[0] != 0.0)
   {
     return;
   }

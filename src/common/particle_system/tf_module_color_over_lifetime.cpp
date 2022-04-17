@@ -5,7 +5,7 @@
 static const char sMethodCall[] = "ColorOverLifeModule();";
 static const char sMethod[] = "void ColorOverLifeModule()\n"
 "{\n"
-"  if(vTypeOut != 0.0)\n"
+"  if(vTypeOut == 0.0)\n"
 "  {\n"
 "    float t = 1.0 - (vLifeTimeOut / vLifeTimeBeginOut);\n"
 "    vec4 color = uColorBegin + t * (uColorEnd - uColorBegin);\n"

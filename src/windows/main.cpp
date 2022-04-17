@@ -23,8 +23,10 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
     g_TestApp->Resize(width, height);
 }
 
-void MouseCallback(GLFWwindow* window, double xpos, double ypos)
+void MouseCallback(GLFWwindow* window, double mouseXPos, double mouseYPospos)
 {
+    float xpos = static_cast<float>(mouseXPos);
+    float ypos = static_cast<float>(mouseYPospos);
     if (g_FirstMouse)
     {
         g_LastX = xpos;
@@ -59,10 +61,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void MouseClickCallback(GLFWwindow* window, int button, int action, int mods)
 {
+    // Currently Unused
 }
 
 void ProcessInput(GLFWwindow* window)
 {
+    // Currently Unused
 }
 
 

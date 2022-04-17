@@ -13,7 +13,7 @@
 #define TX2 (1.0)
 #define TY2 (1.0)
 
-static float sBasePlaneVertexData[] =
+static const float sBasePlaneVertexData[] =
 {
 	// Coord			// Color				// Tex Coord
 	-0.5, -0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX1, TY1,
@@ -38,7 +38,7 @@ void CpuParallelParticleSystem::Worker::StartUpdateParticles(size_t startIndex, 
 	mEndIndex = endIndex;
 	mCameraPos = cameraPos;
 	mDeltaTime = deltaTime;
-	//LOGE("Thread", "Thread #%d working on: %d to %d", mThreadId, mStartIndex, mEndIndex);
+
 	mWorkerThread = std::thread( [this]
 		{
 			UpdateParticles();
@@ -49,7 +49,7 @@ void CpuParallelParticleSystem::Worker::StartUpdateParticles(size_t startIndex, 
 	if (dw == 0)
 	{
 		DWORD dwErr = GetLastError();
-		LOGE("ParticleWorker", "SetThreadAffinityMask failed, GLE=%llu)", dwErr);
+		LOGE("ParticleWorker", "SetThreadAffinityMask failed, GLE=%ll)", dwErr);
 	}
 #endif
 }
@@ -124,7 +124,7 @@ bool CpuParallelParticleSystem::Init()
 	glGenVertexArrays(1, &mVao);
 	glGenBuffers(1, &mVbo);
 
-	uint32_t offset = 0;
+	size_t offset = 0;
 	glBindVertexArray(mVao);
 	glBindBuffer(GL_ARRAY_BUFFER, mVbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mParticleRenderData.size(), &mParticleRenderData[0], GL_DYNAMIC_DRAW);
@@ -219,8 +219,9 @@ void CpuParallelParticleSystem::UpdateParticles(float deltaTime, const glm::vec3
 		mNumParticles -= mWorkers[i].GetRemovedParticles();
 	}
 
+#if SORT
 	SortParticles();
-
+#endif
 	// Write data to array
 	BuildParticleVertexData();
 }

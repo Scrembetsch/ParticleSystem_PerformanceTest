@@ -4,6 +4,7 @@
 #include "../gl/shader.h"
 #include "../gl/camera.h"
 #include "../util/random.h"
+#include "../defines.h"
 
 #include <cstdint>
 
@@ -19,15 +20,15 @@ public:
 	void PrepareRender(Camera* camera);
 	void RenderParticles();
 
-	virtual uint32_t GetCurrentParticles() const;
+	uint32_t GetCurrentParticles() const;
 
-	virtual void SetMinLifetime(float minLifetime);
-	virtual void SetMaxLifetime(float maxLifetime);
+	void SetMinLifetime(float minLifetime);
+	void SetMaxLifetime(float maxLifetime);
 
-	virtual void SetMinStartVelocity(const glm::vec3& minVelocity);
-	virtual void SetMaxStartVelocity(const glm::vec3& maxVelocity);
+	void SetMinStartVelocity(const glm::vec3& minVelocity);
+	void SetMaxStartVelocity(const glm::vec3& maxVelocity);
 
-	virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
+	void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
 	Shader* GetRenderShader();
 
 	float EmitRate;
@@ -53,6 +54,7 @@ private:
 	uint32_t mVelSsbo;
 	uint32_t mColSsbo;
 	uint32_t mLifeSsbo;
+	uint32_t mIndexSsbo;
 
 	uint32_t mNumMaxParticles;
 	uint32_t mNumParticles;
