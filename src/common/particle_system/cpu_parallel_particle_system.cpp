@@ -144,6 +144,8 @@ bool CpuParallelParticleSystem::Init()
 
 void CpuParallelParticleSystem::BuildParticleVertexData()
 {
+	OPTICK_EVENT();
+
 	const uint32_t verticesPerParticle = mNumVertices;	// Currently no triangle strip
 
 	size_t particlesToDraw = 0;
@@ -192,6 +194,8 @@ void CpuParallelParticleSystem::BuildParticleVertexData()
 
 void CpuParallelParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
 {
+	OPTICK_EVENT();
+
 	//Emit particles
 	for (uint32_t j = 0; j < mModules.size(); j++)
 	{
@@ -228,6 +232,8 @@ void CpuParallelParticleSystem::UpdateParticles(float deltaTime, const glm::vec3
 
 void CpuParallelParticleSystem::RenderParticles()
 {
+	OPTICK_EVENT();
+
 	if (mNumParticles > 0)
 	{
 		glEnable(GL_BLEND);

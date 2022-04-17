@@ -7,9 +7,6 @@ layout(local_size_x = LOCAL_SIZE_X) in;
 layout(binding = 0) uniform atomic_uint NumToGenerate;
 layout(binding = 0) uniform atomic_uint NumAlive;
 
-// layout(binding = 0) uniform atomic_uint NumToGenerate[DISPATCH_SIZE];
-// layout(binding = 0, offset = ATOMIC_OFFSET1) uniform atomic_uint NumAlive[DISPATCH_SIZE];
-
 // Buffer always uses vec4
 layout(std140, binding=1) buffer Position
 {
@@ -34,8 +31,12 @@ layout(std140, binding=4) buffer Lifetime
 INDEX_BUFFER_DECL
 
 uniform float uDeltaTime;
+uniform vec3 uEmitData;
 
 vec3 lLocalSeed;
+
+shared uint SharedNumToGenerate;
+shared uint SharedNumAlive;
 
 float randZeroOne()
 {
@@ -58,9 +59,20 @@ void InitParticle(uint id)
 
 void main()
 {
-    uint gid = gl_GlobalInvocationID.x;
+    if(gl_LocalInvocationID.x == 0U)
+    {
+        atomicMin(SharedNumAlive, 0);
+    }
+    barrier();
 
+    uint gid = gl_GlobalInvocationID.x;
+    uint localSize = LOCAL_SIZE_X;
+    // uint gid = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID;
+    // uint gid = gl_LocalInvocationID * LOCAL_SIZE_X;
+    // uint gid = gl_LocalInvocationID.x * gl_WorkGroupSize.x + gl_WorkGroupID.x;
     lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
+
+    atomicAdd(SharedNumAlive, uint(Lifetimes[gid].x > 0.0));
 
     if(Lifetimes[gid].x <= 0.0)
     {
@@ -68,13 +80,11 @@ void main()
         {
             InitParticle(gid);
         }
-        else
-        {
-            return;
-        }
     }
-    uint index = atomicCounterIncrement(NumAlive);
+
+    // uint index = atomicCounterIncrement(NumAlive);
     INDEX_BUFFER_SET_ID
+
     const vec3 cGravity = vec3(0.0, 0.0, 0.0);
 
     vec3 p = Positions[gid].xyz;
@@ -98,4 +108,10 @@ void main()
     // Colors[gid].b = 0.0f;
     // Colors[gid].a = 1.0f;
     Colors[gid] = vec4(1.0);
+
+    barrier();
+    if(gl_LocalInvocationID.x == 0U)
+    {
+        atomicCounterAdd(NumAlive, SharedNumAlive);
+    }
 }

@@ -53,6 +53,7 @@ uint32_t CpuIParticleSystem::GetCurrentParticles() const
 
 void CpuIParticleSystem::SortParticles()
 {
+	OPTICK_EVENT();
 	std::sort(mParticles.begin(), mParticles.end());
 }
 

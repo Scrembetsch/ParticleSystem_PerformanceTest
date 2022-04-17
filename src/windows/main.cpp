@@ -120,8 +120,14 @@ int main(int argc, char** argv)
     {
         return -1;
     }
-
-    FileHandler::Instance()->SetBasePath("../Android/app/src/main/assets/");
+    if (argc > 1)
+    {
+        FileHandler::Instance()->SetBasePath("../Android/app/src/main/assets/");
+    }
+    else
+    {
+        FileHandler::Instance()->SetBasePath("../../../Android/app/src/main/assets/");
+    }
 
     g_TestApp = new TestApp();
     if (!g_TestApp->Init())

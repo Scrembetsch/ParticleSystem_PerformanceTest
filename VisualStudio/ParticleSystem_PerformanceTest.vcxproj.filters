@@ -58,8 +58,32 @@
     <ClCompile Include="..\src\common\particle_system\cs_particle_system.cpp">
       <Filter>common\particle_system\cs</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\common\particle_system\tf_full_emit_particle_system.cpp">
-      <Filter>common\particle_system\tf</Filter>
+    <ClCompile Include="..\src\common\optick\optick_capi.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_core.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_gpu.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_gpu.d3d12.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_gpu.vulkan.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_message.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_miniz.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_serialization.cpp">
+      <Filter>common\optick</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\optick\optick_server.cpp">
+      <Filter>common\optick</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -104,6 +128,9 @@
     </Filter>
     <Filter Include="common\particle_system\cs">
       <UniqueIdentifier>{4cbb83cf-56c2-4cf0-b2ed-40eb593cb32e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\optick">
+      <UniqueIdentifier>{7984c915-5e8f-43a0-9e43-45ac3b4ee39f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -200,8 +227,53 @@
     <ClInclude Include="..\src\common\defines.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\common\particle_system\tf_full_emit_particle_system.h">
-      <Filter>common\particle_system\tf</Filter>
+    <ClInclude Include="..\src\common\optick\optick.config.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_capi.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_common.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_core.freebsd.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_core.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_core.linux.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_core.macos.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_core.platform.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_core.win.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_gpu.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_memory.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_message.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_miniz.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_serialization.h">
+      <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\optick\optick_server.h">
+      <Filter>common\optick</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

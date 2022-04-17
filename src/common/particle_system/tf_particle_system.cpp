@@ -188,6 +188,8 @@ bool TfParticleSystem::AddModule(TfIModule* psModule)
 
 void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPos)
 {
+    OPTICK_EVENT();
+
     mUpdateShader.Use();
 
     mUpdateShader.SetVec3("uPosition", glm::vec3(0.0f));
@@ -239,6 +241,8 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
 
 void TfParticleSystem::Sort()
 {
+    OPTICK_EVENT();
+
     mSortShader.Use();
     uint32_t h = mLocalWorkGroupSize.x * 2;
 
@@ -319,6 +323,8 @@ void TfParticleSystem::PrepareRender(Camera* camera)
 
 void TfParticleSystem::RenderParticles()
 {
+    OPTICK_EVENT();
+
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

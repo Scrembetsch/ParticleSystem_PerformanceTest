@@ -33,6 +33,14 @@ void TestApp::Resize(uint32_t width, uint32_t height)
 
 bool TestApp::Init()
 {
+	OPTICK_SET_MEMORY_ALLOCATOR(
+		[](size_t size) -> void* { return operator new(size); },
+		[](void* p) { operator delete(p); },
+		[]() { /* Do some TLS initialization here if needed */ }
+	);
+
+	OPTICK_THREAD("MainThread");
+
 	mParticleTex.mTex = GlUtil::LoadTexture("textures/particle.png");
 	mParticleTex.mTexLocation = GL_TEXTURE0;
 	mParticleTex.mTexName = "uDiffuseMap";
@@ -131,6 +139,7 @@ bool TestApp::Init()
 
 void TestApp::Step()
 {
+	OPTICK_FRAME("Frame");
 	auto now = std::chrono::system_clock::now();
 	std::chrono::duration<float> elapsedSeconds = now - mLastFrameTime;
 	float deltaTime = elapsedSeconds.count();

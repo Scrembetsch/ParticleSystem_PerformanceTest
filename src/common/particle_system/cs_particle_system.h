@@ -47,6 +47,8 @@ private:
 	void SetNumToGenerate(uint32_t numToGenerate);
 	void ReadGeneratedParticles();
 
+	uint32_t NextPowerOfTwo(uint32_t input) const;
+
 	uint32_t mVao;
 
 	uint32_t mAtomicBuffer;

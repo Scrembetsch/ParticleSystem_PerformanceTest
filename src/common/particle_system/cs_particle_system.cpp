@@ -127,18 +127,17 @@ bool CsParticleSystem::Init()
     std::vector<std::pair<std::string, std::string>> replaceParts;
     replaceParts.emplace_back("LOCAL_SIZE_X", std::to_string(mLocalWorkGroupSize.x));
     replaceParts.emplace_back("DISPATCH_SIZE", std::to_string(GetDispatchSize()));
-    replaceParts.emplace_back("ATOMIC_OFFSET1", std::to_string(GetDispatchSize() * sizeof(uint32_t)));
 
 #if SORT
-    replaceParts.emplace_back("INDEX_BUFFER_DECL", "layout(std140, binding = 5) buffer Index{ uvec4 Indices[]; };\n");
-    replaceParts.emplace_back("INDEX_BUFFER_ID", "uint id = Indices[gl_VertexID].x;\n");
-    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "Indices[index].x = gid;\n");
-    replaceParts.emplace_back("SORTED_VERTICES_ID", "");
-#else
     replaceParts.emplace_back("INDEX_BUFFER_DECL", "");
     replaceParts.emplace_back("INDEX_BUFFER_ID", "");
     replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "");
     replaceParts.emplace_back("SORTED_VERTICES_ID", "uint id = gl_VertexID;\n");
+#else
+    replaceParts.emplace_back("INDEX_BUFFER_DECL", "layout(std140, binding = 5) buffer Index{ uvec4 Indices[]; };\n");
+    replaceParts.emplace_back("INDEX_BUFFER_ID", "uint id = Indices[gl_VertexID].x;\n");
+    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "Indices[index].x = gid;\n");
+    replaceParts.emplace_back("SORTED_VERTICES_ID", "");
 #endif
 
     bool success = true;
@@ -177,6 +176,8 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     CHECK_GL_ERROR();
 
+    OPTICK_EVENT("Update Num To Generate");
+
     float timeForParticle = 1.0f / EmitRate;
 
     mCurrentGenerateOffset += deltaTime;
@@ -190,17 +191,20 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     }
 
     CHECK_GL_ERROR();
+    OPTICK_EVENT("Use and set shader");
 
     mComputeShader.Use();
     mComputeShader.SetFloat("uDeltaTime", deltaTime);
     SetNumToGenerate(numToGenerate);
 
     CHECK_GL_ERROR();
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    OPTICK_EVENT("Compute Dispatch");
+#if SORT
+    glDispatchCompute((NextPowerOfTwo(mNumParticles + numToGenerate) / mLocalWorkGroupSize.x), 1, 1);
+#else
     glDispatchCompute(GetDispatchSize(), 1, 1);
+#endif
     CHECK_GL_ERROR();
-
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     ReadGeneratedParticles();
 
@@ -222,6 +226,8 @@ void CsParticleSystem::PrepareRender(Camera* camera)
 
 void CsParticleSystem::RenderParticles()
 {
+    OPTICK_EVENT();
+
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -241,35 +247,41 @@ void CsParticleSystem::RenderParticles()
 
 void CsParticleSystem::ReadGeneratedParticles()
 {
-    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_READ_BIT));
+    OPTICK_EVENT("Read data");
 
-    mNumParticles = atomicPtr[1];
+    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, sizeof(uint32_t), sizeof(uint32_t), GL_MAP_READ_BIT));
+
+    mNumParticles = atomicPtr[0];
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
     CHECK_GL_ERROR();
 }
 
 void CsParticleSystem::Sort()
 {
+    OPTICK_EVENT();
+
     mSortShader.Use();
     uint32_t h = mLocalWorkGroupSize.x * 2;
 
-    SortLocalBms(mNumMaxParticles, h);
+    uint32_t particlesToSort = NextPowerOfTwo(mNumParticles);
+
+    SortLocalBms(particlesToSort, h);
 
     // we must now double h, as this happens before every flip
     h *= 2;
 
-    for (; h <= mNumMaxParticles; h *= 2) {
+    for (; h <= particlesToSort; h *= 2) {
 
-        SortBigFlip(mNumMaxParticles, h);
+        SortBigFlip(particlesToSort, h);
 
         for (uint32_t hh = h / 2; hh > 1; hh /= 2) {
 
             if (hh <= mLocalWorkGroupSize.x * 2) {
-                SortLocalDisperse(mNumMaxParticles, hh);
+                SortLocalDisperse(particlesToSort, hh);
                 break;
             }
             else {
-                SortBigDisperse(mNumMaxParticles, hh);
+                SortBigDisperse(particlesToSort, hh);
             }
         }
     }
@@ -281,7 +293,7 @@ void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
@@ -292,7 +304,7 @@ void CsParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
@@ -303,7 +315,7 @@ void CsParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
@@ -314,7 +326,7 @@ void CsParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
@@ -356,6 +368,8 @@ Shader* CsParticleSystem::GetRenderShader()
 
 void CsParticleSystem::ResetGenerateCounter()
 {
+    OPTICK_EVENT("Reset Counter");
+
     uint32_t atomicSize = GetAtomicSize();
     auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
     memset(atomicPtr, 0U, GetAtomicSize() * sizeof(uint32_t));
@@ -364,6 +378,8 @@ void CsParticleSystem::ResetGenerateCounter()
 
 void CsParticleSystem::SetNumToGenerate(uint32_t numToGenerate)
 {
+    OPTICK_EVENT();
+
     if (numToGenerate == 0)
     {
         CHECK_GL_ERROR();
@@ -375,7 +391,6 @@ void CsParticleSystem::SetNumToGenerate(uint32_t numToGenerate)
     atomicPtr[0] = numToGenerate;
 
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     CHECK_GL_ERROR();
 }
@@ -383,6 +398,18 @@ void CsParticleSystem::SetNumToGenerate(uint32_t numToGenerate)
 uint32_t CsParticleSystem::GetDispatchSize() const
 {
     return mNumMaxParticles / mLocalWorkGroupSize.x;
+}
+
+uint32_t CsParticleSystem::NextPowerOfTwo(uint32_t input) const
+{
+    input--;
+    input |= input >> 1;
+    input |= input >> 2;
+    input |= input >> 4;
+    input |= input >> 8;
+    input |= input >> 16;
+    input++;
+    return input;
 }
 
 uint32_t CsParticleSystem::GetAtomicSize() const

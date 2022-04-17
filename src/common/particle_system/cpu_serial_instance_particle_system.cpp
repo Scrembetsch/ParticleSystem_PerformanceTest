@@ -87,6 +87,8 @@ bool CpuSerialInstanceParticleSystem::Init()
 
 void CpuSerialInstanceParticleSystem::BuildParticleVertexData()
 {
+	OPTICK_EVENT();
+
 	size_t particlesToDraw = 0;
 
 	for (size_t i = 0; i < mNumMaxParticles; i++)
@@ -125,6 +127,8 @@ void CpuSerialInstanceParticleSystem::BuildParticleVertexData()
 
 void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
 {
+	OPTICK_EVENT();
+
 	//Emit particles
 	for (uint32_t j = 0; j < mModules.size(); j++)
 	{
@@ -163,6 +167,8 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 
 void CpuSerialInstanceParticleSystem::RenderParticles()
 {
+	OPTICK_EVENT();
+
 	if (mNumParticles > 0)
 	{
 		glEnable(GL_BLEND);

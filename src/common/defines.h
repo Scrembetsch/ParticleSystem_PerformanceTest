@@ -1,6 +1,7 @@
 #pragma once
 
 #include <thread>
+#include "optick/optick.h"
 
 #define CPU 0
 #define CS  1
