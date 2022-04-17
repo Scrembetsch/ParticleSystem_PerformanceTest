@@ -10,7 +10,7 @@ static const std::string sMethod = {
 "  {\n"
 "    EmitVertex();\n"
 "    EndPrimitive();\n"
-"    for (int i = 0; i < uNumToGenerate && i < 100; i++)\n"
+"    for (int i = 0; i < uNumToGenerate && i < MAX_OUTPUT_VERTICES; i++)\n"
 "    {\n"
 "      InitParticle();\n"
 "    }\n"

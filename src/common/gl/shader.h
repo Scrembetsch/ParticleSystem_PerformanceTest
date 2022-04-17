@@ -208,6 +208,15 @@ public:
         glUniform2f(GetLocation(name), x, y);
     }
     // ------------------------------------------------------------------------
+    void SetUVec3(const std::string& name, const glm::uvec3& value) const
+    {
+        glUniform3uiv(GetLocation(name), 1, &value[0]);
+    }
+    void SetUVec3(const std::string& name, uint32_t x, uint32_t y, uint32_t z) const
+    {
+        glUniform3ui(GetLocation(name), x, y, z);
+    }
+    // ------------------------------------------------------------------------
     void SetVec3(const std::string& name, const glm::vec3& value) const
     {
         glUniform3fv(GetLocation(name), 1, &value[0]);

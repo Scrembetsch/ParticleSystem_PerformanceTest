@@ -40,6 +40,12 @@ private:
 	void SortLocalDisperse(uint32_t n, uint32_t h);
 	void SortBigDisperse(uint32_t n, uint32_t h);
 
+	uint32_t GetDispatchSize() const;
+	uint32_t GetAtomicSize() const;
+
+	void SetNumToGenerate(uint32_t numToGenerate);
+	void ReadGeneratedParticles();
+
 	uint32_t mVao;
 
 	uint32_t mAtomicBuffer;

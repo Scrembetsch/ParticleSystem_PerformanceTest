@@ -32,8 +32,10 @@ public:
 
     virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
     Shader* GetRenderShader();
+
 private:
     static const uint32_t sBufferSize = 2U;
+    int32_t mMaxVertices;
 
     uint32_t mTransformFeedbackBuffer;
 
@@ -66,7 +68,7 @@ private:
     std::vector<TfIModule*> mModules;
     std::vector<std::pair<std::string, std::string>> mRenderFsMap;
 
-    glm::vec3 mLocalWorkGroupSize;
+    glm::uvec3 mLocalWorkGroupSize;
     Shader mSortShader;
     void Sort();
     void SortLocalBms(uint32_t n, uint32_t h);

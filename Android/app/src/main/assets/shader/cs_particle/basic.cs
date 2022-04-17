@@ -4,17 +4,18 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
-layout(binding = 0) uniform atomic_uint NumGenerated;
-layout(binding = 0) uniform atomic_uint MaxParticles;
+layout(binding = 0) uniform atomic_uint NumToGenerate[DISPATCH_SIZE];
+layout(binding = 0, offset = ATOMIC_OFFSET1) uniform atomic_uint NumAlive[DISPATCH_SIZE];
 
+// Buffer always uses vec4
 layout(std140, binding=1) buffer Position
 {
-    vec3 Positions[];
+    vec4 Positions[];
 };
 
 layout(std140, binding=2) buffer Velocity
 {
-    vec3 Velocities[];
+    vec4 Velocities[];
 };
 
 layout(std140, binding=3) buffer Color
@@ -24,11 +25,10 @@ layout(std140, binding=3) buffer Color
 
 layout(std140, binding=4) buffer Lifetime
 {
-    vec2 Lifetimes[];
+    vec4 Lifetimes[];
 };
 
 uniform float uDeltaTime;
-uniform uint uNumToGenerate;
 
 vec3 lLocalSeed;
 
@@ -43,33 +43,32 @@ float randZeroOne()
     return fRes;
 }
 
-void InitParticle()
+void InitParticle(uint id)
 {
-    uint gid = gl_GlobalInvocationID.x;
-
-    Positions[gid].xyz = vec3(0.0);
-    Velocities[gid].xyz = vec3(randZeroOne(), randZeroOne(), randZeroOne());
-    Colors[gid].rgba = vec4(1.0);
-    Lifetimes[gid].xy = vec2(5.0);
+    Positions[id].xyz = vec3(0.0);
+    Velocities[id].xyz = vec3(randZeroOne(), randZeroOne(), randZeroOne());
+    Colors[id].rgba = vec4(1.0);
+    Lifetimes[id].xy = vec2(5.0);
 }
 
 void main()
 {
     uint gid = gl_GlobalInvocationID.x;
+    uint lid = gl_LocalInvocationID.x;
+    uint groupid = gl_WorkGroupID.x;
 
     lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
 
     if(Lifetimes[gid].x <= 0.0)
     {
-        if(atomicCounterIncrement(NumGenerated) < uNumToGenerate)
+        if(atomicCounterDecrement(NumToGenerate[groupid]) < (-1U / 2U))
         {
-            atomicCounterIncrement(MaxParticles);
-            InitParticle();
+            atomicCounterIncrement(NumAlive[groupid]);
+            InitParticle(gid);
         }
         return;
     }
-
-    atomicCounterIncrement(MaxParticles);
+    atomicCounterIncrement(NumAlive[groupid]);
 
     const vec3 cGravity = vec3(0.0, 0.0, 0.0);
 
@@ -79,18 +78,19 @@ void main()
     vec3 pp = p + v * uDeltaTime + 0.5 * uDeltaTime * uDeltaTime * cGravity;
     vec3 vp = v + cGravity * uDeltaTime;
 
-    vec2 lt = Lifetimes[gid];
+    float lt = Lifetimes[gid].x;
 
-    lt.x -= uDeltaTime;
+    lt -= uDeltaTime;
 
-    Positions[gid] = pp;
-    Velocities[gid] = vp;
+    Positions[gid].xyz = pp;
+    Velocities[gid].xyz = vp;
 
-    Lifetimes[gid] = lt;
+    Lifetimes[gid].x = lt;
+
     // Colors[gid].r = atomicCounter(MaxParticles) / 1000000;
     // Colors[gid].g = atomicCounter(NumGenerated) / 100000;
     // // Colors[gid].gb = vec2(0.0f);
     // Colors[gid].b = 0.0f;
     // Colors[gid].a = 1.0f;
-    Colors[gid] = vec4(1.0f);
+    Colors[gid] = vec4(1.0);
 }

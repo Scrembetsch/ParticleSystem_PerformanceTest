@@ -11,12 +11,12 @@ layout(local_size_x = LOCAL_SIZE_X) in;
 
 layout(std140, binding=1) buffer Position
 {
-    vec3 Positions[];
+    vec4 Positions[];
 };
 
 layout(std140, binding=2) buffer Velocity
 {
-    vec3 Velocities[];
+    vec4 Velocities[];
 };
 
 layout(std140, binding=3) buffer Color
@@ -26,7 +26,7 @@ layout(std140, binding=3) buffer Color
 
 layout(std140, binding=4) buffer Lifetime
 {
-    vec2 Lifetimes[];
+    vec4 Lifetimes[];
 };
 
 uniform uint uAlgorithm;
@@ -36,21 +36,21 @@ uniform uint uH;
 
 // Workgroup local memory. We use this to minimise round-trips to global memory.
 // It allows us to evaluate a sorting network of up to 1024 with one shader invocation.
-shared vec2 local_lifetimes[LOCAL_SIZE_X * 2];
-shared vec3 local_positions[LOCAL_SIZE_X * 2];
-shared vec3 local_velocity[LOCAL_SIZE_X * 2];
+shared vec4 local_lifetimes[LOCAL_SIZE_X * 2];
+shared vec4 local_positions[LOCAL_SIZE_X * 2];
+shared vec4 local_velocity[LOCAL_SIZE_X * 2];
 shared vec4 local_colors[LOCAL_SIZE_X * 2];
 
 void SwapLifetimes(uint x, uint y)
 {
-    vec2 tmp = Lifetimes[x];
+    vec4 tmp = Lifetimes[x];
     Lifetimes[x] = Lifetimes[y];
     Lifetimes[y] = tmp;
 }
 
 void SwapPositions(uint x, uint y)
 {
-    vec3 tmp = Positions[x];
+    vec4 tmp = Positions[x];
     Positions[x] = Positions[y];
     Positions[y] = tmp;
 }
@@ -64,21 +64,21 @@ void SwapColors(uint x, uint y)
 
 void SwapVelocities(uint x, uint y)
 {
-    vec3 tmp = Velocities[x];
+    vec4 tmp = Velocities[x];
     Velocities[x] = Velocities[y];
     Velocities[y] = tmp;
 }
 
 void SwapLocalLifetimes(uint x, uint y)
 {
-    vec2 tmp = local_lifetimes[x];
+    vec4 tmp = local_lifetimes[x];
     local_lifetimes[x] = local_lifetimes[y];
     local_lifetimes[y] = tmp;
 }
 
 void SwapLocalPositions(uint x, uint y)
 {
-    vec3 tmp = local_positions[x];
+    vec4 tmp = local_positions[x];
     local_positions[x] = local_positions[y];
     local_positions[y] = tmp;
 }
@@ -92,7 +92,7 @@ void SwapLocalColors(uint x, uint y)
 
 void SwapLocalVelocities(uint x, uint y)
 {
-    vec3 tmp = local_velocity[x];
+    vec4 tmp = local_velocity[x];
     local_velocity[x] = local_velocity[y];
     local_velocity[y] = tmp;
 }

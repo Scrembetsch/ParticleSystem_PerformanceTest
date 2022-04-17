@@ -17,11 +17,13 @@
 #include "particle_system/tf_module_color_over_lifetime.h"
 
 #ifdef _DEBUG
-	uint32_t numParticles = 2;
+	uint32_t numParticles = 1024 * 1024;
 	float numGenerate = 1;
+	uint32_t workGroupSize = 256;
 #else
 	uint32_t numParticles = 1024 * 1024;
 	float numGenerate = 100000;
+	uint32_t workGroupSize = 256;
 #endif
 
 TestApp::TestApp()
@@ -111,7 +113,7 @@ bool TestApp::Init()
 	success &= mTfParticleSystem->Init();
 #endif
 #if CS
-	mCsParticleSystem = new CsParticleSystem(numParticles, 1);
+	mCsParticleSystem = new CsParticleSystem(numParticles, workGroupSize);
 
 	mCsParticleSystem->SetMinLifetime(5.0f);
 	mCsParticleSystem->SetMaxLifetime(7.0f);

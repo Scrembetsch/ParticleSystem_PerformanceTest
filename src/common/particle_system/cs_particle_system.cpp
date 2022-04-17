@@ -3,24 +3,22 @@
 
 #include <sstream>
 
-#define CREATE_BUFFER(val, size, type, attribPtr, attribSize) \
+#define CREATE_BUFFER(val, size, attribPtr) \
 glGenBuffers(1, &val);  \
 glBindBuffer(GL_SHADER_STORAGE_BUFFER, val); \
-glBufferData(GL_SHADER_STORAGE_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW); \
+glBufferData(GL_SHADER_STORAGE_BUFFER, size * sizeof(glm::vec4), NULL, GL_STATIC_DRAW); \
 glEnableVertexAttribArray(attribPtr); \
-glVertexAttribPointer(attribPtr, attribSize, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0) \
+glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), (void*)0) \
 
-#define INIT_BUFFER_BEGIN(size, type) \
+#define INIT_BUFFER_BEGIN(size) \
 { \
-    type* buffer = static_cast<type*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(type), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
+    glm::vec4* buffer = static_cast<glm::vec4*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(glm::vec4), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
     for (uint32_t i = 0; i < mNumMaxParticles; i++) \
     {
 #define INIT_BUFFER_END() \
     } \
 } \
 glUnmapBuffer(GL_SHADER_STORAGE_BUFFER)
-
-uint32_t atomicSize = sizeof(uint32_t) * 2;
 
 CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     : mVao(0)
@@ -82,48 +80,41 @@ bool CsParticleSystem::Init()
 {
     glGenVertexArrays(1, &mVao);
     glBindVertexArray(mVao);
+    CHECK_GL_ERROR();
 
     glGenBuffers(1, &mAtomicBuffer);
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
-    glVertexAttribPointer(0, (atomicSize / sizeof(uint32_t)), GL_UNSIGNED_INT, GL_FALSE, atomicSize, 0);
-    glBufferData(GL_ATOMIC_COUNTER_BUFFER, atomicSize, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ATOMIC_COUNTER_BUFFER, GetAtomicSize() * sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
     ResetGenerateCounter();
-
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
-    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, glm::vec3, 1, 3);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec3)
-        buffer[i].x = 0.0f;
-        buffer[i].y = 0.0f;
-        buffer[i].z = 0.0f;
+    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, 1);
+    INIT_BUFFER_BEGIN(mNumMaxParticles)
+        buffer[i] = glm::vec4(0.0f);
+        buffer[i].w = 1.0f;
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, glm::vec3, 2, 3);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec3)
-        buffer[i].x = sin(mRandom.Rand01() * 3.14f);
-        buffer[i].y = cos(mRandom.Rand01() * 3.14f);
-        buffer[i].z = sin(mRandom.Rand01() * 3.14f);
+    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, 2);
+    INIT_BUFFER_BEGIN(mNumMaxParticles)
+        buffer[i] = glm::vec4(0.0f);
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mColSsbo, mNumMaxParticles, glm::vec4, 3, 4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i].r = mRandom.Rand01();
-        buffer[i].g = mRandom.Rand01();
-        buffer[i].b = mRandom.Rand01();
-        buffer[i].a = 1.0f;
+    CREATE_BUFFER(mColSsbo, mNumMaxParticles, 3);
+    INIT_BUFFER_BEGIN(mNumMaxParticles)
+        buffer[i] = glm::vec4(1.0f);
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, glm::vec2, 4, 2);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec2)
-        buffer[i][0] = 0.0f;
-        buffer[i][1] = 0.0f;
+    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4);
+    INIT_BUFFER_BEGIN(mNumMaxParticles)
+        buffer[i] = glm::vec4(0.0f);
     INIT_BUFFER_END();
 
-    std::stringstream ss;
-    ss << mLocalWorkGroupSize.x;
+    CHECK_GL_ERROR();
 
     std::vector<std::pair<std::string, std::string>> replaceParts;
-    replaceParts.emplace_back("LOCAL_SIZE_X", ss.str());
+    replaceParts.emplace_back("LOCAL_SIZE_X", std::to_string(mLocalWorkGroupSize.x));
+    replaceParts.emplace_back("DISPATCH_SIZE", std::to_string(GetDispatchSize()));
+    replaceParts.emplace_back("ATOMIC_OFFSET1", std::to_string(GetDispatchSize() * sizeof(uint32_t)));
 
     bool success = true;
     success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
@@ -143,16 +134,19 @@ bool CsParticleSystem::Init()
 
 void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
 {
-
+    CHECK_GL_ERROR();
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
+    CHECK_GL_ERROR();
     ResetGenerateCounter();
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+    CHECK_GL_ERROR();
 
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mAtomicBuffer);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mPosSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mVelSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
+    CHECK_GL_ERROR();
 
     float timeForParticle = 1.0f / EmitRate;
 
@@ -166,50 +160,40 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
         mCurrentGenerateOffset -= timeForParticle;
     }
 
+    CHECK_GL_ERROR();
+
     mComputeShader.Use();
     mComputeShader.SetFloat("uDeltaTime", deltaTime);
-    mComputeShader.SetUInt("uNumToGenerate", numToGenerate);
+    SetNumToGenerate(numToGenerate);
 
-    GLint bufMask = GL_MAP_READ_BIT;
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLifeSsbo);
-    auto* buffer = static_cast<glm::vec2*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec2), bufMask));
-    for (int i = 0; i < mNumMaxParticles; i++)
+    CHECK_GL_ERROR();
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    glDispatchCompute(GetDispatchSize(), 1, 1);
+    CHECK_GL_ERROR();
+
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    ReadGeneratedParticles();
+
+    Sort();
+    CHECK_GL_ERROR();
+}
+
+void CsParticleSystem::ReadGeneratedParticles()
+{
+    const uint32_t size = GetAtomicSize() / 2;
+    const uint32_t offset = GetAtomicSize() / 2;
+    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, offset * sizeof(uint32_t), size * sizeof(uint32_t), GL_MAP_READ_BIT));
+
+    uint32_t currentParticles = 0;
+    for (uint32_t i = 0; i < size; i++)
     {
-        auto newBuf = *buffer;
-        //if (newBuf.x > 0.0f)
-        {
-            LOG("Before", " % d, % g, % g", i, newBuf.x, newBuf.y);
-        }
-        //LOG("CS", "%g, %g, %g", newBuf.x, newBuf.y, newBuf.z);
-        //LOG("CS", "%g, %g, %g, %g", newBuf.x, newBuf.y, newBuf.z, newBuf.a);
+        currentParticles += atomicPtr[i];
     }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glDispatchCompute(mNumMaxParticles / mLocalWorkGroupSize.x, 1, 1);
-
-    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
-
-    uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, atomicSize, GL_MAP_READ_BIT));
-    mNumParticles = atomicPtr[1];
-    LOG("Particles", "NUmGen: %d, Part: %d", atomicPtr[0], atomicPtr[1]);
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    CHECK_GL_ERROR();
 
-    //Sort();
-
-    //GLint bufMask = GL_MAP_READ_BIT;
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLifeSsbo);
-    buffer = static_cast<glm::vec2*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(glm::vec2), bufMask));
-    for (int i = 0; i < mNumMaxParticles; i++)
-    {
-        auto newBuf = *buffer;
-        //if (newBuf.x > 0.0f)
-        {
-            LOG("After", "%d, %g, %g", i, newBuf.x, newBuf.y);
-        }
-        //LOG("CS", "%g, %g, %g", newBuf.x, newBuf.y, newBuf.z);
-        //LOG("CS", "%g, %g, %g, %g", newBuf.x, newBuf.y, newBuf.z, newBuf.a);
-    }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    mNumParticles = currentParticles;
 }
 
 void CsParticleSystem::Sort()
@@ -348,8 +332,66 @@ Shader* CsParticleSystem::GetRenderShader()
 
 void CsParticleSystem::ResetGenerateCounter()
 {
-    uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, atomicSize, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
-    atomicPtr[0] = 0;
-    atomicPtr[1] = 0;
+    uint32_t atomicSize = GetAtomicSize();
+    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
+    memset(atomicPtr, 0U, GetAtomicSize() * sizeof(uint32_t));
     glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+}
+
+void CsParticleSystem::SetNumToGenerate(uint32_t numToGenerate)
+{
+    if (numToGenerate == 0)
+    {
+        CHECK_GL_ERROR();
+        return;
+    }
+    uint32_t firstPossibleId = 0;
+    uint32_t groupsMaxParticles = 0;
+
+    // Find first index, where particles can be generated
+    for (uint32_t i = 0; i < GetDispatchSize(); i++)
+    {
+        groupsMaxParticles += mLocalWorkGroupSize.x;
+        if (mNumParticles > groupsMaxParticles)
+        {
+            continue;
+        }
+        firstPossibleId = i + 1;
+        break;
+    }
+
+    auto atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, (GetDispatchSize()) * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT));
+
+    uint32_t numToGenerateForWorker = groupsMaxParticles - mNumParticles;
+    numToGenerateForWorker = std::min(numToGenerateForWorker, numToGenerate);
+
+    atomicPtr[firstPossibleId] = numToGenerateForWorker;
+    numToGenerate -= numToGenerateForWorker;
+
+    for (uint32_t i = firstPossibleId + 1; i < GetDispatchSize(); i++)
+    {
+        if (numToGenerate == 0)
+        {
+            break;
+        }
+
+        numToGenerateForWorker = std::min(mLocalWorkGroupSize.x, numToGenerate);
+        atomicPtr[i] = numToGenerateForWorker;
+        numToGenerate -= numToGenerateForWorker;
+    }
+
+    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    CHECK_GL_ERROR();
+}
+
+uint32_t CsParticleSystem::GetDispatchSize() const
+{
+    return mNumMaxParticles / mLocalWorkGroupSize.x;
+}
+
+uint32_t CsParticleSystem::GetAtomicSize() const
+{
+    return GetDispatchSize() * 2;
 }

@@ -2,7 +2,7 @@
 
 layout(points) in;
 layout(points) out;
-layout(max_vertices = 100) out;
+layout(max_vertices = MAX_OUTPUT_VERTICES) out;
 
 precision mediump float;
 
@@ -14,6 +14,7 @@ in vec4 vColorPass[];
 in float vLifeTimePass[];
 in float vLifeTimeBeginPass[];
 in float vTypePass[];
+in uint vIdPass[];
 
 // All that we send further
 out vec3 vPositionOut;
@@ -65,7 +66,7 @@ MODULE_METHODS
 
 void main()
 {
-  lLocalSeed = uRandomSeed;
+  lLocalSeed = vec3(uRandomSeed.x + gl_PrimitiveIDIn, uRandomSeed.y + gl_PrimitiveIDIn, uRandomSeed.z + gl_PrimitiveIDIn);
   
   vPositionOut = vPositionPass[0];
   vVelocityOut = vVelocityPass[0];

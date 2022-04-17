@@ -25,6 +25,7 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
         mVbos[i] = 0;
         mVaos[i] = 0;
     }
+    glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES, &mMaxVertices);
 }
 
 TfParticleSystem::~TfParticleSystem()
@@ -92,15 +93,13 @@ bool TfParticleSystem::Init()
 
     replaceMapVs.emplace_back("MODULE_METHODS", methodsVs);
     replaceMapGs.emplace_back("MODULE_METHODS", methodsGs);
+    replaceMapGs.emplace_back("MAX_OUTPUT_VERTICES", std::to_string(mMaxVertices));
 
     replaceMapVs.emplace_back("MODULE_CALLS", callsVs);
     replaceMapGs.emplace_back("MODULE_CALLS", callsGs);
 
-    std::stringstream ss;
-    ss << mLocalWorkGroupSize.x;
-
     std::vector<std::pair<std::string, std::string>> replaceParts;
-    replaceParts.emplace_back("LOCAL_SIZE_X", ss.str());
+    replaceParts.emplace_back("LOCAL_SIZE_X", std::to_string(mLocalWorkGroupSize.x));
 
     success &= mUpdateShader.LoadAndCompile("shader/tf_particle/update.vs", Shader::SHADER_TYPE_VERTEX, replaceMapVs);
     success &= mUpdateShader.LoadAndCompile("shader/tf_particle/update.gs", Shader::SHADER_TYPE_GEOMETRY, replaceMapGs);
@@ -138,14 +137,14 @@ bool TfParticleSystem::Init()
     TfParticle initParticle;
     initParticle.Type = 0.0f;
 
-    for (int i = 0; i < sBufferSize; i++)
+    for (uint32_t i = 0; i < sBufferSize; i++)
     {
         glBindVertexArray(mVaos[i]);
         glBindBuffer(GL_ARRAY_BUFFER, mVbos[i]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(TfParticle) * mNumMaxParticles, nullptr, GL_DYNAMIC_DRAW);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(TfParticle), &initParticle);
 
-        for (unsigned int j = 0; j < varyingSize; j++)
+        for (uint32_t j = 0; j < varyingSize; j++)
         {
             glEnableVertexAttribArray(j);
         }

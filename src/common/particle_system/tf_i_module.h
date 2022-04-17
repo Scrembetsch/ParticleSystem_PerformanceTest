@@ -2,6 +2,7 @@
 
 #include "tf_particle.h"
 #include "../gl/shader.h"
+#include "../gl/gl_util.h"
 
 class TfParticleSystem;
 

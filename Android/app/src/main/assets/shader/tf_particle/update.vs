@@ -15,6 +15,7 @@ out vec4 vColorPass;
 out float vLifeTimePass;
 out float vLifeTimeBeginPass;
 out float vTypePass;
+out uint vIdPass;
 
 MODULE_UNIFORMS
 
@@ -28,6 +29,7 @@ void main()
   vLifeTimePass = aLifeTime;
   vLifeTimeBeginPass = aLifeTimeBegin;
   vTypePass = aType;
+  vIdPass = gl_VertexID;
 
   MODULE_CALLS
 }
