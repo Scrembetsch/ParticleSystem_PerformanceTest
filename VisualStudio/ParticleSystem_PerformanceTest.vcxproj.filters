@@ -85,6 +85,15 @@
     <ClCompile Include="..\src\common\optick\optick_server.cpp">
       <Filter>common\optick</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_module_emission.cpp">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_module_velocity_over_lifetime.cpp">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_module_color_over_lifetime.cpp">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -131,6 +140,9 @@
     </Filter>
     <Filter Include="common\optick">
       <UniqueIdentifier>{7984c915-5e8f-43a0-9e43-45ac3b4ee39f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\particle_system\cs\modules">
+      <UniqueIdentifier>{ed9d05a3-45df-489d-8212-56520ed1b910}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +286,18 @@
     </ClInclude>
     <ClInclude Include="..\src\common\optick\optick_server.h">
       <Filter>common\optick</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_i_module.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_module_emission.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_module_velocity_over_lifetime.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_module_color_over_lifetime.h">
+      <Filter>common\particle_system\cs\modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

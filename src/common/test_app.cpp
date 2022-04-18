@@ -18,6 +18,10 @@
 #include "particle_system/tf_module_velocity_over_lifetime.h"
 #include "particle_system/tf_module_color_over_lifetime.h"
 
+#include "particle_system/cs_module_emission.h"
+#include "particle_system/cs_module_velocity_over_lifetime.h"
+#include "particle_system/cs_module_color_over_lifetime.h"
+
 TestApp::TestApp()
 	: mFrameCount(0)
 	, mFrameTime(0.0f)
@@ -116,10 +120,9 @@ bool TestApp::Init()
 	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
 	mCsParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mCsParticleSystem->SetRenderFragReplaceMap(replaceMap);
-	mCsParticleSystem->EmitRate = NUM_TO_GENERATE;
-	//mCsParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, numGenerate));
-	//mCsParticleSystem->AddModule(new TfModuleVelOverLife(mTfParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-	//mCsParticleSystem->AddModule(new TfModuleColorOverLife(mTfParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+	mCsParticleSystem->AddModule(new CsModuleEmission(mCsParticleSystem, NUM_TO_GENERATE));
+	mCsParticleSystem->AddModule(new CsModuleVelOverLife(mCsParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	mCsParticleSystem->AddModule(new CsModuleColorOverLife(mCsParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 	success &= mCsParticleSystem->Init();
 #endif
 

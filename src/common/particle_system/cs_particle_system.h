@@ -6,7 +6,10 @@
 #include "../util/random.h"
 #include "../defines.h"
 
+#include "cs_i_module.h"
+
 #include <cstdint>
+#include <unordered_map>
 
 class CsParticleSystem
 {
@@ -20,6 +23,8 @@ public:
 	void PrepareRender(Camera* camera);
 	void RenderParticles();
 
+	bool AddModule(CsIModule* psModule);
+
 	uint32_t GetCurrentParticles() const;
 
 	void SetMinLifetime(float minLifetime);
@@ -31,10 +36,8 @@ public:
 	void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
 	Shader* GetRenderShader();
 
-	float EmitRate;
-
+	uint32_t GetAtomicLocation(const std::string& name) const;
 private:
-	void ResetGenerateCounter();
 	void Sort();
 	void SortLocalBms(uint32_t n, uint32_t h);
 	void SortBigFlip(uint32_t n, uint32_t h);
@@ -44,10 +47,7 @@ private:
 	uint32_t GetDispatchSize() const;
 	uint32_t GetAtomicSize() const;
 
-	void SetNumToGenerate(uint32_t numToGenerate);
-	void ReadGeneratedParticles();
-
-	uint32_t NextPowerOfTwo(uint32_t input) const;
+	void ReadbackAtomicData();
 
 	uint32_t mVao;
 
@@ -81,6 +81,9 @@ private:
 	Shader mRenderShader;
 
 	std::vector<std::pair<std::string, std::string>> mRenderFsMap;
+
+	std::vector<CsIModule*> mModules;
+	std::vector<std::pair<std::string, uint32_t>> mAtomicLocations;
 
 	float mCurrentGenerateOffset;
 };

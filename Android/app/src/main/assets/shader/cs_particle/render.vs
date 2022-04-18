@@ -33,9 +33,4 @@ void main()
     gl_Position = vec4(Positions[id].xyz, 1.0);
     vLifetimePass = Lifetimes[id].x;
     vColorPass = Colors[id];
-    // vColorPass.r = 1.0 - Lifetimes[gl_VertexID].x / Lifetimes[gl_VertexID].y;
-    // vColorPass.g = Lifetimes[gl_VertexID].x / Lifetimes[gl_VertexID].y;
-    // vColorPass.b = 0.0;
-    // vColorPass.a = 1.0;
-    // vColorPass.a = Lifetimes[gl_VertexID].x / Lifetimes[gl_VertexID].y;
 }

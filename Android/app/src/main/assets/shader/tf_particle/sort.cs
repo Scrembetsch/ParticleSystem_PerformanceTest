@@ -165,7 +165,8 @@ void main(){
     //
 	uint offset = gl_WorkGroupSize.x * 2U * gl_WorkGroupID.x; 
 
-	if (uAlgorithm <= eLocalDisperse){
+	if (uAlgorithm <= eLocalDisperse)
+	{
 		// pull to local memory
 	    // Each local worker must save two elements to local memory, as there
 	    // are twice as many elments as workers.

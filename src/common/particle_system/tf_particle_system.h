@@ -76,6 +76,8 @@ protected:
 
     glm::uvec3 mLocalWorkGroupSize;
     Shader mSortShader;
+    uint32_t mSortSsbo;
+
     void Sort();
     void SortLocalBms(uint32_t n, uint32_t h);
     void SortBigFlip(uint32_t n, uint32_t h);

@@ -4,8 +4,7 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
-layout(binding = 0) uniform atomic_uint NumToGenerate;
-layout(binding = 0) uniform atomic_uint NumAlive;
+MODULE_ATOMIC_COUNTERS
 
 // Buffer always uses vec4
 layout(std140, binding=1) buffer Position
@@ -31,12 +30,15 @@ layout(std140, binding=4) buffer Lifetime
 INDEX_BUFFER_DECL
 
 uniform float uDeltaTime;
-uniform vec3 uEmitData;
+uniform vec3 uPosition;
+uniform vec3 uVelocityMin;
+uniform vec3 uVelocityRange;
+uniform float uLifeTimeMin;
+uniform float uLifeTimeRange;
+
+MODULE_UNIFORMS
 
 vec3 lLocalSeed;
-
-shared uint SharedNumToGenerate;
-shared uint SharedNumAlive;
 
 float randZeroOne()
 {
@@ -51,67 +53,44 @@ float randZeroOne()
 
 void InitParticle(uint id)
 {
-    Positions[id].xyz = vec3(0.0);
-    Velocities[id].xyz = vec3(randZeroOne(), randZeroOne(), randZeroOne());
+    Positions[id].xyz = uPosition;;
+    Velocities[id].xyz = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
     Colors[id].rgba = vec4(1.0);
-    Lifetimes[id].xy = vec2(5.0);
+    Lifetimes[id].x = uLifeTimeMin + uLifeTimeRange * randZeroOne();
+    Lifetimes[id].y = Lifetimes[id].x;
 }
+
+MODULE_METHODS
 
 void main()
 {
-    if(gl_LocalInvocationID.x == 0U)
-    {
-        atomicMin(SharedNumAlive, 0);
-    }
-    barrier();
-
     uint gid = gl_GlobalInvocationID.x;
-    uint localSize = LOCAL_SIZE_X;
-    // uint gid = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID;
-    // uint gid = gl_LocalInvocationID * LOCAL_SIZE_X;
-    // uint gid = gl_LocalInvocationID.x * gl_WorkGroupSize.x + gl_WorkGroupID.x;
     lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
 
-    atomicAdd(SharedNumAlive, uint(Lifetimes[gid].x > 0.0));
+    vec3 position = Positions[gid].xyz;
+    vec3 velocity = Velocities[gid].xyz;
+    vec2 lifetimes = Lifetimes[gid].xy;
+    vec4 color = Colors[gid].rgba;
 
-    if(Lifetimes[gid].x <= 0.0)
+    MODULE_CALLS
+
+    bool alive = lifetimes.x > 0.0;
+    uint aliveInt = alive ? 1U : 0U;
+    float aliveFloat = float(aliveInt);
+
+    if(!alive)
     {
-        if(atomicCounterDecrement(NumToGenerate) < (-1U / 2U))
-        {
-            InitParticle(gid);
-        }
+        return;
     }
 
-    // uint index = atomicCounterIncrement(NumAlive);
+    uint index = atomicCounterIncrement(NumAlive);
     INDEX_BUFFER_SET_ID
 
-    const vec3 cGravity = vec3(0.0, 0.0, 0.0);
+    position = position + velocity * uDeltaTime;
+    lifetimes.x -= uDeltaTime;
 
-    vec3 p = Positions[gid].xyz;
-    vec3 v = Velocities[gid].xyz;
-
-    vec3 pp = p + v * uDeltaTime + 0.5 * uDeltaTime * uDeltaTime * cGravity;
-    vec3 vp = v + cGravity * uDeltaTime;
-
-    float lt = Lifetimes[gid].x;
-
-    lt -= uDeltaTime;
-
-    Positions[gid].xyz = pp;
-    Velocities[gid].xyz = vp;
-
-    Lifetimes[gid].x = lt;
-
-    // Colors[gid].r = atomicCounter(MaxParticles) / 1000000;
-    // Colors[gid].g = atomicCounter(NumGenerated) / 100000;
-    // // Colors[gid].gb = vec2(0.0f);
-    // Colors[gid].b = 0.0f;
-    // Colors[gid].a = 1.0f;
-    Colors[gid] = vec4(1.0);
-
-    barrier();
-    if(gl_LocalInvocationID.x == 0U)
-    {
-        atomicCounterAdd(NumAlive, SharedNumAlive);
-    }
+    Positions[gid].xyz = position;
+    Velocities[gid].xyz = velocity;
+    Lifetimes[gid].x = lifetimes.x;
+    Colors[gid] = color;
 }

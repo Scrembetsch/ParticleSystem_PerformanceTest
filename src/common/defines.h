@@ -4,8 +4,8 @@
 #include "optick/optick.h"
 
 #define CPU 0
-#define CS  1
-#define TF  0
+#define CS  0
+#define TF  1
 
 #define SORT 1
 
@@ -15,8 +15,8 @@
 #endif
 
 #ifdef _DEBUG
-	#define MAX_PARTICLES (1024 * 1024)
-	#define NUM_TO_GENERATE 1
+	#define MAX_PARTICLES (1024)
+	#define NUM_TO_GENERATE 5
 	#define WORK_GROUP_SIZE 256
 #else
 	#define MAX_PARTICLES (1024 * 1024)

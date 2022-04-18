@@ -21,6 +21,7 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
     , mMinStartVelocity(0.0f)
     , mMaxStartVelocity(0.0f)
     , mLocalWorkGroupSize(256, 0, 0)
+    , mSortSsbo(0)
 {
     for (uint32_t i = 0; i < sBufferSize; i++)
     {
@@ -54,6 +55,11 @@ TfParticleSystem::~TfParticleSystem()
     if (mVaos[0] != 0)
     {
         glDeleteVertexArrays(sBufferSize, mVaos);
+    }
+
+    if (mSortSsbo != 0)
+    {
+        glDeleteBuffers(1, &mSortSsbo);
     }
 
     for (uint32_t i = 0; i < mModules.size(); i++)
@@ -173,8 +179,15 @@ bool TfParticleSystem::Init()
     glBindVertexArray(0);
     mCurrentReadBuffer = 0;
     mNumParticles = mNumEmitters;
+    delete[] initParticles;
 
-    //delete[] mNumEmitters;
+#if SORT
+    glGenBuffers(1, &mSortSsbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSortSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TfParticle) * mNumMaxParticles, nullptr, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TfParticle), nullptr);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+#endif
 
     CHECK_GL_ERROR();
     return true;
@@ -226,16 +239,52 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
 
     glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &mNumParticles);
 
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+    glBindVertexArray(0);
+    glDisable(GL_RASTERIZER_DISCARD);
+    CHECK_GL_ERROR();
+
     // toggle buffer
     mCurrentReadBuffer = 1 - mCurrentReadBuffer;
 
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
-    glDisable(GL_RASTERIZER_DISCARD);
+#if SORT
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    glBindBuffer(GL_COPY_WRITE_BUFFER, mSortSsbo);
+    glBindBuffer(GL_COPY_READ_BUFFER, mVbos[mCurrentReadBuffer]);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(TfParticle) * mNumMaxParticles);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSortSsbo);
 
     CHECK_GL_ERROR();
 
-#if SORT
+    auto buffer = static_cast<TfParticle*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(TfParticle), GL_MAP_READ_BIT));
+    CHECK_GL_ERROR();
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        LOG("Sort Before", "%d, %g", i, buffer[i].LifeTime);
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mSortSsbo);
+    CHECK_GL_ERROR();
+
     Sort();
+
+    buffer = static_cast<TfParticle*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(TfParticle), GL_MAP_READ_BIT));
+    for (size_t i = 0; i < 5; i++)
+    {
+        LOG("Sort After", "%i, %d", i, buffer[i].LifeTime);
+    }
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    glBindBuffer(GL_COPY_READ_BUFFER, mSortSsbo);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, mVbos[mCurrentReadBuffer]);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(TfParticle) * mNumMaxParticles);
+
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    CHECK_GL_ERROR();
+
 #endif
 }
 
@@ -274,9 +323,9 @@ void TfParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 }
 
 void TfParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
@@ -285,9 +334,9 @@ void TfParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 }
 
 void TfParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
@@ -296,9 +345,9 @@ void TfParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 }
 
 void TfParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
@@ -307,9 +356,9 @@ void TfParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
 
-    glDispatchCompute(mNumMaxParticles / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 }
 
 void TfParticleSystem::PrepareRender(Camera* camera)
