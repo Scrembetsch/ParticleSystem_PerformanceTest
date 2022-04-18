@@ -147,15 +147,15 @@ void TestApp::Step()
 	std::chrono::duration<float> elapsedSeconds = now - mLastFrameTime;
 	float deltaTime = elapsedSeconds.count();
 
-	glm::mat4 projection = glm::perspective(glm::radians(mCamera.Zoom), mCamera.ViewWidth / mCamera.ViewHeight, 0.1f, 200.0f);
-	glm::mat4 view = mCamera.GetViewMatrix();
-
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	uint32_t particles = 0;
 
 #if CPU
+	glm::mat4 projection = glm::perspective(glm::radians(mCamera.Zoom), mCamera.ViewWidth / mCamera.ViewHeight, 0.1f, 200.0f);
+	glm::mat4 view = mCamera.GetViewMatrix();
+
 	mCpuParticleSystem->UpdateParticles(deltaTime, mCamera.Position);
 	mCpuShader.Use();
 	mCpuShader.SetMat4("uProjection", projection);

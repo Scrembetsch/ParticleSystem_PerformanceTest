@@ -62,7 +62,7 @@ MODULE_METHODS
 
 void main()
 {
-  lLocalSeed = vec3(uRandomSeed.x + gl_PrimitiveIDIn, uRandomSeed.y + gl_PrimitiveIDIn, uRandomSeed.z + gl_PrimitiveIDIn);
+  lLocalSeed = vec3(uRandomSeed.x + float(gl_PrimitiveIDIn), uRandomSeed.y + float(gl_PrimitiveIDIn), uRandomSeed.z + float(gl_PrimitiveIDIn));
   
   vPositionOut = vPositionPass[0];
   vVelocityOut = vVelocityPass[0];

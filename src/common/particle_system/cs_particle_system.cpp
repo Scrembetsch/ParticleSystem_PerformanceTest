@@ -176,14 +176,13 @@ bool CsParticleSystem::Init()
     replaceParts.emplace_back("INDEX_BUFFER_DECL", "");
     replaceParts.emplace_back("INDEX_BUFFER_ID", "");
     replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "");
-    replaceParts.emplace_back("SORTED_VERTICES_ID", "uint id = gl_VertexID;\n");
+    replaceParts.emplace_back("SORTED_VERTICES_ID", "uint id = uint(gl_VertexID);\n");
 #else
     replaceParts.emplace_back("INDEX_BUFFER_DECL", "layout(std140, binding = 5) buffer Index{ uvec4 Indices[]; };\n");
     replaceParts.emplace_back("INDEX_BUFFER_ID", "uint id = Indices[gl_VertexID].x;\n");
     replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "Indices[index].x = gid;\n");
     replaceParts.emplace_back("SORTED_VERTICES_ID", "");
 #endif
-
 
 
     bool success = true;
@@ -209,6 +208,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     mComputeShader.Use();
     mComputeShader.SetVec3("uPosition", glm::vec3(0.0f));
     mComputeShader.SetVec3("uCameraPos", cameraPos);
+    mComputeShader.SetVec3("uRandomSeed", glm::vec3(mRandom.Rand(-10.0f, 20.0f), mRandom.Rand(-10.0f, 20.0f), mRandom.Rand(-10.0f, 20.0f)));
     mComputeShader.SetVec3("uVelocityMin", mMinStartVelocity);
     mComputeShader.SetVec3("uVelocityRange", mMaxStartVelocity - mMinStartVelocity);
 

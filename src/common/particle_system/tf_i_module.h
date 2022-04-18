@@ -14,6 +14,8 @@ public:
 	{
 	}
 
+	virtual ~TfIModule() = default;
+
 	virtual std::string GetUniforms() = 0;
 	virtual std::string GetMethodCall(Shader::ShaderType shaderType) = 0;
 	virtual std::string GetModuleMethods(Shader::ShaderType shaderType) = 0;

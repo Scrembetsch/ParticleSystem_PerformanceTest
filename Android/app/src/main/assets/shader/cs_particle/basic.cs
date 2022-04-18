@@ -31,6 +31,7 @@ INDEX_BUFFER_DECL
 
 uniform float uDeltaTime;
 uniform vec3 uPosition;
+uniform vec3 uRandomSeed;
 uniform vec3 uCameraPos;
 uniform vec3 uVelocityMin;
 uniform vec3 uVelocityRange;
@@ -43,13 +44,18 @@ vec3 lLocalSeed;
 
 float randZeroOne()
 {
-    uint n = floatBitsToUint(lLocalSeed.y * 214013.0 + lLocalSeed.x * 2531011.0 + lLocalSeed.z * 141251.0);
+    uint n = floatBitsToUint(lLocalSeed.y * 2.113 + lLocalSeed.x * 1.892 + lLocalSeed.z * 1.4234);
     n = n * (n * n * 15731u + 789221u);
     n = (n >> 9u) | 0x3F800000u;
  
     float fRes =  2.0 - uintBitsToFloat(n);
-    lLocalSeed = vec3(lLocalSeed.x + 147158.0 * fRes, lLocalSeed.y * fRes  + 415161.0 * fRes, lLocalSeed.z + 324154.0 * fRes);
+    lLocalSeed = vec3(lLocalSeed.x + 14158.0 * fRes, lLocalSeed.y * fRes  + 411.0 * fRes, lLocalSeed.z + 254.0 * fRes);
     return fRes;
+}
+
+void GenSeed()
+{
+    lLocalSeed = vec3(uRandomSeed.x + float(gl_GlobalInvocationID.x) / 20.0, uRandomSeed.y - float(gl_GlobalInvocationID.x) / 20.0, uRandomSeed.z - float(gl_GlobalInvocationID.x) / 50.0);
 }
 
 void InitParticle(uint id)
@@ -66,7 +72,7 @@ MODULE_METHODS
 void main()
 {
     uint gid = gl_GlobalInvocationID.x;
-    lLocalSeed = vec3(gid, uDeltaTime, uDeltaTime * uDeltaTime);
+    GenSeed();
 
     vec3 position = Positions[gid].xyz;
     vec3 velocity = Velocities[gid].xyz;
@@ -81,7 +87,7 @@ void main()
 
     if(!alive)
     {
-        Positions[gid].w = -1;
+        Positions[gid].w = -1.0;
         return;
     }
 

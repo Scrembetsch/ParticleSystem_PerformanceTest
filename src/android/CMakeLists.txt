@@ -28,6 +28,10 @@ add_library(
         ../common/particle_system/tf_module_color_over_lifetime.cpp
         ../common/particle_system/tf_module_velocity_over_lifetime.cpp
         ../common/particle_system/tf_module_emission.cpp
+
+        ../common/particle_system/cs_module_color_over_lifetime.cpp
+        ../common/particle_system/cs_module_velocity_over_lifetime.cpp
+        ../common/particle_system/cs_module_emission.cpp
 )
 
 find_library(
