@@ -208,6 +208,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     mComputeShader.Use();
     mComputeShader.SetVec3("uPosition", glm::vec3(0.0f));
+    mComputeShader.SetVec3("uCameraPos", cameraPos);
     mComputeShader.SetVec3("uVelocityMin", mMinStartVelocity);
     mComputeShader.SetVec3("uVelocityRange", mMaxStartVelocity - mMinStartVelocity);
 
@@ -215,15 +216,17 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     mComputeShader.SetFloat("uLifeTimeRange", mMaxLifetime - mMinLifetime);
     mComputeShader.SetFloat("uDeltaTime", deltaTime);
 
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
-    auto buffer = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
-    buffer[0] = 0U;
-    for (size_t i = 0; i < mModules.size(); i++)
     {
-        mModules[i]->ApplyShaderValues(deltaTime, &mComputeShader, buffer);
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, mAtomicBuffer);
+        auto buffer = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+        buffer[0] = 0U;
+        for (size_t i = 0; i < mModules.size(); i++)
+        {
+            mModules[i]->ApplyShaderValues(deltaTime, &mComputeShader, buffer);
+        }
+        glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+        glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
     }
-    glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
-    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
     CHECK_GL_ERROR();
 
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mAtomicBuffer);

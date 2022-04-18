@@ -3,12 +3,10 @@
 precision mediump float;
 
 // Has to be here for mobile GL
-in vec3 vPositionOut;
-in vec3 vVelocityOut;
+in vec4 vPositionOut;
+in vec4 vVelocityOut;
 in vec4 vColorOut;
-in float vLifeTimeOut;
-in float vLifeTimeBeginOut;
-in float vTypeOut;
+in vec4 vDataOut;
 
 out vec4 oColor;
 

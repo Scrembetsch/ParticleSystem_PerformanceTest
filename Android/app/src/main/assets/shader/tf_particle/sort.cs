@@ -11,13 +11,10 @@ layout(local_size_x = LOCAL_SIZE_X) in;
 
 struct Particle
 {
-	vec3 Position;
-	vec3 Velocity;
+	vec4 Position;
+	vec4 Velocity;
 	vec4 Color;
-
-	float Lifetime;
-	float BeginLifetime;
-	float Type;
+	vec4 Data;
 };
 
 layout(std140, binding=0) buffer ParticleBuffer
@@ -33,24 +30,22 @@ uniform uint uH;
 // It allows us to evaluate a sorting network of up to 1024 with one shader invocation.
 shared Particle local_particles[LOCAL_SIZE_X * 2];
 
-void SwapParticles(uint x, uint y)
+void Swap(inout Particle x, inout Particle y)
 {
-    Particle tmp = Particles[x];
-    Particles[x] = Particles[y];
-    Particles[y] = tmp;
+	Particle tmp = x;
+    x = y;
+    y = tmp;
 }
 
-void SwapLocalParticles(uint x, uint y)
+bool IsSmaller(float x, float y)
 {
-    Particle tmp = local_particles[x];
-    local_particles[x] = local_particles[y];
-    local_particles[y] = tmp;
+	return x < y;
 }
 
 void global_compare_and_swap(uvec2 idx){
-	if (Particles[idx.x].Lifetime < Particles[idx.y].Lifetime)
+	if (IsSmaller(Particles[idx.x].Position.w, Particles[idx.y].Position.w))
     {
-        SwapParticles(idx.x, idx.y);
+        Swap(Particles[idx.x], Particles[idx.y]);
 	}
 }
 
@@ -103,9 +98,9 @@ void big_disperse( in uint n, in uint h ) {
 // Performs compare-and-swap over elements held in shared,
 // workgroup-local memory
 void local_compare_and_swap(uvec2 idx){
-	if (local_particles[idx.x].Lifetime < local_particles[idx.y].Lifetime)
+	if (IsSmaller(local_particles[idx.x].Position.w, local_particles[idx.y].Position.w))
     {
-        SwapLocalParticles(idx.x, idx.y);
+        Swap(local_particles[idx.x], local_particles[idx.y]);
 	}
 }
 

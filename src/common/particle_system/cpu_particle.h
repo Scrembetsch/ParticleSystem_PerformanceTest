@@ -18,7 +18,8 @@ struct Particle
     bool operator<(const Particle& other) const
     {
         // Sort in reverse order : far particles drawn first.
-        return this->Lifetime > other.Lifetime;
+        return this->CameraDistance > other.CameraDistance;
+        //return this->Lifetime > other.Lifetime;
     }
 };
 

@@ -33,7 +33,6 @@ uniform uint uAlgorithm;
 uniform uint uN;
 uniform uint uH;
 
-
 // Workgroup local memory. We use this to minimise round-trips to global memory.
 // It allows us to evaluate a sorting network of up to 1024 with one shader invocation.
 shared vec4 local_lifetimes[LOCAL_SIZE_X * 2];
@@ -41,69 +40,25 @@ shared vec4 local_positions[LOCAL_SIZE_X * 2];
 shared vec4 local_velocity[LOCAL_SIZE_X * 2];
 shared vec4 local_colors[LOCAL_SIZE_X * 2];
 
-void SwapLifetimes(uint x, uint y)
+void Swap(inout vec4 x, inout vec4 y)
 {
-    vec4 tmp = Lifetimes[x];
-    Lifetimes[x] = Lifetimes[y];
-    Lifetimes[y] = tmp;
+	vec4 tmp = x;
+	x = y;
+	y = tmp;
 }
 
-void SwapPositions(uint x, uint y)
+bool IsSmaller(float x, float y)
 {
-    vec4 tmp = Positions[x];
-    Positions[x] = Positions[y];
-    Positions[y] = tmp;
-}
-
-void SwapColors(uint x, uint y)
-{
-    vec4 tmp = Colors[x];
-    Colors[x] = Colors[y];
-    Colors[y] = tmp;
-}
-
-void SwapVelocities(uint x, uint y)
-{
-    vec4 tmp = Velocities[x];
-    Velocities[x] = Velocities[y];
-    Velocities[y] = tmp;
-}
-
-void SwapLocalLifetimes(uint x, uint y)
-{
-    vec4 tmp = local_lifetimes[x];
-    local_lifetimes[x] = local_lifetimes[y];
-    local_lifetimes[y] = tmp;
-}
-
-void SwapLocalPositions(uint x, uint y)
-{
-    vec4 tmp = local_positions[x];
-    local_positions[x] = local_positions[y];
-    local_positions[y] = tmp;
-}
-
-void SwapLocalColors(uint x, uint y)
-{
-    vec4 tmp = local_colors[x];
-    local_colors[x] = local_colors[y];
-    local_colors[y] = tmp;
-}
-
-void SwapLocalVelocities(uint x, uint y)
-{
-    vec4 tmp = local_velocity[x];
-    local_velocity[x] = local_velocity[y];
-    local_velocity[y] = tmp;
+	return x < y;
 }
 
 void global_compare_and_swap(uvec2 idx){
-	if (Lifetimes[idx.x].x < Lifetimes[idx.y].x)
+	if (IsSmaller(Positions[idx.x].w, Positions[idx.y].w))
     {
-        SwapLifetimes(idx.x, idx.y);
-        SwapPositions(idx.x, idx.y);
-        SwapVelocities(idx.x, idx.y);
-        SwapColors(idx.x, idx.y);
+        Swap(Lifetimes[idx.x], Lifetimes[idx.y]);
+        Swap(Positions[idx.x], Positions[idx.y]);
+        Swap(Velocities[idx.x], Velocities[idx.y]);
+        Swap(Colors[idx.x], Colors[idx.y]);
 	}
 }
 
@@ -156,12 +111,12 @@ void big_disperse( in uint n, in uint h ) {
 // Performs compare-and-swap over elements held in shared,
 // workgroup-local memory
 void local_compare_and_swap(uvec2 idx){
-	if (local_lifetimes[idx.x].x < local_lifetimes[idx.y].x)
+	if (IsSmaller(local_positions[idx.x].w, local_positions[idx.y].w))
     {
-        SwapLocalLifetimes(idx.x, idx.y);
-        SwapLocalPositions(idx.x, idx.y);
-        SwapLocalVelocities(idx.x, idx.y);
-        SwapLocalColors(idx.x, idx.y);
+        Swap(local_lifetimes[idx.x], local_lifetimes[idx.y]);
+        Swap(local_positions[idx.x], local_positions[idx.y]);
+        Swap(local_velocity[idx.x], local_velocity[idx.y]);
+        Swap(local_colors[idx.x], local_colors[idx.y]);
 	}
 }
 

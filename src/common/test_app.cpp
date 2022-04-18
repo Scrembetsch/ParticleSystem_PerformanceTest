@@ -83,7 +83,7 @@ bool TestApp::Init()
 
 	mCpuParticleSystem->SetMinLifetime(5.0f);
 	mCpuParticleSystem->SetMaxLifetime(7.0f);
-	mCpuParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mCpuParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mCpuParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, sNumToGenerate));
 	mCpuParticleSystem->AddModule(new CpuModuleVelOverLife(mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
@@ -104,7 +104,7 @@ bool TestApp::Init()
 
 	mTfParticleSystem->SetMinLifetime(5.0f);
 	mTfParticleSystem->SetMaxLifetime(7.0f);
-	mTfParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mTfParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mTfParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mTfParticleSystem->SetRenderFragReplaceMap(replaceMap);
 	mTfParticleSystem->AddModule(new TfModuleEmission(mTfParticleSystem, NUM_TO_GENERATE));
@@ -117,7 +117,7 @@ bool TestApp::Init()
 
 	mCsParticleSystem->SetMinLifetime(5.0f);
 	mCsParticleSystem->SetMaxLifetime(7.0f);
-	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, 0.0f));
+	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mCsParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mCsParticleSystem->SetRenderFragReplaceMap(replaceMap);
 	mCsParticleSystem->AddModule(new CsModuleEmission(mCsParticleSystem, NUM_TO_GENERATE));

@@ -31,6 +31,7 @@ INDEX_BUFFER_DECL
 
 uniform float uDeltaTime;
 uniform vec3 uPosition;
+uniform vec3 uCameraPos;
 uniform vec3 uVelocityMin;
 uniform vec3 uVelocityRange;
 uniform float uLifeTimeMin;
@@ -53,7 +54,7 @@ float randZeroOne()
 
 void InitParticle(uint id)
 {
-    Positions[id].xyz = uPosition;;
+    Positions[id].xyz = uPosition;
     Velocities[id].xyz = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
     Colors[id].rgba = vec4(1.0);
     Lifetimes[id].x = uLifeTimeMin + uLifeTimeRange * randZeroOne();
@@ -80,6 +81,7 @@ void main()
 
     if(!alive)
     {
+        Positions[gid].w = -1;
         return;
     }
 
@@ -89,7 +91,7 @@ void main()
     position = position + velocity * uDeltaTime;
     lifetimes.x -= uDeltaTime;
 
-    Positions[gid].xyz = position;
+    Positions[gid].xyzw = vec4(position, distance(position, uCameraPos));
     Velocities[gid].xyz = velocity;
     Lifetimes[gid].x = lifetimes.x;
     Colors[gid] = color;

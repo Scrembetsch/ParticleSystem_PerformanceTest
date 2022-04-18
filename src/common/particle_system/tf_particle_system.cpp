@@ -36,6 +36,8 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
 
     int32_t maxVerticesByComponentLimit = maxComponents / (sizeof(TfParticle) / sizeof(float));
     mMaxVertices = std::min(maxVertices, maxVerticesByComponentLimit);
+    // Somehow AMD cannot handle reported maxVertices
+    mMaxVertices = std::min(mMaxVertices, 128);
 }
 
 TfParticleSystem::~TfParticleSystem()
@@ -75,9 +77,7 @@ bool TfParticleSystem::Init()
             "vPositionOut",
             "vVelocityOut",
             "vColorOut",
-            "vLifeTimeOut",
-            "vLifeTimeBeginOut",
-            "vTypeOut"
+            "vDataOut"
     };
     unsigned int varyingSize = sizeof(sVaryings) / sizeof(sVaryings[0]);
     bool success = true;
@@ -154,7 +154,7 @@ bool TfParticleSystem::Init()
     TfParticle* initParticles = new TfParticle[mNumEmitters];
     for (uint32_t i = 0; i < mNumEmitters; i++)
     {
-        initParticles[i].Type = (i + 1);
+        initParticles[i].Data.z = (i + 1);
     }
 
     for (uint32_t i = 0; i < sBufferSize; i++)
@@ -169,13 +169,12 @@ bool TfParticleSystem::Init()
             glEnableVertexAttribArray(j);
         }
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)12);
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)24);
-        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)40);
-        glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)44);
-        glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)48);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)16);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)32);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)48);
     }
+
     glBindVertexArray(0);
     mCurrentReadBuffer = 0;
     mNumParticles = mNumEmitters;
@@ -206,6 +205,7 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
     mUpdateShader.Use();
 
     mUpdateShader.SetVec3("uPosition", glm::vec3(0.0f));
+    mUpdateShader.SetVec3("uCameraPos", cameraPos);
     mUpdateShader.SetVec3("uVelocityMin", mMinStartVelocity);
     mUpdateShader.SetVec3("uVelocityRange", mMaxStartVelocity - mMinStartVelocity);
 
@@ -248,44 +248,14 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
     mCurrentReadBuffer = 1 - mCurrentReadBuffer;
 
 #if SORT
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-    glBindBuffer(GL_COPY_WRITE_BUFFER, mSortSsbo);
-    glBindBuffer(GL_COPY_READ_BUFFER, mVbos[mCurrentReadBuffer]);
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(TfParticle) * mNumMaxParticles);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSortSsbo);
-
-    CHECK_GL_ERROR();
-
-    auto buffer = static_cast<TfParticle*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(TfParticle), GL_MAP_READ_BIT));
-    CHECK_GL_ERROR();
-
-    for (size_t i = 0; i < 5; i++)
-    {
-        LOG("Sort Before", "%d, %g", i, buffer[i].LifeTime);
-    }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mSortSsbo);
-    CHECK_GL_ERROR();
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mVbos[mCurrentReadBuffer]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mVbos[mCurrentReadBuffer]);
 
     Sort();
 
-    buffer = static_cast<TfParticle*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(TfParticle), GL_MAP_READ_BIT));
-    for (size_t i = 0; i < 5; i++)
-    {
-        LOG("Sort After", "%i, %d", i, buffer[i].LifeTime);
-    }
-    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    glBindBuffer(GL_COPY_READ_BUFFER, mSortSsbo);
-    glBindBuffer(GL_COPY_WRITE_BUFFER, mVbos[mCurrentReadBuffer]);
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, sizeof(TfParticle) * mNumMaxParticles);
-
-    glMemoryBarrier(GL_ALL_BARRIER_BITS);
     CHECK_GL_ERROR();
-
 #endif
+
 }
 
 void TfParticleSystem::Sort()

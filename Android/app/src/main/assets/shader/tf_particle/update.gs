@@ -8,22 +8,19 @@ precision mediump float;
 
 // All that we get from vertex shader
 
-in vec3 vPositionPass[];
-in vec3 vVelocityPass[];
+in vec4 vPositionPass[];
+in vec4 vVelocityPass[];
 in vec4 vColorPass[];
-in float vLifeTimePass[];
-in float vLifeTimeBeginPass[];
-in float vTypePass[];
+in vec4 vDataPass[];
 
 // All that we send further
-out vec3 vPositionOut;
-out vec3 vVelocityOut;
+out vec4 vPositionOut;
+out vec4 vVelocityOut;
 out vec4 vColorOut;
-out float vLifeTimeOut;
-out float vLifeTimeBeginOut;
-out float vTypeOut;
+out vec4 vDataOut;
 
 uniform vec3 uPosition; // Position where new particles are spawned
+uniform vec3 uCameraPos;
 uniform vec3 uVelocityMin; // Velocity of new particle - from min to (min+range)
 uniform vec3 uVelocityRange;
 
@@ -50,12 +47,12 @@ float randZeroOne()
 
 void InitParticle()
 {
-  vPositionOut = uPosition;
-  vVelocityOut = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
-  vLifeTimeOut = uLifeTimeMin + uLifeTimeRange * randZeroOne();
-  vLifeTimeBeginOut = vLifeTimeOut;
+  vPositionOut = vec4(uPosition.xyz, distance(uPosition, uCameraPos));
+  vVelocityOut = vec4(uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne()), 0.0);
   vColorOut = vec4(1.0);
-  vTypeOut = 0.0;
+  vDataOut.x = uLifeTimeMin + uLifeTimeRange * randZeroOne();
+  vDataOut.y = vDataOut.x;
+  vDataOut.z = 0.0;
 
   EmitVertex();
   EndPrimitive();
@@ -69,25 +66,25 @@ void main()
   
   vPositionOut = vPositionPass[0];
   vVelocityOut = vVelocityPass[0];
-  vLifeTimeBeginOut = vLifeTimeBeginPass[0];
-  vTypeOut = vTypePass[0];
   vColorOut = vColorPass[0];
-  vLifeTimeOut = vLifeTimePass[0] - uTimeStep;
+  vDataOut = vDataPass[0];
+  vDataOut.x -= uTimeStep;
 
-  if(vTypeOut == 0.0
-    && vLifeTimeOut <= 0.0)
+  if(vDataOut.z == 0.0
+    && vDataOut.x <= 0.0)
   {
     return;
   }
 
   MODULE_CALLS
 
-  if(vTypePass[0] != 0.0)
+  if(vDataPass[0].z != 0.0)
   {
     return;
   }
 
-  vPositionOut += vVelocityOut * uTimeStep;
+  vPositionOut.xyz += vVelocityOut.xyz * uTimeStep;
+  vPositionOut.w = distance(vPositionOut.xyz, uCameraPos);
 
   EmitVertex();
   EndPrimitive();
