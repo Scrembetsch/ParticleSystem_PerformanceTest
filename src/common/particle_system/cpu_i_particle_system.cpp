@@ -1,4 +1,5 @@
 #include "cpu_i_particle_system.h"
+#include "../logger.h"
 
 CpuIParticleSystem::CpuIParticleSystem(uint32_t maxParticles)
 	: mNumMaxParticles(maxParticles)
@@ -59,7 +60,7 @@ void CpuIParticleSystem::SortParticles()
 
 void CpuIParticleSystem::Emit(uint32_t numToGenerate)
 {
-	// Todo can be improved
+	// Remembering last position would partially interfere with other optimizations
 	uint32_t generatedParticles = 0;
 	for (uint32_t i = 0; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
 	{

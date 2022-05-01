@@ -18,17 +18,20 @@
 
 #if CPU
 	#define PARALLEL 0
-	#define INSTANCE 1
+	#define INSTANCE 0
+#if not INSTANCE
+	#define INDEXED  1
+#endif
 #endif
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	#define MAX_PARTICLES (1024)
-	#define NUM_TO_GENERATE 1
+	#define NUM_TO_GENERATE 100
 	#define WORK_GROUP_SIZE 256
 #else
-	#define MAX_PARTICLES (1024 * 1024 >> 1)
-	#define NUM_TO_GENERATE 100000
+	#define MAX_PARTICLES (1024 * 1024 * 2)
+	#define NUM_TO_GENERATE 300000
 	#define WORK_GROUP_SIZE 256
 #endif
 
-#define NUM_CPU_THREADS (std::thread::hardware_concurrency())
+#define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)

@@ -10,18 +10,23 @@ private:
     class Worker
     {
     public:
-        void Init(std::vector<CpuIModule*>* modules, std::vector<Particle>* particles, uint32_t threadIndex);
+        void Init(std::vector<CpuIModule*>* modules, std::vector<Particle>* particles, uint32_t threadIndex, CpuParallelParticleSystem* particleSystem);
         void StartUpdateParticles(size_t startIndex, size_t endIndex, const glm::vec3& cameraPos, float deltaTime);
+        void StartVertexBuild(size_t startIndex, size_t endIndex);
 
         void Join();
         uint32_t GetRemovedParticles() const;
 
     private:
         void UpdateParticles();
+        void BuildVertices();
+
+        CpuParallelParticleSystem* mParticleSystem;
 
         std::thread mWorkerThread;
         std::vector<CpuIModule*>* mModules;
         std::vector<Particle>* mParticles;
+        std::vector<float>* mParticleRenderData;
 
         uint32_t mRemovedParticles;
         uint32_t mThreadId;
@@ -48,4 +53,5 @@ protected:
     uint32_t mVbo;
 
     std::vector<Worker> mWorkers;
+    std::atomic_uint32_t mParticlesToDraw;
 };

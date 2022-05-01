@@ -78,12 +78,8 @@ void TfModuleEmission::ApplyUniforms(float deltaTime, Shader* shader)
 	mCurrentGenerateOffset += deltaTime;
 	uint32_t numToGenerate = 0;
 
-	// Todo: Could improve
-	while (mCurrentGenerateOffset >= timeForOneCpuParticle)
-	{
-		numToGenerate++;
-		mCurrentGenerateOffset -= timeForOneCpuParticle;
-	}
+	numToGenerate = static_cast<uint32_t>(mCurrentGenerateOffset / timeForOneCpuParticle);
+	mCurrentGenerateOffset -= static_cast<float>(numToGenerate) * timeForOneCpuParticle;
 
 	glm::vec3 emitParams(0);
 	if (numToGenerate == 0)

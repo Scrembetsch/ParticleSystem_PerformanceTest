@@ -14,6 +14,7 @@ class CpuIParticleSystem
 {
 protected:
     static const uint32_t mNumVertices = 6;
+    static const uint32_t mNumIndexedVertices = 4;
 
 public:
     explicit CpuIParticleSystem(uint32_t maxParticles);

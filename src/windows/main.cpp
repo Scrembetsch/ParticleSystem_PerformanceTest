@@ -3,7 +3,7 @@
 #include "../common/gl/gl.h"
 #include "../common/device/file_handler.h"
 
-#define SMALL_WINDOW 1
+#define SMALL_WINDOW 0
 
 #if SMALL_WINDOW
 const int WIDTH = 1280;

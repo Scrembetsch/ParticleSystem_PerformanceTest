@@ -17,5 +17,10 @@ protected:
     void BuildParticleVertexData();
 
     uint32_t mVao;
+    uint32_t mVeo;
     uint32_t mVbo;
+
+#if INDEXED
+    std::vector<uint32_t> mIndices;
+#endif
 };

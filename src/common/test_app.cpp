@@ -85,7 +85,7 @@ bool TestApp::Init()
 	mCpuParticleSystem->SetMaxLifetime(7.0f);
 	mCpuParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mCpuParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
-	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, sNumToGenerate));
+	mCpuParticleSystem->AddModule(new CpuModuleEmission(mCpuParticleSystem, NUM_TO_GENERATE));
 	mCpuParticleSystem->AddModule(new CpuModuleVelOverLife(mCpuParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mCpuParticleSystem->AddModule(new CpuModuleColorOverLife(mCpuParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 

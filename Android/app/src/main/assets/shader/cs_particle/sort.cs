@@ -192,9 +192,6 @@ void main(){
 
 	uint n = uN;
 
-	// check which one of these does not work properly...
-	// it could also be a synchronisation problem!!!
-
 	switch (uAlgorithm){
 		case eLocalBms:
 			local_bms(uH);

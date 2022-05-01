@@ -136,6 +136,7 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 	}
 
 	// Update all particles
+	uint32_t updatedParticles = 0;
 	for (uint32_t i = 0; i < mNumMaxParticles; i++)
 	{
 		mParticles[i].CameraDistance = glm::distance2(mParticles[i].Position, cameraPos);
@@ -155,6 +156,12 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 			mModules[j]->UpdateParticle(deltaTime, mParticles[i]);
 		}
 		mParticles[i].Position += mParticles[i].Velocity * deltaTime;
+
+		updatedParticles++;
+		if (updatedParticles == mNumParticles)
+		{
+			break;
+		}
 	}
 
 #if SORT

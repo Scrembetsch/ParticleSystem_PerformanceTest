@@ -24,11 +24,13 @@ static const float sBasePlaneVertexData[] =
 	 0.5,  0.5,  0.0,	1.0, 1.0, 1.0, 1.0,		TX2, TY2
 };
 
-void CpuParallelParticleSystem::Worker::Init(std::vector<CpuIModule*>* modules, std::vector<Particle>* particles, uint32_t threadIndex)
+void CpuParallelParticleSystem::Worker::Init(std::vector<CpuIModule*>* modules, std::vector<Particle>* particles, uint32_t threadIndex, CpuParallelParticleSystem* particleSystem)
 {
 	mModules = modules;
 	mParticles = particles;
 	mThreadId = threadIndex;
+	mParticleSystem = particleSystem;
+	mParticleRenderData = &particleSystem->mParticleRenderData;
 }
 
 void CpuParallelParticleSystem::Worker::StartUpdateParticles(size_t startIndex, size_t endIndex, const glm::vec3& cameraPos, float deltaTime)
@@ -52,6 +54,17 @@ void CpuParallelParticleSystem::Worker::StartUpdateParticles(size_t startIndex, 
 		LOGE("ParticleWorker", "SetThreadAffinityMask failed, GLE=%ll)", dwErr);
 	}
 #endif
+}
+
+void CpuParallelParticleSystem::Worker::StartVertexBuild(size_t startIndex, size_t endIndex)
+{
+	mStartIndex = startIndex;
+	mEndIndex = endIndex;
+
+	mWorkerThread = std::thread([this]
+		{
+			BuildVertices();
+		});
 }
 
 void CpuParallelParticleSystem::Worker::UpdateParticles()
@@ -81,6 +94,48 @@ void CpuParallelParticleSystem::Worker::UpdateParticles()
 	}
 }
 
+void CpuParallelParticleSystem::Worker::BuildVertices()
+{
+	const uint32_t verticesPerParticle = mNumVertices;	// Currently no triangle strip
+	std::vector<Particle>& particles = *mParticles;
+	std::vector<float>& renderData = *mParticleRenderData;
+	std::atomic_uint32_t& particlesToDrawAtomic = mParticleSystem->mParticlesToDraw;
+
+	for (size_t i = mStartIndex; i < mEndIndex; i++)
+	{
+		if (particles[i].Active)
+		{
+			uint32_t particlesToDraw = particlesToDrawAtomic.fetch_add(1);
+			size_t particleIndex = particlesToDraw * CpuRenderParticle::ParticleSize * verticesPerParticle;
+
+			for (uint32_t j = 0; j < verticesPerParticle; j++)
+			{
+				size_t vertexIndex = j * CpuRenderParticle::ParticleSize;
+
+				//Position
+				renderData[particleIndex + vertexIndex + 0] = particles[i].Position.x + sBasePlaneVertexData[vertexIndex + 0];
+				renderData[particleIndex + vertexIndex + 1] = particles[i].Position.y + sBasePlaneVertexData[vertexIndex + 1];
+				renderData[particleIndex + vertexIndex + 2] = particles[i].Position.z + sBasePlaneVertexData[vertexIndex + 2];
+
+				// Colors
+				renderData[particleIndex + vertexIndex + 0 + CpuRenderParticle::PositionSize] = particles[i].Color.r;
+				renderData[particleIndex + vertexIndex + 1 + CpuRenderParticle::PositionSize] = particles[i].Color.g;
+				renderData[particleIndex + vertexIndex + 2 + CpuRenderParticle::PositionSize] = particles[i].Color.b;
+				renderData[particleIndex + vertexIndex + 3 + CpuRenderParticle::PositionSize] = particles[i].Color.a;
+
+				// TexCoord
+				renderData[particleIndex + vertexIndex + 0 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize] = sBasePlaneVertexData[vertexIndex + 0 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize];
+				renderData[particleIndex + vertexIndex + 1 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize] = sBasePlaneVertexData[vertexIndex + 1 + CpuRenderParticle::PositionSize + CpuRenderParticle::ColorSize];
+			}
+
+			if (particlesToDraw >= mParticleSystem->mNumParticles)
+			{
+				break;
+			}
+		}
+	}
+}
+
 void CpuParallelParticleSystem::Worker::Join()
 {
 	mWorkerThread.join();
@@ -102,7 +157,7 @@ CpuParallelParticleSystem::CpuParallelParticleSystem(uint32_t maxParticles, uint
 	mWorkers.resize(threads);
 	for (uint32_t i = 0; i < mWorkers.size(); i++)
 	{
-		mWorkers[i].Init(&mModules, &mParticles, i);
+		mWorkers[i].Init(&mModules, &mParticles, i, this);
 	}
 }
 
@@ -226,6 +281,7 @@ void CpuParallelParticleSystem::UpdateParticles(float deltaTime, const glm::vec3
 #if SORT
 	SortParticles();
 #endif
+
 	// Write data to array
 	BuildParticleVertexData();
 }
@@ -249,3 +305,41 @@ void CpuParallelParticleSystem::RenderParticles()
 	}
 	CHECK_GL_ERROR();
 }
+
+//Particle* CpuParallelParticleSystem::Partition(Particle* begin, Particle* end)
+//{
+//	//Particle* pivot = mRandom.RandIntegral(begin, end);
+//	Particle* pivot = end;
+//	Particle* i = begin;
+//
+//	for (Particle* j = begin; j < end; j++)
+//	{
+//		if ((*j) < (*pivot))
+//		{
+//			std::swap(*i, *j);
+//			i++;
+//		}
+//	}
+//	std::swap(*i, *end);
+//	return i;
+//}
+//
+//void CpuParallelParticleSystem::QuickSort(Particle* begin, Particle* end)
+//{
+//	if (begin < end)
+//	{
+//		Particle* pi = Partition(begin, end);
+//		if (mSortThreadCounter < mWorkers.size())
+//		{
+//			uint32_t id = mSortThreadCounter.fetch_add(1);
+//			if (id < mWorkers.size())
+//			{
+//				mWorkers[id].StartSort(begin, pi - 1);
+//				QuickSort(pi + 1, end);
+//				return;
+//			}
+//		}
+//		QuickSort(begin, pi - 1);
+//		QuickSort(pi + 1, end);
+//	}
+//}
