@@ -2,20 +2,10 @@
 
 precision mediump float;
 
-layout(std140, binding=1) buffer Position
-{
-    vec4 Positions[];
-};
-
-layout(std140, binding=3) buffer Color
-{
-    vec4 Colors[];
-};
-
-layout(std140, binding=4) buffer Lifetime
-{
-    vec4 Lifetimes[];
-};
+layout (location = 1) in vec4 aPosition;
+layout (location = 2) in vec4 aVelocity;
+layout (location = 3) in vec4 aColor;
+layout (location = 4) in vec4 aLifetime;
 
 INDEX_BUFFER_DECL
 
@@ -30,7 +20,7 @@ void main()
     INDEX_BUFFER_ID
     SORTED_VERTICES_ID
     
-    gl_Position = vec4(Positions[id].xyz, 1.0);
-    vLifetimePass = Lifetimes[id].x;
-    vColorPass = Colors[id];
+    gl_Position = vec4(aPosition.xyz, 1.0);
+    vLifetimePass = aLifetime.x;
+    vColorPass = aColor;
 }

@@ -1,32 +1,29 @@
-#include "cs_particle_system.h"
+#include "cs_particle_system_struct.h"
 #include "../gl/gl_util.h"
 
 #include <sstream>
 
 #define CREATE_BUFFER(val, size, attribPtr, type) \
 glGenBuffers(1, &val);  \
-glBindBuffer(GL_ARRAY_BUFFER, val); \
-glBufferData(GL_ARRAY_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW); \
+glBindBuffer(GL_SHADER_STORAGE_BUFFER, val); \
+glBufferData(GL_SHADER_STORAGE_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW); \
 glEnableVertexAttribArray(attribPtr); \
-glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0)
+glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0) \
 
 #define INIT_BUFFER_BEGIN(size, type) \
 { \
-    type* buffer = static_cast<type*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, size * sizeof(type), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
+    type* buffer = static_cast<type*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size * sizeof(type), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)); \
     for (uint32_t i = 0; i < mNumMaxParticles; i++) \
     {
 #define INIT_BUFFER_END() \
     } \
 } \
-glUnmapBuffer(GL_ARRAY_BUFFER)
+glUnmapBuffer(GL_SHADER_STORAGE_BUFFER)
 
-CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
+CsParticleSystemStruct::CsParticleSystemStruct(uint32_t maxParticles, uint32_t groupSize)
     : mVao(0)
     , mAtomicBuffer(0)
-    , mPosSsbo(0)
-    , mVelSsbo(0)
-    , mColSsbo(0)
-    , mLifeSsbo(0)
+    , mParticleSsbo(0)
     , mIndexSsbo(0)
     , mNumMaxParticles(maxParticles)
     , mNumParticles(0)
@@ -43,32 +40,17 @@ CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
 {
 }
 
-CsParticleSystem::~CsParticleSystem()
+CsParticleSystemStruct::~CsParticleSystemStruct()
 {
     if (mAtomicBuffer != 0)
     {
         glDeleteBuffers(1, &mAtomicBuffer);
         mAtomicBuffer = 0;
     }
-    if (mPosSsbo != 0)
+    if (mParticleSsbo != 0)
     {
-        glDeleteBuffers(1, &mPosSsbo);
-        mPosSsbo = 0;
-    }
-    if (mVelSsbo != 0)
-    {
-        glDeleteBuffers(1, &mVelSsbo);
-        mVelSsbo = 0;
-    }
-    if (mColSsbo != 0)
-    {
-        glDeleteBuffers(1, &mColSsbo);
-        mColSsbo = 0;
-    }
-    if (mLifeSsbo != 0)
-    {
-        glDeleteBuffers(1, &mLifeSsbo);
-        mLifeSsbo = 0;
+        glDeleteBuffers(1, &mParticleSsbo);
+        mParticleSsbo = 0;
     }
     if (mIndexSsbo != 0)
     {
@@ -87,7 +69,7 @@ CsParticleSystem::~CsParticleSystem()
     }
 }
 
-bool CsParticleSystem::Init()
+bool CsParticleSystemStruct::Init()
 {
     mAtomicLocations.emplace_back("NumAlive", mAtomicLocations.size());
     for (size_t i = 0; i < mModules.size(); i++)
@@ -113,26 +95,19 @@ bool CsParticleSystem::Init()
     }
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
-    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, 1, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(0.0f);
-        buffer[i].w = 1.0f;
-    INIT_BUFFER_END();
-
-    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, 2, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(0.0f);
-    INIT_BUFFER_END();
-
-    CREATE_BUFFER(mColSsbo, mNumMaxParticles, 3, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(1.0f);
-    INIT_BUFFER_END();
-
-    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(0.0f);
-    INIT_BUFFER_END();
+    glGenBuffers(1, &mParticleSsbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mParticleSsbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, mNumMaxParticles * sizeof(CsParticle), NULL, GL_STATIC_DRAW);
+    {
+        auto* buffer = static_cast<CsParticle*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, mNumMaxParticles * sizeof(CsParticle), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+        for (uint32_t i = 0; i < mNumMaxParticles; i++) \
+        {
+            buffer[i].Position = glm::vec4(0.0f);
+            buffer[i].Velocity = glm::vec4(0.0f);
+            buffer[i].Color = glm::vec4(1.0f);
+            buffer[i].Lifetime = glm::vec4(0.0f);
+        }
+    }
 
 #if not SORT
     CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, glm::uvec4);
@@ -186,22 +161,22 @@ bool CsParticleSystem::Init()
 
 
     bool success = true;
-    success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
+    success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic_struct.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
     success &= mComputeShader.AttachLoadedShaders();
     success &= mComputeShader.Link();
-    success &= mSortShader.LoadAndCompile("shader/cs_particle/sort.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
+    success &= mSortShader.LoadAndCompile("shader/cs_particle/sort_struct.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
     success &= mSortShader.AttachLoadedShaders();
     success &= mSortShader.Link();
-    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
-    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.gs", Shader::SHADER_TYPE_GEOMETRY);
-    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
+    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render_struct.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render_struct.gs", Shader::SHADER_TYPE_GEOMETRY);
+    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render_struct.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
     success &= mRenderShader.AttachLoadedShaders();
     success &= mRenderShader.Link();
 
     return success;
 }
 
-void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
+void CsParticleSystemStruct::UpdateParticles(float deltaTime, const glm::vec3& cameraPos)
 {
     OPTICK_EVENT();
 
@@ -230,10 +205,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     CHECK_GL_ERROR();
 
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mAtomicBuffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mPosSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mVelSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mParticleSsbo);
 #if not SORT
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, mIndexSsbo);
 #endif
@@ -251,7 +223,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     CHECK_GL_ERROR();
 }
 
-void CsParticleSystem::PrepareRender(Camera* camera)
+void CsParticleSystemStruct::PrepareRender(Camera* camera)
 {
     mProjection = glm::perspective(glm::radians(camera->Zoom), camera->ViewWidth / camera->ViewHeight, 0.1f, 200.0f);
     mView = camera->GetViewMatrix();
@@ -260,13 +232,13 @@ void CsParticleSystem::PrepareRender(Camera* camera)
     mQuad2 = glm::normalize(glm::cross(camera->Front, mQuad1));
 }
 
-bool CsParticleSystem::AddModule(CsIModule* psModule)
+bool CsParticleSystemStruct::AddModule(CsIModuleStruct* psModule)
 {
     mModules.push_back(psModule);
     return true;
 }
 
-void CsParticleSystem::RenderParticles()
+void CsParticleSystemStruct::RenderParticles()
 {
     OPTICK_EVENT();
 
@@ -287,7 +259,7 @@ void CsParticleSystem::RenderParticles()
     glDisable(GL_BLEND);
 }
 
-void CsParticleSystem::ReadbackAtomicData()
+void CsParticleSystemStruct::ReadbackAtomicData()
 {
     OPTICK_EVENT();
 
@@ -301,7 +273,7 @@ void CsParticleSystem::ReadbackAtomicData()
     CHECK_GL_ERROR();
 }
 
-void CsParticleSystem::Sort()
+void CsParticleSystemStruct::Sort()
 {
     OPTICK_EVENT();
 
@@ -332,7 +304,7 @@ void CsParticleSystem::Sort()
     }
 }
 
-void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
+void CsParticleSystemStruct::SortLocalBms(uint32_t n, uint32_t h)
 {
     mSortShader.SetUInt("uAlgorithm", 0);
     mSortShader.SetUInt("uN", n);
@@ -343,7 +315,7 @@ void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void CsParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
+void CsParticleSystemStruct::SortLocalDisperse(uint32_t n, uint32_t h)
 {
     mSortShader.SetUInt("uAlgorithm", 1);
     mSortShader.SetUInt("uN", n);
@@ -354,7 +326,7 @@ void CsParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void CsParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
+void CsParticleSystemStruct::SortBigFlip(uint32_t n, uint32_t h)
 {
     mSortShader.SetUInt("uAlgorithm", 2);
     mSortShader.SetUInt("uN", n);
@@ -365,7 +337,7 @@ void CsParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void CsParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
+void CsParticleSystemStruct::SortBigDisperse(uint32_t n, uint32_t h)
 {
     mSortShader.SetUInt("uAlgorithm", 3);
     mSortShader.SetUInt("uN", n);
@@ -376,42 +348,42 @@ void CsParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-uint32_t CsParticleSystem::GetCurrentParticles() const
+uint32_t CsParticleSystemStruct::GetCurrentParticles() const
 {
     return mNumParticles;
 }
 
-void CsParticleSystem::SetMinLifetime(float minLifetime)
+void CsParticleSystemStruct::SetMinLifetime(float minLifetime)
 {
     mMinLifetime = minLifetime;
 }
 
-void CsParticleSystem::SetMaxLifetime(float maxLifetime)
+void CsParticleSystemStruct::SetMaxLifetime(float maxLifetime)
 {
     mMaxLifetime = maxLifetime;
 }
 
-void CsParticleSystem::SetMinStartVelocity(const glm::vec3& minVelocity)
+void CsParticleSystemStruct::SetMinStartVelocity(const glm::vec3& minVelocity)
 {
     mMinStartVelocity = minVelocity;
 }
 
-void CsParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
+void CsParticleSystemStruct::SetMaxStartVelocity(const glm::vec3& maxVelocity)
 {
     mMaxStartVelocity = maxVelocity;
 }
 
-void CsParticleSystem::SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap)
+void CsParticleSystemStruct::SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap)
 {
     mRenderFsMap = replaceMap;
 }
 
-Shader* CsParticleSystem::GetRenderShader()
+Shader* CsParticleSystemStruct::GetRenderShader()
 {
     return &mRenderShader;
 }
 
-uint32_t CsParticleSystem::GetAtomicLocation(const std::string& name) const
+uint32_t CsParticleSystemStruct::GetAtomicLocation(const std::string& name) const
 {
     const uint32_t atomicSize = GetAtomicSize();
     for (uint32_t i = 0; i < atomicSize; i++)
@@ -424,12 +396,12 @@ uint32_t CsParticleSystem::GetAtomicLocation(const std::string& name) const
     return -1;
 }
 
-uint32_t CsParticleSystem::GetDispatchSize() const
+uint32_t CsParticleSystemStruct::GetDispatchSize() const
 {
     return mNumMaxParticles / mLocalWorkGroupSize.x;
 }
 
-uint32_t CsParticleSystem::GetAtomicSize() const
+uint32_t CsParticleSystemStruct::GetAtomicSize() const
 {
     return static_cast<uint32_t>(mAtomicLocations.size());
 }

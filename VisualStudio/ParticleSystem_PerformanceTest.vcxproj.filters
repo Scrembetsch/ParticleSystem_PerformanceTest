@@ -94,6 +94,18 @@
     <ClCompile Include="..\src\common\particle_system\cs_module_color_over_lifetime.cpp">
       <Filter>common\particle_system\cs\modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_particle_system_struct.cpp">
+      <Filter>common\particle_system\cs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_module_color_over_lifetime_struct.cpp">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_module_emission_struct.cpp">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\cs_module_velocity_over_lifetime_struct.cpp">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -297,6 +309,21 @@
       <Filter>common\particle_system\cs\modules</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\cs_module_color_over_lifetime.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_particle_system_struct.h">
+      <Filter>common\particle_system\cs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_module_color_over_lifetime_struct.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_module_emission_struct.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_module_velocity_over_lifetime_struct.h">
+      <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\cs_i_module_struct.h">
       <Filter>common\particle_system\cs\modules</Filter>
     </ClInclude>
   </ItemGroup>

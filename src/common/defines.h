@@ -24,7 +24,11 @@
 #endif
 #endif
 
-#ifdef DEBUG
+#if CS
+	#define USE_STRUCT 0
+#endif
+
+#ifdef _DEBUG
 	#define MAX_PARTICLES (1024)
 	#define NUM_TO_GENERATE 100
 	#define WORK_GROUP_SIZE 256

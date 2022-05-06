@@ -9,8 +9,8 @@
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 #else
-const int WIDTH = 1920;
-const int HEIGHT = 1080;
+const int WIDTH = 2560;
+const int HEIGHT = 1440;
 #endif
 TestApp* g_TestApp = nullptr;
 

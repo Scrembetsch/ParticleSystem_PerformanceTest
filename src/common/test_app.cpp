@@ -18,6 +18,9 @@
 #include "particle_system/tf_module_velocity_over_lifetime.h"
 #include "particle_system/tf_module_color_over_lifetime.h"
 
+#include "particle_system/cs_module_emission_struct.h"
+#include "particle_system/cs_module_velocity_over_lifetime_struct.h"
+#include "particle_system/cs_module_color_over_lifetime_struct.h"
 #include "particle_system/cs_module_emission.h"
 #include "particle_system/cs_module_velocity_over_lifetime.h"
 #include "particle_system/cs_module_color_over_lifetime.h"
@@ -113,16 +116,38 @@ bool TestApp::Init()
 	success &= mTfParticleSystem->Init();
 #endif
 #if CS
+#if USE_STRUCT
+	mCsParticleSystem = new CsParticleSystemStruct(MAX_PARTICLES, WORK_GROUP_SIZE);
+#else
 	mCsParticleSystem = new CsParticleSystem(MAX_PARTICLES, WORK_GROUP_SIZE);
+#endif
 
 	mCsParticleSystem->SetMinLifetime(5.0f);
 	mCsParticleSystem->SetMaxLifetime(7.0f);
 	mCsParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mCsParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mCsParticleSystem->SetRenderFragReplaceMap(replaceMap);
-	mCsParticleSystem->AddModule(new CsModuleEmission(mCsParticleSystem, NUM_TO_GENERATE));
-	mCsParticleSystem->AddModule(new CsModuleVelOverLife(mCsParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-	mCsParticleSystem->AddModule(new CsModuleColorOverLife(mCsParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+	mCsParticleSystem->AddModule(
+#if USE_STRUCT
+		new CsModuleEmissionStruct
+#else
+		new CsModuleEmission
+#endif
+		(mCsParticleSystem, NUM_TO_GENERATE));
+	mCsParticleSystem->AddModule(
+#if USE_STRUCT
+		new CsModuleVelOverLifeStruct
+#else
+		new CsModuleVelOverLife
+#endif
+		(mCsParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	mCsParticleSystem->AddModule(
+#if USE_STRUCT
+		new CsModuleColorOverLifeStruct
+#else
+		new CsModuleColorOverLife
+#endif
+		(mCsParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 	success &= mCsParticleSystem->Init();
 #endif
 

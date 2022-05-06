@@ -3,8 +3,10 @@
 #include "defines.h"
 
 #include "particle_system/cpu_i_particle_system.h"
-#include "particle_system/cs_particle_system.h"
 #include "particle_system/tf_particle_system.h"
+
+#include "particle_system/cs_particle_system_struct.h"
+#include "particle_system/cs_particle_system.h"
 
 #include "gl/camera.h"
 #include "gl/texture_2d.h"
@@ -36,7 +38,11 @@ private:
 	CpuIParticleSystem* mCpuParticleSystem;
 #endif
 #if CS
-	CsParticleSystem* mCsParticleSystem;
+	#if USE_STRUCT
+		CsParticleSystemStruct* mCsParticleSystem;
+	#else
+		CsParticleSystem* mCsParticleSystem;
+	#endif
 #endif
 #if TF
 	TfParticleSystem* mTfParticleSystem;
