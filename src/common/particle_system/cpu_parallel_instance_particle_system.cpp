@@ -61,23 +61,25 @@ void CpuParallelInstanceParticleSystem::Worker::UpdateParticles()
 
 	for (size_t i = mStartIndex; i < mEndIndex; i++)
 	{
-		particles[i].CameraDistance = glm::distance2(particles[i].Position, mCameraPos);
+		Particle& particle = particles[i];
 
-		particles[i].Lifetime -= mDeltaTime;
-		if (particles[i].Lifetime <= 0.0f
-			&& particles[i].Active)
+		particle.Lifetime -= mDeltaTime * particle.Active;
+		if (particle.Lifetime <= 0.0f
+			&& particle.Active)
 		{
-			particles[i].Lifetime = 0.0f;
-			particles[i].Active = false;
-			particles[i].CameraDistance = -1.0f;
+			particle.Lifetime = 0.0f;
+			particle.Active = false;
+			particle.CameraDistance = -1.0f;
 			mRemovedParticles++;
 		}
+		if (!particle.Active)
+			continue;
 
 		for (uint32_t j = 0; j < modules.size(); j++)
 		{
-			modules[j]->UpdateParticle(mDeltaTime, particles[i]);
+			modules[j]->UpdateParticle(mDeltaTime, particle);
 		}
-		particles[i].Position += particles[i].Velocity * mDeltaTime;
+		particle.Position += particle.Velocity * mDeltaTime;
 	}
 }
 
@@ -120,10 +122,6 @@ CpuParallelInstanceParticleSystem::~CpuParallelInstanceParticleSystem()
 	if (mVboParticleData != 0)
 	{
 		glDeleteBuffers(1, &mVboParticleData);
-	}
-	for (uint32_t i = 0; i < mModules.size(); i++)
-	{
-		delete mModules[i];
 	}
 	CHECK_GL_ERROR();
 }

@@ -62,7 +62,13 @@ void CpuIParticleSystem::Emit(uint32_t numToGenerate)
 {
 	// Remembering last position would partially interfere with other optimizations
 	uint32_t generatedParticles = 0;
-	for (uint32_t i = 0; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
+	uint32_t start =
+#if SORT
+		mNumParticles;
+#else
+		0;
+#endif
+	for (uint32_t i = start; i < mNumMaxParticles && generatedParticles < numToGenerate; i++)
 	{
 		if (mParticles[i].Active)
 		{

@@ -44,10 +44,6 @@ CpuSerialInstanceParticleSystem::~CpuSerialInstanceParticleSystem()
 	{
 		glDeleteBuffers(1, &mVboParticleData);
 	}
-	for (size_t i = 0; i < mModules.size(); i++)
-	{
-		delete mModules[i];
-	}
 	CHECK_GL_ERROR();
 }
 
@@ -139,23 +135,27 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 	uint32_t updatedParticles = 0;
 	for (uint32_t i = 0; i < mNumMaxParticles; i++)
 	{
-		mParticles[i].CameraDistance = glm::distance2(mParticles[i].Position, cameraPos);
+		Particle& particle = mParticles[i];
 
-		mParticles[i].Lifetime -= deltaTime;
-		if (mParticles[i].Lifetime <= 0.0f
-			&& mParticles[i].Active)
+		particle.Lifetime -= deltaTime * particle.Active;
+		if (particle.Lifetime <= 0.0f
+			&& particle.Active)
 		{
-			mParticles[i].Lifetime = 0.0f;
-			mParticles[i].Active = false;
-			mParticles[i].CameraDistance = -1.0f;
+			particle.Lifetime = 0.0f;
+			particle.Active = false;
+			particle.CameraDistance = -1.0f;
 			mNumParticles--;
 		}
+		if (!particle.Active)
+			continue;
+
+		particle.CameraDistance = glm::distance2(particle.Position, cameraPos);
 
 		for (uint32_t j = 0; j < mModules.size(); j++)
 		{
-			mModules[j]->UpdateParticle(deltaTime, mParticles[i]);
+			mModules[j]->UpdateParticle(deltaTime, particle);
 		}
-		mParticles[i].Position += mParticles[i].Velocity * deltaTime;
+		particle.Position += particle.Velocity * deltaTime;
 
 		updatedParticles++;
 		if (updatedParticles == mNumParticles)

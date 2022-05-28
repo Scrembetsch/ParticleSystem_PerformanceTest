@@ -141,6 +141,11 @@ int main(int argc, char** argv)
         glfwPollEvents();
         g_TestApp->Step();
         glfwSwapBuffers(window);
+
+        if (g_TestApp->ShouldClose())
+        {
+            glfwSetWindowShouldClose(window, true);
+        }
     }
 
     delete g_TestApp;

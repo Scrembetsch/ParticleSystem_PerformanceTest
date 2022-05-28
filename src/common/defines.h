@@ -10,17 +10,17 @@
 	#define OPTICK_FRAME(...)
 #endif
 
-#define CPU 0
-#define CS  1
+#define CPU 1
+#define CS  0
 #define TF  0
 
-#define SORT 1
+#define SORT 0
 
 #if CPU
 	#define PARALLEL 0
 	#define INSTANCE 0
 #if not INSTANCE
-	#define INDEXED  1
+	#define INDEXED  0
 #endif
 #endif
 
@@ -28,14 +28,6 @@
 	#define USE_STRUCT 0
 #endif
 
-#ifdef _DEBUG
-	#define MAX_PARTICLES (1024)
-	#define NUM_TO_GENERATE 100
-	#define WORK_GROUP_SIZE 256
-#else
-	#define MAX_PARTICLES (1024 * 1024 * 2)
-	#define NUM_TO_GENERATE 300000
-	#define WORK_GROUP_SIZE 256
-#endif
+#define WORK_GROUP_SIZE 256
 
 #define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)
