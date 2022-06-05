@@ -15,6 +15,8 @@ public:
 
     void Use(Shader* shader = nullptr, GLuint overrideLocation = GL_TEXTURE) const override
     {
+        CHECK_GL_ERROR();
+
         if (overrideLocation == GL_TEXTURE)
         {
             glActiveTexture(mTexLocation);

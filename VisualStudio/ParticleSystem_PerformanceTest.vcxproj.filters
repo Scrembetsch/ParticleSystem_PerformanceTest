@@ -106,6 +106,12 @@
     <ClCompile Include="..\src\common\particle_system\cs_module_velocity_over_lifetime_struct.cpp">
       <Filter>common\particle_system\cs\modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\fs_particle_system.cpp">
+      <Filter>common\particle_system\fs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\fs_module_emission.cpp">
+      <Filter>common\particle_system\fs\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -155,6 +161,12 @@
     </Filter>
     <Filter Include="common\particle_system\cs\modules">
       <UniqueIdentifier>{ed9d05a3-45df-489d-8212-56520ed1b910}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\particle_system\fs">
+      <UniqueIdentifier>{bd5a4150-30e9-46ed-b378-dda885f880bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\particle_system\fs\modules">
+      <UniqueIdentifier>{97d02218-a5fc-47f7-aab3-4112d267be9d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -325,6 +337,15 @@
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\cs_i_module_struct.h">
       <Filter>common\particle_system\cs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\fs_particle_system.h">
+      <Filter>common\particle_system\fs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\fs_i_module.h">
+      <Filter>common\particle_system\fs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\fs_module_emission.h">
+      <Filter>common\particle_system\fs\modules</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

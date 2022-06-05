@@ -18,6 +18,8 @@
 #include "particle_system/tf_module_velocity_over_lifetime.h"
 #include "particle_system/tf_module_color_over_lifetime.h"
 
+#include "particle_system/fs_module_emission.h"
+
 #include "particle_system/cs_module_emission_struct.h"
 #include "particle_system/cs_module_velocity_over_lifetime_struct.h"
 #include "particle_system/cs_module_color_over_lifetime_struct.h"
@@ -59,7 +61,7 @@ bool TestApp::ReInit()
 #endif
 
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	uint32_t testRuns[] = { 1024 * 1024 * 2 };
+	uint32_t testRuns[] = { 32 * 32 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
@@ -108,6 +110,19 @@ bool TestApp::ReInit()
 	mParticleSystem->AddModule(new TfModuleEmission(mParticleSystem, NUM_TO_GENERATE));
 	mParticleSystem->AddModule(new TfModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mParticleSystem->AddModule(new TfModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+	success &= mParticleSystem->Init();
+#endif
+#if FS
+	mParticleSystem = new FsParticleSystem(mMaxParticles);
+
+	mParticleSystem->SetMinLifetime(emitMulti);
+	mParticleSystem->SetMaxLifetime(emitMulti);
+	mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
+	mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
+	mParticleSystem->SetRenderFragReplaceMap(replaceMap);
+	 mParticleSystem->AddModule(new FsModuleEmission(mParticleSystem, mEmitRate));
+	// mParticleSystem->AddModule(new TfModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+	// mParticleSystem->AddModule(new TfModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 	success &= mParticleSystem->Init();
 #endif
 #if CS
@@ -230,13 +245,14 @@ void TestApp::Step()
 	particles = mParticleSystem->GetCurrentParticles();
 	CHECK_GL_ERROR();
 #endif
-#if CS || TF
+#if CS || TF || FS
 	mParticleSystem->GetRenderShader()->Use();
 	mParticleTex.Use(mParticleSystem->GetRenderShader());
 	mParticleSystem->PrepareRender(&mCamera);
 	CHECK_GL_ERROR();
 #endif
 	mParticleSystem->RenderParticles();
+	CHECK_GL_ERROR();
 	particles = mParticleSystem->GetCurrentParticles();
 	CHECK_GL_ERROR();
 
@@ -281,6 +297,9 @@ void TestApp::Step()
 #endif
 #if TF
 			"TF";
+#endif
+#if FS
+			"FS";
 #endif
 #if CS
 			"CS (" + std::to_string(WORK_GROUP_SIZE) + ")";

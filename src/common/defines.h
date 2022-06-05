@@ -11,8 +11,9 @@
 #endif
 
 #define CPU 0
-#define CS  1
+#define CS  0
 #define TF  0
+#define FS  1
 
 #define SORT 0
 

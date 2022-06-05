@@ -8,6 +8,8 @@
 #include "particle_system/cs_particle_system_struct.h"
 #include "particle_system/cs_particle_system.h"
 
+#include "particle_system/fs_particle_system.h"
+
 #include "gl/camera.h"
 #include "gl/texture_2d.h"
 
@@ -63,5 +65,8 @@ private:
 #endif
 #if TF
 	TfParticleSystem* mParticleSystem = nullptr;
+#endif
+#if FS
+	FsParticleSystem* mParticleSystem = nullptr;
 #endif
 };
