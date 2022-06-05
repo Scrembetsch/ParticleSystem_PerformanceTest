@@ -10,7 +10,6 @@ CpuIParticleSystem::CpuIParticleSystem(uint32_t maxParticles)
 	, mMaxStartVelocity(0)
 {
 	mParticles.resize(mNumMaxParticles);
-	mParticleRenderData.resize(CpuRenderParticle::ParticleSize * mNumVertices * mNumMaxParticles);
 }
 
 CpuIParticleSystem::~CpuIParticleSystem()

@@ -59,7 +59,7 @@ bool TestApp::ReInit()
 #endif
 
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	uint32_t testRuns[] = { 5000000 };
+	uint32_t testRuns[] = { 1024 * 1024 * 2 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
@@ -96,7 +96,7 @@ bool TestApp::ReInit()
 	mParticleSystem->AddModule(new CpuModuleEmission(mParticleSystem, mEmitRate));
 	mParticleSystem->AddModule(new CpuModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 	mParticleSystem->AddModule(new CpuModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
-
+#endif
 #if TF
 	mParticleSystem = new TfParticleSystem(mMaxParticles);
 
@@ -119,7 +119,7 @@ bool TestApp::ReInit()
 
 	mParticleSystem->SetMinLifetime(emitMulti);
 	mParticleSystem->SetMaxLifetime(emitMulti);
-	mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
+	mParticleSystem->SetMinStartVelocity(glm::vec3(4.0f, -2.0f, -1.0f));
 	mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mParticleSystem->SetRenderFragReplaceMap(replaceMap);
 	mParticleSystem->AddModule(
@@ -129,14 +129,14 @@ bool TestApp::ReInit()
 		new CsModuleEmission
 #endif
 		(mParticleSystem, mEmitRate));
-	mCsParticleSystem->AddModule(
+	mParticleSystem->AddModule(
 #if USE_STRUCT
 		new CsModuleVelOverLifeStruct
 #else
 		new CsModuleVelOverLife
 #endif
 		(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-	mCsParticleSystem->AddModule(
+	mParticleSystem->AddModule(
 #if USE_STRUCT
 		new CsModuleColorOverLifeStruct
 #else
@@ -177,6 +177,7 @@ bool TestApp::Init()
 	replaceMap.emplace_back("USE_TEX0", "uDiffuseMap");
 #endif
 
+#if CPU
 #if INSTANCE
 	success &= mCpuShader.LoadAndCompile("shader/instance.vs", Shader::ShaderType::SHADER_TYPE_VERTEX);
 	success &= mCpuShader.LoadAndCompile("shader/instance.fs", Shader::ShaderType::SHADER_TYPE_FRAGMENT, replaceMap);

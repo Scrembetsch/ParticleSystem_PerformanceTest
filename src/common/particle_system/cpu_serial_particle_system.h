@@ -23,4 +23,6 @@ protected:
 #if INDEXED
     std::vector<uint32_t> mIndices;
 #endif
+
+    std::vector<CpuRenderParticle> mParticleRenderData;
 };

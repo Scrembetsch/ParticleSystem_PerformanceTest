@@ -49,4 +49,5 @@ protected:
     uint32_t mVboParticleData;
 
     std::vector<Worker> mWorkers;
+    std::vector<float> mParticleRenderData;
 };

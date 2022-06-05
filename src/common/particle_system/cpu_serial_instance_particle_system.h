@@ -19,4 +19,7 @@ protected:
     uint32_t mVao;
     uint32_t mVboParticlePosition;
     uint32_t mVboParticleData;
+
+    std::vector<float> mParticleRenderData;
+
 };

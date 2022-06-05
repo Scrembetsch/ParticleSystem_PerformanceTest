@@ -54,7 +54,6 @@ protected:
     glm::vec3 mMinStartVelocity;
     glm::vec3 mMaxStartVelocity;
 
-    std::vector<float> mParticleRenderData;
     std::vector<Particle> mParticles;
     std::vector<CpuIModule*> mModules;
 };

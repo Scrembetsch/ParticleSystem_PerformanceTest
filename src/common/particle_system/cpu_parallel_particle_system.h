@@ -54,4 +54,6 @@ protected:
 
     std::vector<Worker> mWorkers;
     std::atomic_uint32_t mParticlesToDraw;
+
+    std::vector<float> mParticleRenderData;
 };

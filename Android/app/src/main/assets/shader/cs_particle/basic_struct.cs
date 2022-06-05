@@ -74,18 +74,17 @@ void main()
 
     if(lParticle.Lifetime.x <= 0.0)
     {
-        lParticle.Position.w = -1.0;
-        Particles[gid] = lParticle;
+        Particles[gid].Position.w = -1.0;
         return;
     }
 
     uint index = atomicCounterIncrement(NumAlive);
     INDEX_BUFFER_SET_ID
 
-    lParticle.Position.xyz = lParticle.Position.xyz + lParticle.Velocity.xyz * uDeltaTime;
+    lParticle.Position = lParticle.Position + lParticle.Velocity * uDeltaTime;
     lParticle.Lifetime.x -= uDeltaTime;
 
-    lParticle.Position.w = distance(lParticle.Position.xyz, uCameraPos);
+    lParticle.Position.xyzw = vec4(lParticle.Position.xyz, distance(lParticle.Position.xyz, uCameraPos));
 
     Particles[gid] = lParticle;
 }
