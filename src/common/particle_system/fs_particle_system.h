@@ -10,6 +10,7 @@
 #include "fs_i_module.h"
 
 #include <cstdint>
+#include <stack>
 #include <queue>
 
 class FsParticleSystem
@@ -41,7 +42,10 @@ public:
 
 private:
 	void CheckForDeadParticles();
+	void InitParticles(uint32_t fromId, uint32_t toId);
 
+	uint32_t mEmptyVao;
+	uint32_t mEmptyVbo;
 	uint32_t mUpdateVao;
 	uint32_t mUpdateVbo;
 

@@ -13,7 +13,9 @@ static const float sBasePlaneVertexData[] =
 };
 
 FsParticleSystem::FsParticleSystem(uint32_t maxParticles)
-    : mUpdateVao(0)
+    : mEmptyVao(0)
+    , mEmptyVbo(0)
+    , mUpdateVao(0)
     , mUpdateVbo(0)
     , mResolutionX(0)
     , mResolutionY(0)
@@ -41,6 +43,16 @@ FsParticleSystem::FsParticleSystem(uint32_t maxParticles)
 
 FsParticleSystem::~FsParticleSystem()
 {
+    if (mEmptyVbo != 0)
+    {
+        glDeleteBuffers(1, &mEmptyVbo);
+        mEmptyVbo = 0;
+    }
+    if (mEmptyVao != 0)
+    {
+        glDeleteVertexArrays(1, &mEmptyVao);
+        mEmptyVao = 0;
+    }
     if (mUpdateVbo != 0)
     {
         glDeleteBuffers(1, &mUpdateVbo);
@@ -60,6 +72,15 @@ FsParticleSystem::~FsParticleSystem()
 
 bool FsParticleSystem::Init()
 {
+    glGenVertexArrays(1, &mEmptyVao);
+    glBindVertexArray(mEmptyVao);
+
+    glGenBuffers(1, &mEmptyVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mEmptyVbo);
+    float* tempData = new float[mNumMaxParticles * 6];
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tempData), tempData, GL_STATIC_DRAW);
+    delete tempData;
+
     glGenVertexArrays(1, &mUpdateVao);
     glBindVertexArray(mUpdateVao);
     CHECK_GL_ERROR();
@@ -85,8 +106,8 @@ bool FsParticleSystem::Init()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mResolutionX, mResolutionY, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mPosition[i].mTex, 0);
         CHECK_GL_ERROR();
 
@@ -97,8 +118,8 @@ bool FsParticleSystem::Init()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mResolutionX, mResolutionY, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, mVelocity[i].mTex, 0);
         CHECK_GL_ERROR();
 
@@ -109,8 +130,8 @@ bool FsParticleSystem::Init()
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mResolutionX, mResolutionY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, mColor[i].mTex, 0);
         CHECK_GL_ERROR();
 
@@ -138,8 +159,8 @@ bool FsParticleSystem::Init()
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
     CHECK_GL_ERROR();
 
@@ -156,6 +177,21 @@ bool FsParticleSystem::Init()
     replaceParts.emplace_back("USE_TEX3", "uColorMap");
     replaceParts.emplace_back("DECL_TEX4", "layout (binding = 4) uniform sampler2D uData0Map;");
     replaceParts.emplace_back("USE_TEX4", "uData0Map");
+
+    std::string moduleMethods;
+    std::string moduleCalls;
+    std::string moduleUniforms;
+
+    for (size_t i = 0; i < mModules.size(); i++)
+    {
+        moduleMethods += mModules[i]->GetModuleMethods();
+        moduleCalls += mModules[i]->GetMethodCall();
+        moduleUniforms += mModules[i]->GetUniforms();
+    }
+
+    replaceParts.emplace_back("MODULE_UNIFORMS", moduleUniforms);
+    replaceParts.emplace_back("MODULE_METHODS", moduleMethods);
+    replaceParts.emplace_back("MODULE_CALLS", moduleCalls);
 
     bool success = true;
     success &= mUpdateShader.LoadAndCompile("shader/fs_particle/update.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
@@ -179,19 +215,19 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     int32_t val = 0;
     glGetIntegerv(GL_DRAW_BUFFER, &val);
 
-    CheckForDeadParticles();
-
-    for (uint32_t i = 0; i < mModules.size(); i++)
-    {
-        mModules[i]->PreRun(mCurrentTime, deltaTime);
-    }
-
     int32_t viewPortDims[4];
     glGetIntegerv(GL_VIEWPORT, viewPortDims);
     glViewport(0, 0, mResolutionX, mResolutionY);
 
     mCurrentReadBuffer = 1 - mCurrentReadBuffer;
     mCurrentWriteBuffer = 1 - mCurrentReadBuffer;
+
+    CheckForDeadParticles();
+
+    for (uint32_t i = 0; i < mModules.size(); i++)
+    {
+        mModules[i]->PreRun(mCurrentTime, deltaTime);
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer[mCurrentWriteBuffer]);
     unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
@@ -202,6 +238,19 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     mUpdateShader.SetFloat("uCurrentTime", mCurrentTime);
     mUpdateShader.SetFloat("uDeltaTime", deltaTime);
     mUpdateShader.SetVec3("uCameraPos", cameraPos);
+    mUpdateShader.SetVec3("uPosition", glm::vec3(0.0f));
+    mUpdateShader.SetVec3("uCameraPos", cameraPos);
+    mUpdateShader.SetVec3("uRandomSeed", glm::vec3(mRandom.Rand(-20.0f, 20.0f), mRandom.Rand(-20.0f, 20.0f), mRandom.Rand(-20.0f, 20.0f)));
+    mUpdateShader.SetVec3("uVelocityMin", mMinStartVelocity);
+    mUpdateShader.SetVec3("uVelocityRange", mMaxStartVelocity - mMinStartVelocity);
+
+    mUpdateShader.SetFloat("uLifeTimeMin", mMinLifetime);
+    mUpdateShader.SetFloat("uLifeTimeRange", mMaxLifetime - mMinLifetime);
+
+    for (uint32_t i = 0; i < mModules.size(); i++)
+    {
+        mModules[i]->ApplyShaderValues(mCurrentTime, deltaTime, &mUpdateShader);
+    }
 
     mPosition[mCurrentReadBuffer].Use(&mUpdateShader);
     mVelocity[mCurrentReadBuffer].Use(&mUpdateShader);
@@ -217,8 +266,11 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    unsigned int baseattachments[3] = { val, GL_NONE, GL_NONE };
+    unsigned int baseattachments[3] = { GL_NONE, GL_NONE, GL_NONE };
     glDrawBuffers(3, baseattachments);
+    CHECK_GL_ERROR();
+
+    glDrawBuffer(val);
     CHECK_GL_ERROR();
 
     glViewport(viewPortDims[0], viewPortDims[1], viewPortDims[2], viewPortDims[3]);
@@ -243,22 +295,26 @@ void FsParticleSystem::RenderParticles()
     glDepthMask(GL_FALSE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (mNumParticles > 0)
-    {
-        mRenderShader.Use();
-        mRenderShader.SetMat4("uProjection", mProjection);
-        mRenderShader.SetMat4("uView", mView);
-        mRenderShader.SetVec3("uQuad1", mQuad1);
-        mRenderShader.SetVec3("uQuad2", mQuad2);
-        CHECK_GL_ERROR();
+    mRenderShader.Use();
+    mRenderShader.SetFloat("uCurrentTime", mCurrentTime);
+    mRenderShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mRenderShader.SetMat4("uProjection", mProjection);
+    mRenderShader.SetMat4("uView", mView);
+    mRenderShader.SetVec3("uQuad1", mQuad1);
+    mRenderShader.SetVec3("uQuad2", mQuad2);
 
-        glBindVertexArray(0);
-        glDrawArrays(GL_TRIANGLES, 0, mNumMaxParticles * 6);
-        CHECK_GL_ERROR();
+    mPosition[mCurrentWriteBuffer].Use(&mRenderShader);
+    mVelocity[mCurrentWriteBuffer].Use(&mRenderShader);
+    mColor[mCurrentWriteBuffer].Use(&mRenderShader);
+    mData0.Use(&mRenderShader);
+    CHECK_GL_ERROR();
 
-        glDepthMask(GL_TRUE);
-        glDisable(GL_BLEND);
-    }
+    glBindVertexArray(mEmptyVao);
+    glDrawArrays(GL_TRIANGLES, 0, mNumMaxParticles * 6);
+    CHECK_GL_ERROR();
+
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 
     CHECK_GL_ERROR();
 }
@@ -270,38 +326,97 @@ void FsParticleSystem::AddModule(FsIModule* mod)
 
 void FsParticleSystem::Emit(uint32_t numToGenerate)
 {
-    uint32_t maxToGenerate = std::min(numToGenerate, uint32_t(mGenerateQueue.size()));
+    numToGenerate = std::min(numToGenerate, uint32_t(mGenerateQueue.size()));
+    uint32_t generated = 0;
 
-    for (uint32_t i = 0; i < maxToGenerate; i++)
+    uint32_t startId = 0;
+    uint32_t startIdRow = 0;
+    uint32_t lastId = 0;
+    uint32_t length = 0;
+
+    while (numToGenerate > 0 && !mGenerateQueue.empty())
     {
-        glm::vec4 newData;
-        newData.x = mCurrentTime + mRandom.Rand(mMinLifetime, mMaxLifetime);
-        newData.y = mCurrentTime;
-
-        uint32_t id = mGenerateQueue.front();
+        bool update = false;
+        startId = mGenerateQueue.front();
         mGenerateQueue.pop();
+        startIdRow = startId / mResolutionX;
+        lastId = startId;
+        length = 1;
+        numToGenerate--;
 
-        int32_t x = id % mResolutionX;
-        int32_t y = id / mResolutionY;
+        while (!update && numToGenerate > 0 && !mGenerateQueue.empty())
+        {
+            uint32_t id = mGenerateQueue.front();
+            if (id != lastId + 1
+                || id / mResolutionX != startIdRow)
+            {
+                update = true;
+                continue;
+            }
+            mGenerateQueue.pop();
 
-        glTextureSubImage2D(mData0.mTex, 0, x, y, 1, 1, GL_RGBA, GL_FLOAT, &newData);
-        CHECK_GL_ERROR();
+            lastId = id;
+            length++;
+            numToGenerate--;
+
+            if (numToGenerate == 0 || mGenerateQueue.empty())
+                update = true;
+        }
+
+        generated += length;
+        InitParticles(startId, startId + length);
     }
-    mNumParticles += maxToGenerate;
+
+    //for (uint32_t i = 0; i < maxToGenerate; i++)
+    //{
+    //    uint32_t id = mGenerateQueue.front();
+    //    mGenerateQueue.pop();
+    //    int32_t x = id % mResolutionX;
+    //    int32_t y = id / mResolutionY;
+
+    //    mData0Array[id].x = mCurrentTime + mRandom.Rand(mMinLifetime, mMaxLifetime);
+    //    mData0Array[id].y = mCurrentTime;
+
+    //    glTextureSubImage2D(mData0.mTex, 0, x, y, 1, 1, GL_RGBA, GL_FLOAT, &mData0Array[id]);
+    //    CHECK_GL_ERROR();
+
+    //    generated++;
+    //}
+    mNumParticles += generated;
+}
+
+void FsParticleSystem::InitParticles(uint32_t fromId, uint32_t toId)
+{
+    uint32_t row = fromId / mResolutionX;
+    uint32_t column = fromId % mResolutionX;
+
+    for (uint32_t i = fromId; i < toId; i++)
+    {
+        mData0Array[i].x = mCurrentTime + mRandom.Rand(mMinLifetime, mMaxLifetime);
+        mData0Array[i].y = mCurrentTime;
+    }
+
+    glTextureSubImage2D(mData0.mTex, 0, column, row, toId - fromId, 1, GL_RGBA, GL_FLOAT, &mData0Array[fromId]);
 }
 
 void FsParticleSystem::CheckForDeadParticles()
 {
     uint32_t updatedParticles = 0;
+    uint32_t removedParticles = 0;
     for (uint32_t i = 0; i < mNumMaxParticles && updatedParticles < mNumParticles; i++)
     {
-        if (mData0Array[i].x >= mCurrentTime)
+        if (mData0Array[i].x == 0.0f)
+            continue;
+
+        if (mCurrentTime >= mData0Array[i].x)
         {
             mData0Array[i].x = 0.0f;
             mGenerateQueue.push(i);
-            mNumParticles--;
+            removedParticles--;
         }
+        updatedParticles++;
     }
+    mNumParticles -= removedParticles;
 }
 
 uint32_t FsParticleSystem::GetCurrentParticles() const

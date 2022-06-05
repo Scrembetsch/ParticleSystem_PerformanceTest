@@ -112,6 +112,12 @@
     <ClCompile Include="..\src\common\particle_system\fs_module_emission.cpp">
       <Filter>common\particle_system\fs\modules</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\fs_module_color_over_lifetime.cpp">
+      <Filter>common\particle_system\fs\modules</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\common\particle_system\fs_module_velocity_over_lifetime.cpp">
+      <Filter>common\particle_system\fs\modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="common">
@@ -345,6 +351,12 @@
       <Filter>common\particle_system\fs\modules</Filter>
     </ClInclude>
     <ClInclude Include="..\src\common\particle_system\fs_module_emission.h">
+      <Filter>common\particle_system\fs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\fs_module_color_over_lifetime.h">
+      <Filter>common\particle_system\fs\modules</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\common\particle_system\fs_module_velocity_over_lifetime.h">
       <Filter>common\particle_system\fs\modules</Filter>
     </ClInclude>
   </ItemGroup>
