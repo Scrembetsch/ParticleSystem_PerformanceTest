@@ -3,17 +3,14 @@
 #include "cs_particle_system.h"
 
 static const std::string sMethodCall = {
-"	ColorOverlifetimeModule(color, lifetimes);\n"
+"	ColorOverlifetimeModule();\n"
 };
 
 static const std::string sMethod = {
-"void ColorOverlifetimeModule(inout vec4 color, vec2 lifetimes)\n"
+"void ColorOverlifetimeModule()\n"
 "{\n"
-"  if(lifetimes.x >= 0.0)\n"
-"  {\n"
-"    float t = 1.0 - (lifetimes.x / lifetimes.y);\n"
-"    color = uColorBegin + t * (uColorEnd - uColorBegin);\n"
-"  }\n"
+"  vec4 col = uColorBegin + (1.0 - lParticle.LifetimeT) * (uColorEnd - uColorBegin);\n"
+"  lParticle.Color = col * lParticle.AliveF;"
 "}\n"
 };
 

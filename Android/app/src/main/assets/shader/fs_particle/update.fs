@@ -1,6 +1,6 @@
 #version VERSION
 
-precision mediump float;
+precision highp float;
 
 layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oVelocity;
@@ -45,13 +45,16 @@ MODULE_METHODS
 
 float randZeroOne()
 {
-    uint n = floatBitsToUint(lLocalSeed.y * 2.113 + lLocalSeed.x * 1.892 + lLocalSeed.z * 1.4234);
-    n = n * (n * n * 15731u + 789221u);
-    n = (n >> 9u) | 0x3F800000u;
- 
-    float fRes =  2.0 - uintBitsToFloat(n);
-    lLocalSeed = vec3(lLocalSeed.x + 14158.0 * fRes, lLocalSeed.y * fRes  + 411.0 * fRes, lLocalSeed.z + 254.0 * fRes);
-    return fRes;
+  float value = fract(sin(dot(vec2(lLocalSeed.x + lLocalSeed.y, lLocalSeed.z), vec2(12.9898, 78.233))) * 43758.5453);
+  lLocalSeed = vec3(lLocalSeed.x * value, lLocalSeed.y + value, lLocalSeed.z + 9.12 + value);
+  return value;
+  // uint n = floatBitsToUint(lLocalSeed.y * 1.2342 + lLocalSeed.x * 1.9283490 + lLocalSeed.z * 1.1568678);
+  // n = n * (n * n * 151u + 7821u);
+  // n = (n >> 9u) | 0x3F800000u;
+
+  // float fRes =  2.0 - uintBitsToFloat(n);
+  // lLocalSeed = vec3(lLocalSeed.x + 14.0 * fRes, lLocalSeed.y * fRes  + 41.0 * fRes, lLocalSeed.z + 2.0 * fRes);
+  // return fRes;
 }
 
 void InitParticle()

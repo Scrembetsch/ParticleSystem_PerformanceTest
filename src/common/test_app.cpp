@@ -63,7 +63,7 @@ bool TestApp::ReInit()
 #endif
 
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	uint32_t testRuns[] = { 128 * 128};
+	uint32_t testRuns[] = { 1024 * 1024};
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
@@ -118,8 +118,8 @@ bool TestApp::ReInit()
 #if FS
 	mParticleSystem = new FsParticleSystem(mMaxParticles);
 
-	mParticleSystem->SetMinLifetime(emitMulti);
-	mParticleSystem->SetMaxLifetime(emitMulti);
+	mParticleSystem->SetMinLifetime(emitMulti - 0.1);
+	mParticleSystem->SetMaxLifetime(emitMulti + 0.1);
 	mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mParticleSystem->SetRenderFragReplaceMap(replaceMap);
@@ -137,7 +137,7 @@ bool TestApp::ReInit()
 
 	mParticleSystem->SetMinLifetime(emitMulti);
 	mParticleSystem->SetMaxLifetime(emitMulti);
-	mParticleSystem->SetMinStartVelocity(glm::vec3(4.0f, -2.0f, -1.0f));
+	mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 	mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 	mParticleSystem->SetRenderFragReplaceMap(replaceMap);
 	mParticleSystem->AddModule(

@@ -13,7 +13,7 @@ out vec3 vRand;
 
 void main()
 {
-    vRand = uRandomSeed + vec3((gl_VertexID + 1) * 12.5, aPosition * 75.4);
+    vRand = uRandomSeed * vec3((float(gl_VertexID) + 1.0) * 12.5, aPosition * 7.4);
     gl_Position = vec4(aPosition, 0.0 , 1.0);
     vTexCoord = vec2(aPosition);
     vTexCoord.x = max(vTexCoord.x, 0.0);

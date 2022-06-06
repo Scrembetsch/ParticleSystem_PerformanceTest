@@ -213,8 +213,11 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     mCurrentTime += deltaTime;
 
     int32_t val = 0;
+#if _WIN32
     glGetIntegerv(GL_DRAW_BUFFER, &val);
-
+#else
+    glGetIntegerv(GL_DRAW_BUFFER0, &val);
+#endif
     int32_t viewPortDims[4];
     glGetIntegerv(GL_VIEWPORT, viewPortDims);
     glViewport(0, 0, mResolutionX, mResolutionY);
@@ -266,11 +269,14 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    unsigned int baseattachments[3] = { GL_NONE, GL_NONE, GL_NONE };
-    glDrawBuffers(3, baseattachments);
+    unsigned int baseattachments[1] = { GL_NONE};
+    baseattachments[0] = val;
+    glDrawBuffers(1, baseattachments);
     CHECK_GL_ERROR();
 
+#if _WIN32
     glDrawBuffer(val);
+#endif
     CHECK_GL_ERROR();
 
     glViewport(viewPortDims[0], viewPortDims[1], viewPortDims[2], viewPortDims[3]);
@@ -329,74 +335,21 @@ void FsParticleSystem::Emit(uint32_t numToGenerate)
     numToGenerate = std::min(numToGenerate, uint32_t(mGenerateQueue.size()));
     uint32_t generated = 0;
 
-    uint32_t startId = 0;
-    uint32_t startIdRow = 0;
-    uint32_t lastId = 0;
-    uint32_t length = 0;
+    glBindTexture(GL_TEXTURE_2D, mData0.mTex);
 
     while (numToGenerate > 0 && !mGenerateQueue.empty())
     {
-        bool update = false;
-        startId = mGenerateQueue.front();
+        uint32_t id = mGenerateQueue.front();
         mGenerateQueue.pop();
-        startIdRow = startId / mResolutionX;
-        lastId = startId;
-        length = 1;
+        mData0Array[id].x = mCurrentTime + mRandom.Rand(mMinLifetime, mMaxLifetime);
+        mData0Array[id].y = mCurrentTime;
         numToGenerate--;
-
-        while (!update && numToGenerate > 0 && !mGenerateQueue.empty())
-        {
-            uint32_t id = mGenerateQueue.front();
-            if (id != lastId + 1
-                || id / mResolutionX != startIdRow)
-            {
-                update = true;
-                continue;
-            }
-            mGenerateQueue.pop();
-
-            lastId = id;
-            length++;
-            numToGenerate--;
-
-            if (numToGenerate == 0 || mGenerateQueue.empty())
-                update = true;
-        }
-
-        generated += length;
-        InitParticles(startId, startId + length);
+        generated++;
     }
+    if (generated > 0)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mResolutionX, mResolutionY, GL_RGBA, GL_FLOAT, &mData0Array[0]);
 
-    //for (uint32_t i = 0; i < maxToGenerate; i++)
-    //{
-    //    uint32_t id = mGenerateQueue.front();
-    //    mGenerateQueue.pop();
-    //    int32_t x = id % mResolutionX;
-    //    int32_t y = id / mResolutionY;
-
-    //    mData0Array[id].x = mCurrentTime + mRandom.Rand(mMinLifetime, mMaxLifetime);
-    //    mData0Array[id].y = mCurrentTime;
-
-    //    glTextureSubImage2D(mData0.mTex, 0, x, y, 1, 1, GL_RGBA, GL_FLOAT, &mData0Array[id]);
-    //    CHECK_GL_ERROR();
-
-    //    generated++;
-    //}
     mNumParticles += generated;
-}
-
-void FsParticleSystem::InitParticles(uint32_t fromId, uint32_t toId)
-{
-    uint32_t row = fromId / mResolutionX;
-    uint32_t column = fromId % mResolutionX;
-
-    for (uint32_t i = fromId; i < toId; i++)
-    {
-        mData0Array[i].x = mCurrentTime + mRandom.Rand(mMinLifetime, mMaxLifetime);
-        mData0Array[i].y = mCurrentTime;
-    }
-
-    glTextureSubImage2D(mData0.mTex, 0, column, row, toId - fromId, 1, GL_RGBA, GL_FLOAT, &mData0Array[fromId]);
 }
 
 void FsParticleSystem::CheckForDeadParticles()
@@ -412,7 +365,7 @@ void FsParticleSystem::CheckForDeadParticles()
         {
             mData0Array[i].x = 0.0f;
             mGenerateQueue.push(i);
-            removedParticles--;
+            removedParticles++;
         }
         updatedParticles++;
     }

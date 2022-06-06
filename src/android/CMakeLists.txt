@@ -19,6 +19,8 @@ add_library(
         ../common/particle_system/cpu_parallel_particle_system.cpp
         ../common/particle_system/tf_particle_system.cpp
         ../common/particle_system/cs_particle_system.cpp
+        ../common/particle_system/fs_particle_system.cpp
+        ../common/particle_system/cs_particle_system_struct.cpp
         ../common/util/random.cpp
 
         ../common/particle_system/cpu_module_color_over_lifetime.cpp
@@ -29,9 +31,16 @@ add_library(
         ../common/particle_system/tf_module_velocity_over_lifetime.cpp
         ../common/particle_system/tf_module_emission.cpp
 
+        ../common/particle_system/fs_module_color_over_lifetime.cpp
+        ../common/particle_system/fs_module_velocity_over_lifetime.cpp
+        ../common/particle_system/fs_module_emission.cpp
+
         ../common/particle_system/cs_module_color_over_lifetime.cpp
         ../common/particle_system/cs_module_velocity_over_lifetime.cpp
         ../common/particle_system/cs_module_emission.cpp
+        ../common/particle_system/cs_module_color_over_lifetime_struct.cpp
+        ../common/particle_system/cs_module_velocity_over_lifetime_struct.cpp
+        ../common/particle_system/cs_module_emission_struct.cpp
 )
 
 find_library(

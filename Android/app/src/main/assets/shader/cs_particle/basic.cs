@@ -42,6 +42,20 @@ MODULE_UNIFORMS
 
 vec3 lLocalSeed;
 
+struct Particle
+{
+    vec3 Position;
+    float DistanceToCamera;
+    vec3 Velocity;
+    vec4 Color;
+    float CurrentLifetime;
+    float BeginLifetime;
+    float LifetimeT;
+    bool Alive;
+    float AliveF;
+};
+Particle lParticle;
+
 float randZeroOne()
 {
     uint n = floatBitsToUint(lLocalSeed.y * 2.113 + lLocalSeed.x * 1.892 + lLocalSeed.z * 1.4234);
@@ -58,13 +72,39 @@ void GenSeed()
     lLocalSeed = vec3(uRandomSeed.x + float(gl_GlobalInvocationID.x) / 20.0, uRandomSeed.y - float(gl_GlobalInvocationID.x) / 20.0, uRandomSeed.z - float(gl_GlobalInvocationID.x) / 50.0);
 }
 
-void InitParticle(uint id)
+void InitLocalParticle()
 {
-    Positions[id].xyz = uPosition;
-    Velocities[id].xyz = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
-    Colors[id].rgba = vec4(1.0);
-    Lifetimes[id].x = uLifeTimeMin + uLifeTimeRange * randZeroOne();
-    Lifetimes[id].y = Lifetimes[id].x;
+    uint gid = gl_GlobalInvocationID.x;
+
+    lParticle.Position = Positions[gid].xyz;
+    lParticle.Velocity = Velocities[gid].xyz;
+    lParticle.Color = Colors[gid].rgba;
+    lParticle.CurrentLifetime = Lifetimes[gid].x - uDeltaTime;
+    lParticle.BeginLifetime = Lifetimes[gid].y;
+    lParticle.LifetimeT = lParticle.CurrentLifetime / lParticle.BeginLifetime;
+    lParticle.Alive = lParticle.CurrentLifetime > 0.0;
+    lParticle.AliveF = float(lParticle.Alive);
+}
+
+void WriteParticleToStorage()
+{
+    uint gid = gl_GlobalInvocationID.x;
+
+    Positions[gid] = vec4(lParticle.Position, lParticle.DistanceToCamera);
+    Velocities[gid].xyz = lParticle.Velocity;
+    Colors[gid] = lParticle.Color;
+    Lifetimes[gid].xy = vec2(lParticle.CurrentLifetime, lParticle.BeginLifetime);
+}
+
+void InitParticle()
+{
+    lParticle.Position = uPosition;
+    lParticle.Velocity = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
+    lParticle.Color = vec4(1.0);
+    lParticle.BeginLifetime = uLifeTimeMin + uLifeTimeRange * randZeroOne();
+    lParticle.CurrentLifetime = lParticle.BeginLifetime;
+    lParticle.LifetimeT = 1.0;
+    lParticle.Alive = true;
 }
 
 MODULE_METHODS
@@ -74,31 +114,22 @@ void main()
     uint gid = gl_GlobalInvocationID.x;
     GenSeed();
 
-    vec3 position = Positions[gid].xyz;
-    vec3 velocity = Velocities[gid].xyz;
-    vec2 lifetimes = Lifetimes[gid].xy;
-    vec4 color = Colors[gid].rgba;
+    InitLocalParticle();
 
     MODULE_CALLS
 
-    bool alive = lifetimes.x > 0.0;
-    uint aliveInt = alive ? 1U : 0U;
-    float aliveFloat = float(aliveInt);
-
-    if(!alive)
+    if(!lParticle.Alive)
     {
-        Positions[gid].w = -1.0;
+        lParticle.DistanceToCamera = -1.0;
+        WriteParticleToStorage();
         return;
     }
 
     uint index = atomicCounterIncrement(NumAlive);
     INDEX_BUFFER_SET_ID
 
-    position = position + velocity * uDeltaTime;
-    lifetimes.x -= uDeltaTime;
+    lParticle.Position = lParticle.Position + lParticle.Velocity * uDeltaTime;
+    lParticle.DistanceToCamera = distance(lParticle.Position, uCameraPos);
 
-    Positions[gid].xyzw = vec4(position, distance(position, uCameraPos));
-    Velocities[gid].xyz = velocity;
-    Lifetimes[gid].x = lifetimes.x;
-    Colors[gid] = color;
+    WriteParticleToStorage();
 }

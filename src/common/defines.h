@@ -29,6 +29,6 @@
 	#define USE_STRUCT 0
 #endif
 
-#define WORK_GROUP_SIZE 256
+#define WORK_GROUP_SIZE 128
 
 #define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)

@@ -3,27 +3,22 @@
 #include "cs_particle_system.h"
 
 static const std::string sMethodCall = {
-"	if(lifetimes.x <= 0.0)\n"
+"	if(!lParticle.Alive)\n"
 "	{\n"
-"		if(EmissionModule(gid))\n"
-"		{\n"
-"			position = Positions[gid].xyz;\n"
-"			velocity = Velocities[gid].xyz;\n"
-"			lifetimes = Lifetimes[gid].xy;\n"
-"			color = Colors[gid].rgba;\n"
-"		}\n"
+"		EmissionModule();\n"
 "   }\n"
 };
 
 static const std::string sMethod = {
-"bool EmissionModule(uint gid)\n"
+"void EmissionModule()\n"
 "{\n"
+"  if(atomicCounter(EmitNumToGenerate) < (-1U / 2U))"
+"  {"
 "    if(atomicCounterDecrement(EmitNumToGenerate) < (-1U / 2U))\n"
 "    {\n"
-"        InitParticle(gid);\n"
-"        return true;\n"
+"        InitParticle();\n"
 "     }\n"
-"     return false;\n"
+"  }\n"
 "}\n"
 };
 

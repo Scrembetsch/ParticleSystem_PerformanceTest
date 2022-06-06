@@ -3,18 +3,14 @@
 #include "cs_particle_system.h"
 
 static const std::string sMethodCall = {
-"	VelOverlifetimeModule(velocity, lifetimes);\n"
+"	VelOverlifetimeModule();\n"
 };
 
 static const std::string sMethod = {
-"void VelOverlifetimeModule(inout vec3 velocity, vec2 lifetimes)\n"
+"void VelOverlifetimeModule()\n"
 "{\n"
-"  if(lifetimes.x >= 0.0)\n"
-"  {\n"
-"    float t = 1.0 - (lifetimes.x / lifetimes.y);\n"
-"    vec3 vel = uVelocityBegin + t * (uVelocityEnd - uVelocityBegin);\n"
-"    velocity += vel * uDeltaTime;\n"
-"  }\n"
+"  vec3 vel = uVelocityBegin + (1.0 - lParticle.LifetimeT) * (uVelocityEnd - uVelocityBegin);\n"
+"  lParticle.Velocity += vel * uDeltaTime * lParticle.AliveF;\n"
 "}\n"
 };
 
