@@ -4,6 +4,7 @@ precision mediump float;
 
 DECL_TEX1
 DECL_TEX4
+DECL_TEX5
 
 uniform mat4 uProjection;
 uniform mat4 uView;
@@ -21,9 +22,10 @@ void main()
     vec2 vId = vec2(0.0);
     vId.x = float(id % uint(uResolution.x));
     vId.y = float(id / uint(uResolution.x));
-    vTexId.x = float(id % uint(uResolution.x)) / uResolution.x;
-    vTexId.y = float(id / uint(uResolution.x)) / uResolution.y;
-    vec3 position = texture(USE_TEX1, vec2(vTexId.x, vTexId.y)).xyz;
+    vec2 offset = (1.0 / uResolution) / 2.0;
+    vTexId = texture(USE_TEX5, (vId / uResolution) + offset).rg;
+
+    vec3 position = texture(USE_TEX1, vTexId).xyz;
 
     float bl = float(subId == 0U);
     float br = float(subId == 1U || subId == 3U);

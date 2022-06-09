@@ -68,6 +68,10 @@ FsParticleSystem::~FsParticleSystem()
         glDeleteFramebuffers(1, &mFramebuffer[i]);
         mFramebuffer[i] = 0;
     }
+#if SORT
+    glDeleteFramebuffers(1, &mSortBuffer);
+    mSortBuffer = 0;
+#endif
 }
 
 bool FsParticleSystem::Init()
@@ -77,9 +81,6 @@ bool FsParticleSystem::Init()
 
     glGenBuffers(1, &mEmptyVbo);
     glBindBuffer(GL_ARRAY_BUFFER, mEmptyVbo);
-    float* tempData = new float[mNumMaxParticles * 6];
-    glBufferData(GL_ARRAY_BUFFER, sizeof(tempData), tempData, GL_STATIC_DRAW);
-    delete tempData;
 
     glGenVertexArrays(1, &mUpdateVao);
     glBindVertexArray(mUpdateVao);
@@ -92,6 +93,10 @@ bool FsParticleSystem::Init()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glBindVertexArray(0);
+
+#if SORT
+    glGenFramebuffers(1, &mSortBuffer);
+#endif
 
     for (uint32_t i = 0; i < 2; i++)
     {
@@ -135,7 +140,16 @@ bool FsParticleSystem::Init()
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, mColor[i].mTex, 0);
         CHECK_GL_ERROR();
 
-
+        glGenTextures(1, &mIndex[i].mTex);
+        mIndex[i].mTexName = "uIndexMap";
+        mIndex[i].mTexLocation = GL_TEXTURE5;
+        glBindTexture(GL_TEXTURE_2D, mIndex[i].mTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mResolutionX, mResolutionY, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, mIndex[i].mTex, 0);
     }
     CHECK_GL_ERROR();
 
@@ -162,8 +176,6 @@ bool FsParticleSystem::Init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
-    CHECK_GL_ERROR();
-
     std::vector<std::pair<std::string, std::string>> replaceParts;
     for (auto it = mRenderFsMap.begin(); it != mRenderFsMap.end(); it++)
     {
@@ -177,6 +189,10 @@ bool FsParticleSystem::Init()
     replaceParts.emplace_back("USE_TEX3", "uColorMap");
     replaceParts.emplace_back("DECL_TEX4", "layout (binding = 4) uniform sampler2D uData0Map;");
     replaceParts.emplace_back("USE_TEX4", "uData0Map");
+    replaceParts.emplace_back("DECL_TEX5", "layout (binding = 5) uniform sampler2D uIndexMap;");
+    replaceParts.emplace_back("USE_TEX5", "uIndexMap");
+    replaceParts.emplace_back("DECL_TEX6", "layout (binding = 6) uniform sampler2D uDebugMap;");
+    replaceParts.emplace_back("USE_TEX6", "uDebugMap");
 
     std::string moduleMethods;
     std::string moduleCalls;
@@ -202,6 +218,26 @@ bool FsParticleSystem::Init()
     success &= mRenderShader.LoadAndCompile("shader/fs_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
     success &= mRenderShader.AttachLoadedShaders();
     success &= mRenderShader.Link();
+
+#if SORT
+    success &= mSortShader.LoadAndCompile("shader/fs_particle/sort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    success &= mSortShader.LoadAndCompile("shader/fs_particle/sort.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
+    success &= mSortShader.AttachLoadedShaders();
+    success &= mSortShader.Link();
+#endif
+
+    //success &= mSortColShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    //success &= mSortColShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort_Col.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
+    //success &= mSortColShader.AttachLoadedShaders();
+    //success &= mSortColShader.Link();
+    //success &= mSortRow01Shader.LoadAndCompile("shader/fs_particle/bitonicMergeSort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    //success &= mSortRow01Shader.LoadAndCompile("shader/fs_particle/bitonicMergeSort_Row01.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
+    //success &= mSortRow01Shader.AttachLoadedShaders();
+    //success &= mSortRow01Shader.Link();
+    //success &= mSortRowNShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    //success &= mSortRowNShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort_RowN.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
+    //success &= mSortRowNShader.AttachLoadedShaders();
+    //success &= mSortRowNShader.Link();
     CHECK_GL_ERROR();
 
 
@@ -224,7 +260,8 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     mCurrentReadBuffer = 1 - mCurrentReadBuffer;
     mCurrentWriteBuffer = 1 - mCurrentReadBuffer;
-
+    mSortCurrentReadBuffer = mCurrentReadBuffer;
+    mSortCurrentWriteBuffer = mCurrentWriteBuffer;
     CheckForDeadParticles();
 
     for (uint32_t i = 0; i < mModules.size(); i++)
@@ -233,11 +270,12 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer[mCurrentWriteBuffer]);
-    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-    glDrawBuffers(3, attachments);
+    unsigned int attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+    glDrawBuffers(4, attachments);
     CHECK_GL_ERROR();
 
     mUpdateShader.Use();
+    mUpdateShader.SetVec2("uResolution", mResolutionX, mResolutionY);
     mUpdateShader.SetFloat("uCurrentTime", mCurrentTime);
     mUpdateShader.SetFloat("uDeltaTime", deltaTime);
     mUpdateShader.SetVec3("uCameraPos", cameraPos);
@@ -265,6 +303,10 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindVertexArray(mUpdateVao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     CHECK_GL_ERROR();
+
+#if SORT
+    Sort();
+#endif
 
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -312,11 +354,16 @@ void FsParticleSystem::RenderParticles()
     mPosition[mCurrentWriteBuffer].Use(&mRenderShader);
     mVelocity[mCurrentWriteBuffer].Use(&mRenderShader);
     mColor[mCurrentWriteBuffer].Use(&mRenderShader);
+    mIndex[mSortCurrentWriteBuffer].Use(&mRenderShader);
     mData0.Use(&mRenderShader);
     CHECK_GL_ERROR();
 
     glBindVertexArray(mEmptyVao);
+#if SORT
+    glDrawArrays(GL_TRIANGLES, 0, mNumParticles * 6);
+#else
     glDrawArrays(GL_TRIANGLES, 0, mNumMaxParticles * 6);
+#endif
     CHECK_GL_ERROR();
 
     glDepthMask(GL_TRUE);
@@ -324,6 +371,41 @@ void FsParticleSystem::RenderParticles()
 
     CHECK_GL_ERROR();
 }
+
+#if SORT
+void FsParticleSystem::Sort()
+{
+    mSortShader.Use();
+    mSortShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+
+    mPosition[mCurrentWriteBuffer].Use(&mSortShader);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, mSortBuffer);
+    glBindVertexArray(mUpdateVao);
+
+    unsigned int baseattachments[] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, baseattachments);
+    CHECK_GL_ERROR();
+
+    for (uint32_t stageDistance = 1; stageDistance < mNumMaxParticles; stageDistance *= 2)
+    {
+        for (uint32_t stepDistance = stageDistance; stepDistance > 0; stepDistance /= 2)
+        {
+            mSortCurrentReadBuffer = 1 - mSortCurrentReadBuffer;
+            mSortCurrentWriteBuffer = 1 - mSortCurrentReadBuffer;
+
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mIndex[mSortCurrentWriteBuffer].mTex, 0);
+
+            mIndex[mSortCurrentReadBuffer].Use(&mSortShader);
+            mSortShader.SetUInt("uStageDistance", stageDistance);
+            mSortShader.SetUInt("uStepDistance", stepDistance);
+
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            CHECK_GL_ERROR();
+        }
+    }
+}
+#endif
 
 void FsParticleSystem::AddModule(FsIModule* mod)
 {

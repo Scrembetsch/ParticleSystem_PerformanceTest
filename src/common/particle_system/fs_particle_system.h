@@ -43,6 +43,13 @@ public:
 private:
 	void CheckForDeadParticles();
 
+	// Sorting
+#if SORT
+	void Sort();
+	uint32_t mSortBuffer = 0;
+	Shader mSortShader;
+#endif
+
 	uint32_t mEmptyVao;
 	uint32_t mEmptyVbo;
 	uint32_t mUpdateVao;
@@ -52,6 +59,7 @@ private:
 	Texture2D mPosition[2];
 	Texture2D mVelocity[2];
 	Texture2D mColor[2];
+	Texture2D mIndex[2];
 	Texture2D mData0;
 
 	uint32_t mResolutionX;
@@ -71,6 +79,9 @@ private:
 
 	uint32_t mCurrentReadBuffer;
 	uint32_t mCurrentWriteBuffer;
+
+	uint32_t mSortCurrentReadBuffer;
+	uint32_t mSortCurrentWriteBuffer;
 
 	glm::vec3 mMinStartVelocity;
 	glm::vec3 mMaxStartVelocity;

@@ -240,6 +240,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     CHECK_GL_ERROR();
 
     glDispatchCompute(GetDispatchSize(), 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     CHECK_GL_ERROR();
 
     ReadbackAtomicData();
@@ -248,6 +249,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     Sort();
 #endif
 
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     CHECK_GL_ERROR();
 }
 

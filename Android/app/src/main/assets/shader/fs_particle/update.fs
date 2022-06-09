@@ -5,6 +5,7 @@ precision highp float;
 layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oVelocity;
 layout (location = 2) out vec4 oColor;
+layout (location = 3) out vec4 oIndex;
 
 DECL_TEX1
 DECL_TEX2
@@ -19,6 +20,7 @@ uniform vec3 uVelocityMin;
 uniform vec3 uVelocityRange;
 uniform float uLifeTimeMin;
 uniform float uLifeTimeRange;
+uniform vec2 uResolution;
 
 MODULE_UNIFORMS
 
@@ -30,7 +32,6 @@ vec3 lLocalSeed;
 struct Particle
 {
     vec3 Position;
-    float DistanceToCamera;
     vec3 Velocity;
     vec4 Color;
     float DeathTime;
@@ -60,7 +61,6 @@ float randZeroOne()
 void InitParticle()
 {
   lParticle.Position = uPosition;
-  lParticle.DistanceToCamera = distance(uCameraPos, lParticle.Position);
   lParticle.Velocity = uVelocityMin + vec3(uVelocityRange.x * randZeroOne(), uVelocityRange.y * randZeroOne(), uVelocityRange.z * randZeroOne());
   lParticle.Color = vec4(1.0);
 }
@@ -68,7 +68,6 @@ void InitParticle()
 void InitLocalParticle()
 {
   lParticle.Position = texture(USE_TEX1, vTexCoord).xyz;
-  lParticle.DistanceToCamera = distance(lParticle.Position, uCameraPos);
 
   lParticle.Velocity = texture(USE_TEX2, vTexCoord).xyz;
 
@@ -83,12 +82,15 @@ void InitLocalParticle()
 void SetOutputValues()
 {
   oPosition.xyz = lParticle.Position;
-  oPosition.w = lParticle.DistanceToCamera;
+  oPosition.w = distance(lParticle.Position, uCameraPos) * float(lParticle.Alive) - float(!lParticle.Alive);
 
   oVelocity.xyz = lParticle.Velocity;
   oVelocity.w = 1.0;
 
   oColor = lParticle.Color;
+
+  oIndex.xy = vTexCoord;
+  oIndex.z = oPosition.w;
 }
 
 void main()

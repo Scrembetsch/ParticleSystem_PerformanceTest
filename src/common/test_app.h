@@ -34,6 +34,7 @@ private:
 	std::chrono::time_point<std::chrono::system_clock> mLastFrameTime;
 	Camera mCamera;
 
+	uint32_t mNumSystems = 0;
 	int32_t mFrameCount = 0;
 	float mFrameTime = 0.0f;
 	float mTimeSinceStart = 0.0f;
@@ -54,19 +55,19 @@ private:
 
 #if CPU
 	Shader mCpuShader;
-	CpuIParticleSystem* mParticleSystem = nullptr;
+	CpuIParticleSystem** mParticleSystems = nullptr;
 #endif
 #if CS
 	#if USE_STRUCT
-		CsParticleSystemStruct* mParticleSystem = nullptr;
+		CsParticleSystemStruct** mParticleSystems = nullptr;
 	#else
-		CsParticleSystem* mParticleSystem = nullptr;
+		CsParticleSystem** mParticleSystems = nullptr;
 	#endif
 #endif
 #if TF
-	TfParticleSystem* mParticleSystem = nullptr;
+	TfParticleSystem** mParticleSystems = nullptr;
 #endif
 #if FS
-	FsParticleSystem* mParticleSystem = nullptr;
+	FsParticleSystem** mParticleSystems = nullptr;
 #endif
 };
