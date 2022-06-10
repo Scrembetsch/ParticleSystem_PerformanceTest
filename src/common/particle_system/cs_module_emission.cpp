@@ -12,13 +12,10 @@ static const std::string sMethodCall = {
 static const std::string sMethod = {
 "void EmissionModule()\n"
 "{\n"
-"  if(atomicCounter(EmitNumToGenerate) < (-1U / 2U))"
-"  {"
-"    if(atomicCounterDecrement(EmitNumToGenerate) < (-1U / 2U))\n"
-"    {\n"
-"        InitParticle();\n"
-"     }\n"
-"  }\n"
+"  if(atomicCounterDecrement(EmitNumToGenerate) < (-1U / 2U))\n"
+"  {\n"
+"      InitParticle();\n"
+"   }\n"
 "}\n"
 };
 

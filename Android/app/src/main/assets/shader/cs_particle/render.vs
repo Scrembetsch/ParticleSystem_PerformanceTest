@@ -2,12 +2,36 @@
 
 precision mediump float;
 
-layout (location = 1) in vec4 aPosition;
-layout (location = 2) in vec4 aVelocity;
-layout (location = 3) in vec4 aColor;
-layout (location = 4) in vec4 aLifetime;
+layout(shared, binding=1) buffer Position
+{
+    vec4 Positions[];
+};
 
-INDEX_BUFFER_DECL
+layout(shared, binding=2) buffer Velocity
+{
+    vec4 Velocities[];
+};
+
+layout(std430, binding=3) buffer Color
+{
+    vec4 Colors[];
+};
+
+layout(std430, binding=4) buffer Lifetime
+{
+    vec4 Lifetimes[];
+};
+
+struct IndexStruct
+{
+    uint Idx;
+    float Distance;
+};
+
+layout(std430, binding=5) buffer Index
+{
+    IndexStruct Indices[];
+};
 
 uniform mat4 uProjection;
 uniform mat4 uView;
@@ -17,10 +41,9 @@ out vec4 vColorPass;
 
 void main()
 {
-    INDEX_BUFFER_ID
-    SORTED_VERTICES_ID
-    
-    gl_Position = vec4(aPosition.xyz, 1.0);
-    vLifetimePass = aLifetime.x;
-    vColorPass = aColor;
+    uint id = Indices[gl_VertexID].Idx;    
+
+    gl_Position = vec4(Positions[id].xyz, 1.0);
+    vLifetimePass = Lifetimes[id].x;
+    vColorPass = Colors[id];
 }

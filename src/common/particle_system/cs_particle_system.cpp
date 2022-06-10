@@ -6,9 +6,9 @@
 #define CREATE_BUFFER(val, size, attribPtr, type) \
 glGenBuffers(1, &val);  \
 glBindBuffer(GL_ARRAY_BUFFER, val); \
-glBufferData(GL_ARRAY_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW); \
-glEnableVertexAttribArray(attribPtr); \
-glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0)
+glBufferData(GL_ARRAY_BUFFER, size * sizeof(type), NULL, GL_STATIC_DRAW) \
+//glEnableVertexAttribArray(attribPtr); \
+//glVertexAttribPointer(attribPtr, 4, GL_FLOAT, GL_FALSE, sizeof(type), (void*)0)
 
 #define INIT_BUFFER_BEGIN(size, type) \
 { \
@@ -116,7 +116,6 @@ bool CsParticleSystem::Init()
     CREATE_BUFFER(mPosSsbo, mNumMaxParticles, 1, glm::vec4);
     INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
         buffer[i] = glm::vec4(0.0f);
-        buffer[i].w = 1.0f;
     INIT_BUFFER_END();
 
     CREATE_BUFFER(mVelSsbo, mNumMaxParticles, 2, glm::vec4);
@@ -134,12 +133,17 @@ bool CsParticleSystem::Init()
         buffer[i] = glm::vec4(0.0f);
     INIT_BUFFER_END();
 
-#if not SORT
-    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, glm::uvec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::uvec4)
-        buffer[i] = glm::uvec4(0.0f);
+    struct IndexStruct
+    {
+        uint32_t Index;
+        float Distance;
+    };
+
+    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, IndexStruct);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, IndexStruct)
+        buffer[i].Index = 0;
+        buffer[i].Distance = -1.0f;
     INIT_BUFFER_END();
-#endif
 
     CHECK_GL_ERROR();
 
@@ -171,19 +175,6 @@ bool CsParticleSystem::Init()
     replaceParts.emplace_back("MODULE_UNIFORMS", moduleUniforms);
     replaceParts.emplace_back("MODULE_METHODS", moduleMethods);
     replaceParts.emplace_back("MODULE_CALLS", moduleCalls);
-
-#if SORT
-    replaceParts.emplace_back("INDEX_BUFFER_DECL", "");
-    replaceParts.emplace_back("INDEX_BUFFER_ID", "");
-    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "");
-    replaceParts.emplace_back("SORTED_VERTICES_ID", "uint id = uint(gl_VertexID);\n");
-#else
-    replaceParts.emplace_back("INDEX_BUFFER_DECL", "layout(std140, binding = 5) buffer Index{ uvec4 Indices[]; };\n");
-    replaceParts.emplace_back("INDEX_BUFFER_ID", "uint id = Indices[gl_VertexID].x;\n");
-    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "Indices[index].x = gid;\n");
-    replaceParts.emplace_back("SORTED_VERTICES_ID", "");
-#endif
-
 
     bool success = true;
     success &= mComputeShader.LoadAndCompile("shader/cs_particle/basic.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
@@ -234,13 +225,13 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mVelSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
-#if not SORT
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, mIndexSsbo);
-#endif
+
     CHECK_GL_ERROR();
 
     glDispatchCompute(GetDispatchSize(), 1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    CHECK_GL_ERROR();
+    glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
     CHECK_GL_ERROR();
 
     ReadbackAtomicData();
@@ -339,6 +330,7 @@ void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uAlgorithm", 0);
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
+    mSortShader.SetUInt("uAliveParticles", mNumParticles);
 
     glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 

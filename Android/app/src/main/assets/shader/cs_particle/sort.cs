@@ -9,40 +9,30 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
-layout(std140, binding=1) buffer Position
+struct IndexStruct
 {
-    vec4 Positions[];
+    uint Idx;
+    float Distance;
 };
 
-layout(std140, binding=2) buffer Velocity
+layout(std430, binding=5) buffer Index
 {
-    vec4 Velocities[];
-};
-
-layout(std140, binding=3) buffer Color
-{
-    vec4 Colors[];
-};
-
-layout(std140, binding=4) buffer Lifetime
-{
-    vec4 Lifetimes[];
+    IndexStruct Indices[];
 };
 
 uniform uint uAlgorithm;
 uniform uint uN;
 uniform uint uH;
 
+uniform uint uAliveParticles;
+
 // Workgroup local memory. We use this to minimise round-trips to global memory.
 // It allows us to evaluate a sorting network of up to 1024 with one shader invocation.
-shared vec4 local_lifetimes[LOCAL_SIZE_X * 2];
-shared vec4 local_positions[LOCAL_SIZE_X * 2];
-shared vec4 local_velocity[LOCAL_SIZE_X * 2];
-shared vec4 local_colors[LOCAL_SIZE_X * 2];
+shared IndexStruct local_indices[LOCAL_SIZE_X * 2];
 
-void Swap(inout vec4 x, inout vec4 y)
+void Swap(inout IndexStruct x, inout IndexStruct y)
 {
-	vec4 tmp = x;
+	IndexStruct tmp = x;
 	x = y;
 	y = tmp;
 }
@@ -53,12 +43,9 @@ bool IsSmaller(float x, float y)
 }
 
 void global_compare_and_swap(uvec2 idx){
-	if (IsSmaller(Positions[idx.x].w, Positions[idx.y].w))
+	if (IsSmaller(Indices[idx.x].Distance, Indices[idx.y].Distance))
     {
-        Swap(Lifetimes[idx.x], Lifetimes[idx.y]);
-        Swap(Positions[idx.x], Positions[idx.y]);
-        Swap(Velocities[idx.x], Velocities[idx.y]);
-        Swap(Colors[idx.x], Colors[idx.y]);
+        Swap(Indices[idx.x], Indices[idx.y]);
 	}
 }
 
@@ -111,12 +98,9 @@ void big_disperse( in uint n, in uint h ) {
 // Performs compare-and-swap over elements held in shared,
 // workgroup-local memory
 void local_compare_and_swap(uvec2 idx){
-	if (IsSmaller(local_positions[idx.x].w, local_positions[idx.y].w))
+	if (IsSmaller(local_indices[idx.x].Distance, local_indices[idx.y].Distance))
     {
-        Swap(local_lifetimes[idx.x], local_lifetimes[idx.y]);
-        Swap(local_positions[idx.x], local_positions[idx.y]);
-        Swap(local_velocity[idx.x], local_velocity[idx.y]);
-        Swap(local_colors[idx.x], local_colors[idx.y]);
+        Swap(local_indices[idx.x], local_indices[idx.y]);
 	}
 }
 
@@ -177,17 +161,21 @@ void main(){
 	uint offset = gl_WorkGroupSize.x * 2U * gl_WorkGroupID.x; 
 
 	if (uAlgorithm <= eLocalDisperse){
-		// pull to local memory
-	    // Each local worker must save two elements to local memory, as there
-	    // are twice as many elments as workers.
-		local_lifetimes[t*2U]   = Lifetimes[offset+t*2U];
-		local_lifetimes[t*2U+1U] = Lifetimes[offset+t*2U+1U];
-        local_positions[t*2U]   = Positions[offset+t*2U];
-		local_positions[t*2U+1U] = Positions[offset+t*2U+1U];
-        local_velocity[t*2U]   = Velocities[offset+t*2U];
-		local_velocity[t*2U+1U] = Velocities[offset+t*2U+1U];
-        local_colors[t*2U]   = Colors[offset+t*2U];
-		local_colors[t*2U+1U] = Colors[offset+t*2U+1U];
+		if(uAlgorithm == eLocalBms)
+		{
+			local_indices[t*2U]   = Indices[offset+t*2U];
+			local_indices[t*2U+1U] = Indices[offset+t*2U+1U];
+			local_indices[t*2U].Distance = (offset+t*2U) < uAliveParticles ?local_indices[t*2U].Distance : -1.0;
+			local_indices[t*2U+1U].Distance = (offset+t*2U+1U) < uAliveParticles ? local_indices[t*2U+1U].Distance : -1.0;
+		}
+		else
+		{
+			// pull to local memory
+			// Each local worker must save two elements to local memory, as there
+			// are twice as many elments as workers.
+			local_indices[t*2U]   = Indices[offset+t*2U];
+			local_indices[t*2U+1U] = Indices[offset+t*2U+1U];
+		}
 	}
 
 	uint n = uN;
@@ -212,13 +200,7 @@ void main(){
 	if (uAlgorithm <= eLocalDisperse){
 		barrier();
 		// push to global memory
-		Lifetimes[offset+t*2U]   = local_lifetimes[t*2U];
-		Lifetimes[offset+t*2U+1U] = local_lifetimes[t*2U+1U];
-        Positions[offset+t*2U]   = local_positions[t*2U];
-		Positions[offset+t*2U+1U] = local_positions[t*2U+1U];
-        Velocities[offset+t*2U]   = local_velocity[t*2U];
-		Velocities[offset+t*2U+1U] = local_velocity[t*2U+1U];
-        Colors[offset+t*2U]   = local_colors[t*2U];
-		Colors[offset+t*2U+1U] = local_colors[t*2U+1U];
+		Indices[offset+t*2U]   = local_indices[t*2U];
+		Indices[offset+t*2U+1U] = local_indices[t*2U+1U];
 	}
 }

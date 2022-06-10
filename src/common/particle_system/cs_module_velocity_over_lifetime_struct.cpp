@@ -9,12 +9,8 @@ static const std::string sMethodCall = {
 static const std::string sMethod = {
 "void VelOverlifetimeModule()\n"
 "{\n"
-"  if(lParticle.Lifetime.x >= 0.0)\n"
-"  {\n"
-"    float t = 1.0 - (lParticle.Lifetime.x / lParticle.Lifetime.y);\n"
-"    vec3 vel = uVelocityBegin + t * (uVelocityEnd - uVelocityBegin);\n"
-"    lParticle.Velocity.xyz += vel * uDeltaTime;\n"
-"  }\n"
+"  vec3 vel = uVelocityBegin + (1.0 - lParticle.LifetimeT) * (uVelocityEnd - uVelocityBegin);\n"
+"  lParticle.Velocity += vel * uDeltaTime * lParticle.AliveF;\n"
 "}\n"
 };
 

@@ -9,8 +9,8 @@ static const std::string sMethodCall = {
 static const std::string sMethod = {
 "void ColorOverlifetimeModule()\n"
 "{\n"
-"  vec4 col = uColorBegin + (1.0 - lParticle.LifetimeT) * (uColorEnd - uColorBegin);\n"
-"  lParticle.Color = col * lParticle.AliveF;"
+"  float t = (1.0 - lParticle.LifetimeT);\n"
+"  lParticle.Color = uColorBegin + t * (uColorEnd - uColorBegin);\n"
 "}\n"
 };
 

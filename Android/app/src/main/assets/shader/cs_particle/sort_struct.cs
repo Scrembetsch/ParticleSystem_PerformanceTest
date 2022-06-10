@@ -9,31 +9,30 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
-struct Particle
+struct IndexStruct
 {
-    vec4 Position;
-    vec4 Velocity;
-    vec4 Color;
-    vec4 Lifetime;
+    uint Idx;
+    float Distance;
 };
 
-// Buffer always uses vec4
-layout(std140, binding=1) buffer ParticleBuffer
+layout(std430, binding=5) buffer Index
 {
-    Particle Particles[];
+    IndexStruct Indices[];
 };
 
 uniform uint uAlgorithm;
 uniform uint uN;
 uniform uint uH;
 
+uniform uint uAliveParticles;
+
 // Workgroup local memory. We use this to minimise round-trips to global memory.
 // It allows us to evaluate a sorting network of up to 1024 with one shader invocation.
-shared Particle local_particles[LOCAL_SIZE_X * 2];
+shared IndexStruct local_indices[LOCAL_SIZE_X * 2];
 
-void Swap(inout Particle x, inout Particle y)
+void Swap(inout IndexStruct x, inout IndexStruct y)
 {
-	Particle tmp = x;
+	IndexStruct tmp = x;
 	x = y;
 	y = tmp;
 }
@@ -44,9 +43,9 @@ bool IsSmaller(float x, float y)
 }
 
 void global_compare_and_swap(uvec2 idx){
-	if (IsSmaller(Particles[idx.x].Position.w, Particles[idx.y].Position.w))
+	if (IsSmaller(Indices[idx.x].Distance, Indices[idx.y].Distance))
     {
-        Swap(Particles[idx.x], Particles[idx.y]);
+        Swap(Indices[idx.x], Indices[idx.y]);
 	}
 }
 
@@ -99,9 +98,9 @@ void big_disperse( in uint n, in uint h ) {
 // Performs compare-and-swap over elements held in shared,
 // workgroup-local memory
 void local_compare_and_swap(uvec2 idx){
-	if (IsSmaller(local_particles[idx.x].Position.w, local_particles[idx.y].Position.w))
+	if (IsSmaller(local_indices[idx.x].Distance, local_indices[idx.y].Distance))
     {
-        Swap(local_particles[idx.x], local_particles[idx.y]);
+        Swap(local_indices[idx.x], local_indices[idx.y]);
 	}
 }
 
@@ -162,11 +161,21 @@ void main(){
 	uint offset = gl_WorkGroupSize.x * 2U * gl_WorkGroupID.x; 
 
 	if (uAlgorithm <= eLocalDisperse){
-		// pull to local memory
-	    // Each local worker must save two elements to local memory, as there
-	    // are twice as many elments as workers.
-		local_particles[t*2U]   = Particles[offset+t*2U];
-		local_particles[t*2U+1U] = Particles[offset+t*2U+1U];
+		if(uAlgorithm == eLocalBms)
+		{
+			local_indices[t*2U]   = Indices[offset+t*2U];
+			local_indices[t*2U+1U] = Indices[offset+t*2U+1U];
+			local_indices[t*2U].Distance = (offset+t*2U) < uAliveParticles ?local_indices[t*2U].Distance : -1.0;
+			local_indices[t*2U+1U].Distance = (offset+t*2U+1U) < uAliveParticles ? local_indices[t*2U+1U].Distance : -1.0;
+		}
+		else
+		{
+			// pull to local memory
+			// Each local worker must save two elements to local memory, as there
+			// are twice as many elments as workers.
+			local_indices[t*2U]   = Indices[offset+t*2U];
+			local_indices[t*2U+1U] = Indices[offset+t*2U+1U];
+		}
 	}
 
 	uint n = uN;
@@ -191,7 +200,7 @@ void main(){
 	if (uAlgorithm <= eLocalDisperse){
 		barrier();
 		// push to global memory
-		Particles[offset+t*2U]   = local_particles[t*2U];
-		Particles[offset+t*2U+1U] = local_particles[t*2U+1U];
+		Indices[offset+t*2U]   = local_indices[t*2U];
+		Indices[offset+t*2U+1U] = local_indices[t*2U+1U];
 	}
 }

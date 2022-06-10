@@ -56,14 +56,15 @@ bool TestApp::ReInit()
 
 	mNumSystems = 1;
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	//uint32_t testRuns[] = { 4 * 4 };
-	uint32_t testRuns[] = { 256 * 256};
+	//uint32_t testRuns[] = { 8 };
+	uint32_t testRuns[] = { 1024 * 1024 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
 	mMaxParticles = testRuns[mCurrentTestRun];
 	mEmitRate = mMaxParticles / emitMulti;
 	//mEmitRate = 1;
+	emitMulti -= emitMulti / 10.0f;
 
 	std::vector<std::pair<std::string, std::string>> replaceMap;
 #ifdef _WIN32
@@ -136,7 +137,7 @@ bool TestApp::ReInit()
 		mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 		mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 		mParticleSystem->SetRenderFragReplaceMap(replaceMap);
-		mParticleSystem->AddModule(new TfModuleEmission(mParticleSystem, NUM_TO_GENERATE));
+		mParticleSystem->AddModule(new TfModuleEmission(mParticleSystem, mEmitRate));
 		mParticleSystem->AddModule(new TfModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
 		mParticleSystem->AddModule(new TfModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 		success &= mParticleSystem->Init();

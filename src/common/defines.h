@@ -11,11 +11,11 @@
 #endif
 
 #define CPU 0
-#define CS  0
+#define CS  1
 #define TF  0
-#define FS  1
+#define FS  0
 
-#define SORT 0
+#define SORT 1
 
 #if CPU
 	#define PARALLEL 0
@@ -26,9 +26,9 @@
 #endif
 
 #if CS
-	#define USE_STRUCT 0
+	#define USE_STRUCT 1
 #endif
 
-#define WORK_GROUP_SIZE 128
+#define WORK_GROUP_SIZE 256
 
 #define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)

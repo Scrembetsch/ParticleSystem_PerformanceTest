@@ -6,28 +6,36 @@ layout(local_size_x = LOCAL_SIZE_X) in;
 
 MODULE_ATOMIC_COUNTERS
 
-// Buffer always uses vec4
-layout(std140, binding=1) buffer Position
+layout(std430, binding=1) buffer Position
 {
     vec4 Positions[];
 };
 
-layout(std140, binding=2) buffer Velocity
+layout(std430, binding=2) buffer Velocity
 {
     vec4 Velocities[];
 };
 
-layout(std140, binding=3) buffer Color
+layout(std430, binding=3) buffer Color
 {
     vec4 Colors[];
 };
 
-layout(std140, binding=4) buffer Lifetime
+layout(std430, binding=4) buffer Lifetime
 {
     vec4 Lifetimes[];
 };
 
-INDEX_BUFFER_DECL
+struct IndexStruct
+{
+    uint Idx;
+    float Distance;
+};
+
+layout(std430, binding=5) buffer Index
+{
+    IndexStruct Indices[];
+};
 
 uniform float uDeltaTime;
 uniform vec3 uPosition;
@@ -81,7 +89,7 @@ void InitLocalParticle()
     lParticle.Color = Colors[gid].rgba;
     lParticle.CurrentLifetime = Lifetimes[gid].x - uDeltaTime;
     lParticle.BeginLifetime = Lifetimes[gid].y;
-    lParticle.LifetimeT = lParticle.CurrentLifetime / lParticle.BeginLifetime;
+    lParticle.LifetimeT = clamp(lParticle.CurrentLifetime / lParticle.BeginLifetime, 0.0, 1.0);
     lParticle.Alive = lParticle.CurrentLifetime > 0.0;
     lParticle.AliveF = float(lParticle.Alive);
 }
@@ -90,7 +98,7 @@ void WriteParticleToStorage()
 {
     uint gid = gl_GlobalInvocationID.x;
 
-    Positions[gid] = vec4(lParticle.Position, lParticle.DistanceToCamera);
+    Positions[gid].xyz = lParticle.Position;
     Velocities[gid].xyz = lParticle.Velocity;
     Colors[gid] = lParticle.Color;
     Lifetimes[gid].xy = vec2(lParticle.CurrentLifetime, lParticle.BeginLifetime);
@@ -120,16 +128,16 @@ void main()
 
     if(!lParticle.Alive)
     {
-        lParticle.DistanceToCamera = -1.0;
         WriteParticleToStorage();
         return;
     }
 
     uint index = atomicCounterIncrement(NumAlive);
-    INDEX_BUFFER_SET_ID
 
     lParticle.Position = lParticle.Position + lParticle.Velocity * uDeltaTime;
-    lParticle.DistanceToCamera = distance(lParticle.Position, uCameraPos);
+
+    Indices[index].Idx = gid;
+    Indices[index].Distance = distance(lParticle.Position, uCameraPos);
 
     WriteParticleToStorage();
 }

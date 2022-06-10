@@ -109,12 +109,17 @@ bool CsParticleSystemStruct::Init()
         }
     }
 
-#if not SORT
-    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, glm::uvec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::uvec4)
-        buffer[i] = glm::uvec4(0.0f);
+    struct IndexStruct
+    {
+        uint32_t Index;
+        float Distance;
+    };
+
+    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, IndexStruct);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, IndexStruct)
+        buffer[i].Index = 0;
+        buffer[i].Distance = -1.0f;
     INIT_BUFFER_END();
-#endif
 
     CHECK_GL_ERROR();
 
@@ -146,18 +151,6 @@ bool CsParticleSystemStruct::Init()
     replaceParts.emplace_back("MODULE_UNIFORMS", moduleUniforms);
     replaceParts.emplace_back("MODULE_METHODS", moduleMethods);
     replaceParts.emplace_back("MODULE_CALLS", moduleCalls);
-
-#if SORT
-    replaceParts.emplace_back("INDEX_BUFFER_DECL", "");
-    replaceParts.emplace_back("INDEX_BUFFER_ID", "");
-    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "");
-    replaceParts.emplace_back("SORTED_VERTICES_ID", "uint id = uint(gl_VertexID);\n");
-#else
-    replaceParts.emplace_back("INDEX_BUFFER_DECL", "layout(std140, binding = 5) buffer Index{ uvec4 Indices[]; };\n");
-    replaceParts.emplace_back("INDEX_BUFFER_ID", "uint id = Indices[gl_VertexID].x;\n");
-    replaceParts.emplace_back("INDEX_BUFFER_SET_ID", "Indices[index].x = gid;\n");
-    replaceParts.emplace_back("SORTED_VERTICES_ID", "");
-#endif
 
 
     bool success = true;
@@ -206,12 +199,12 @@ void CsParticleSystemStruct::UpdateParticles(float deltaTime, const glm::vec3& c
 
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mAtomicBuffer);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mParticleSsbo);
-#if not SORT
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, mIndexSsbo);
-#endif
     CHECK_GL_ERROR();
 
     glDispatchCompute(GetDispatchSize(), 1, 1);
+    CHECK_GL_ERROR();
+    glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
     CHECK_GL_ERROR();
 
     ReadbackAtomicData();
@@ -220,6 +213,7 @@ void CsParticleSystemStruct::UpdateParticles(float deltaTime, const glm::vec3& c
     Sort();
 #endif
 
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     CHECK_GL_ERROR();
 }
 
@@ -309,6 +303,7 @@ void CsParticleSystemStruct::SortLocalBms(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uAlgorithm", 0);
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
+    mSortShader.SetUInt("uAliveParticles", mNumParticles);
 
     glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 

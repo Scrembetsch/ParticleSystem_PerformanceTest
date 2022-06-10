@@ -10,13 +10,21 @@ struct Particle
     vec4 Lifetime;
 };
 
-
-layout(std140, binding=1) buffer ParticleBuffer
+layout(std430, binding=1) buffer ParticleBuffer
 {
     Particle Particles[];
 };
 
-INDEX_BUFFER_DECL
+struct IndexStruct
+{
+    uint Idx;
+    float Distance;
+};
+
+layout(std430, binding=5) buffer Index
+{
+    IndexStruct Indices[];
+};
 
 uniform mat4 uProjection;
 uniform mat4 uView;
@@ -26,10 +34,9 @@ out vec4 vColorPass;
 
 void main()
 {
-    INDEX_BUFFER_ID
-    SORTED_VERTICES_ID
-    
+    uint id = Indices[gl_VertexID].Idx;    
+
     gl_Position = vec4(Particles[id].Position.xyz, 1.0);
-    vLifetimePass = Particles[id].Position.x;
-    vColorPass = Particles[id].Color;
+    vLifetimePass = Particles[id].Lifetime.x;
+    vColorPass = Particles[id].Color.rgba;
 }
