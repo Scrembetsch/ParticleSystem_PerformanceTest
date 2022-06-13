@@ -23,7 +23,7 @@ layout(std430, binding=3) buffer Color
 
 layout(std430, binding=4) buffer Lifetime
 {
-    vec4 Lifetimes[];
+    vec2 Lifetimes[];
 };
 
 struct IndexStruct

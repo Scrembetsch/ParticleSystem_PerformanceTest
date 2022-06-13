@@ -128,9 +128,9 @@ bool CsParticleSystem::Init()
         buffer[i] = glm::vec4(1.0f);
     INIT_BUFFER_END();
 
-    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(0.0f);
+    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4, glm::vec2);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec2)
+        buffer[i] = glm::vec2(0.0f);
     INIT_BUFFER_END();
 
     struct IndexStruct

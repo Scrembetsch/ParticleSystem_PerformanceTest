@@ -10,7 +10,7 @@ struct Particle
     vec4 Lifetime;
 };
 
-layout(std430, binding=1) buffer ParticleBuffer
+layout(binding=1) buffer ParticleBuffer
 {
     Particle Particles[];
 };

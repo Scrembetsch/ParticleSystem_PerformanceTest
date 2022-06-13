@@ -28,7 +28,7 @@ struct Particle
 };
 
 // Buffer always uses vec4
-layout(std430, binding=1) buffer ParticleBuffer
+layout(binding=1) buffer ParticleBuffer
 {
     BufferParticle Particles[];
 };

@@ -26,7 +26,7 @@
 #endif
 
 #if CS
-	#define USE_STRUCT 1
+	#define USE_STRUCT 0
 #endif
 
 #define WORK_GROUP_SIZE 256
