@@ -47,6 +47,7 @@ private:
 	bool mTestFinished = false;
 	uint32_t mTestRuns = 0;
 	uint32_t mCurrentTestRun = 0;
+	std::vector<float> mTestResults;
 
 	uint32_t mMaxParticles = 0;
 	float mEmitRate = 0.0f;

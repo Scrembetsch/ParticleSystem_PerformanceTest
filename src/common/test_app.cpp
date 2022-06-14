@@ -349,7 +349,16 @@ void TestApp::Step()
 		if (mCurrentTestRun < mTestRuns)
 			ReInit();
 		else
+		{
 			mTestFinished = true;
+			std::string result;
+			for (auto it = mTestResults.begin(); it != mTestResults.end(); it++)
+			{
+				result += "\n";
+				result += std::to_string(*it);
+			}
+			LOG("SUMMARY: ", "%s", result.c_str());
+		}
 	}
 
 	mLastFrameTime = now;

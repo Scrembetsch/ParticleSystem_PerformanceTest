@@ -6,19 +6,14 @@ static const std::string sMethodCall = { "EmissionModule();\n" };
 static const std::string sMethod = {
 "void EmissionModule()\n"
 "{\n"
-"  if (vDataOut.z != 0.0)\n"
+"  if (vDataOut.z > 0.0)\n"
 "  {\n"
 "    EmitVertex();\n"
 "    EndPrimitive();\n"
-"    float numToEmit = 0.0;\n"
-"    if(vDataOut.z < uEmitParams.y)\n"
-"    {\n"
-"        numToEmit = uEmitParams.x;\n"
-"    }\n"
-"    else if(vDataOut.z == uEmitParams.y)\n"
-"    {\n"
-"        numToEmit = uEmitParams.z;\n"
-"    }\n"
+
+"    float numToEmit = uEmitParams.x;\n"
+"    numToEmit += float(vDataOut.z < uEmitParams.y);\n"
+
 "    float maxVertices = float(MAX_OUTPUT_VERTICES);\n"
 "    for (float i = 0.0; i < numToEmit && i < maxVertices; i++)\n"
 "    {\n"
@@ -28,7 +23,7 @@ static const std::string sMethod = {
 "}\n"
 };
 
-static const char sUniforms[] = "uniform vec3 uEmitParams;\n";
+static const char sUniforms[] = "uniform vec2 uEmitParams;\n";
 
 TfModuleEmission::TfModuleEmission(TfParticleSystem* particleSystem)
 	: TfModuleEmission(particleSystem, 0.0f)
@@ -81,7 +76,7 @@ void TfModuleEmission::ApplyUniforms(float deltaTime, Shader* shader)
 	numToGenerate = static_cast<uint32_t>(mCurrentGenerateOffset / timeForOneCpuParticle);
 	mCurrentGenerateOffset -= static_cast<float>(numToGenerate) * timeForOneCpuParticle;
 
-	glm::vec3 emitParams(0);
+	glm::vec2 emitParams(0);
 	if (numToGenerate == 0)
 	{
 		// Just to jump over this case
@@ -89,23 +84,15 @@ void TfModuleEmission::ApplyUniforms(float deltaTime, Shader* shader)
 	else if (numToGenerate <= ParticleSystem->GetMaxVerticesPerEmitter())
 	{
 		emitParams.x = 0;
-		emitParams.y = 1;
-		emitParams.z = numToGenerate;
+		emitParams.y = numToGenerate + 1;
 	}
 	else
 	{
-		emitParams.x = ParticleSystem->GetMaxVerticesPerEmitter();
-		for (uint32_t i = 0; i < ParticleSystem->GetEmitters(); i++)
-		{
-			if (numToGenerate < ParticleSystem->GetMaxVerticesPerEmitter())
-			{
-				emitParams.y = (i + 1);
-				emitParams.z = numToGenerate;
-				break;
-			}
-			numToGenerate -= emitParams.x;
-		}
+		emitParams.x = numToGenerate / ParticleSystem->GetEmitters();
+		emitParams.y = numToGenerate - (emitParams.x * ParticleSystem->GetEmitters());
+
+		emitParams.y += 1;
 	}
 
-	shader->SetVec3("uEmitParams", emitParams);
+	shader->SetVec2("uEmitParams", emitParams);
 }
