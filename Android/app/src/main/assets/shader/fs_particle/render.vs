@@ -17,13 +17,12 @@ out vec2 vTexCoord;
 
 void main()
 {
-    uint id = uint(gl_VertexID / 6);
-    uint subId = uint(gl_VertexID % 6);
-    vec2 vId = vec2(0.0);
-    vId.x = float(id % uint(uResolution.x));
-    vId.y = float(id / uint(uResolution.x));
-    vec2 offset = (1.0 / uResolution) / 2.0;
-    vTexId = texture(USE_TEX5, (vId / uResolution) + offset).rg;
+    uint id = uint(gl_VertexID) / 6U;
+    uint subId = uint(gl_VertexID) % 6U;
+    uvec2 uid = uvec2(0, 0);
+    uid.x = id % uint(uResolution.x);
+    uid.y = id / uint(uResolution.x);
+    vTexId = texture(USE_TEX5, vec2(uid.xy / uResolution)).rg;
 
     vec3 position = texture(USE_TEX1, vTexId).xyz;
 
@@ -45,8 +44,8 @@ void main()
     position += vec3(scale, scale, 0.0) * tr;
 
     gl_Position = uProjection * uView * vec4(position, 1.0);
-    vTexCoord = vec2(0.0, 0.0) * alive;
-    vTexCoord += vec2(1.0, 0.0) * br * alive;
-    vTexCoord += vec2(0.0, 1.0) * tl * alive;
-    vTexCoord += vec2(1.0, 1.0) * tr * alive;
+    vTexCoord = vec2(0.0, 0.0);
+    vTexCoord += vec2(1.0, 0.0) * br;
+    vTexCoord += vec2(0.0, 1.0) * tl;
+    vTexCoord += vec2(1.0, 1.0) * tr;
 }

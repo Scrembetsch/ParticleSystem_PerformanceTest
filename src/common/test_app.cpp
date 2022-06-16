@@ -56,8 +56,8 @@ bool TestApp::ReInit()
 
 	mNumSystems = 1;
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	//uint32_t testRuns[] = { 8 };
-	uint32_t testRuns[] = { 1024 * 1024 };
+	//uint32_t testRuns[] = { 16 };
+	uint32_t testRuns[] = { 2048 * 2048 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;

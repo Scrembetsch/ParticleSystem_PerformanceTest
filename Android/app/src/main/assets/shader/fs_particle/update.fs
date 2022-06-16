@@ -1,11 +1,11 @@
 #version VERSION
 
-precision highp float;
+precision mediump float;
 
 layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oVelocity;
 layout (location = 2) out vec4 oColor;
-layout (location = 3) out vec4 oIndex;
+layout (location = 3) out vec3 oIndex;
 
 DECL_TEX1
 DECL_TEX2

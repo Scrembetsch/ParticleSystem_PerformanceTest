@@ -2,7 +2,6 @@
 
 precision mediump float;
 
-DECL_TEX1 // Position
 DECL_TEX5 // Index
 
 in vec2 vTexCoord;
@@ -11,13 +10,11 @@ uniform vec2 uResolution;
 uniform uint uStageDistance;
 uniform uint uStepDistance;
 
-layout (location = 0) out vec4 oColor;
-layout (location = 1) out vec4 oDebug;
+out vec3 oColor;
 
 struct SortItem
 {
   float SortVal;
-  // vec2 IndexValue;
   vec2 TexCoord;
 };
 
@@ -45,8 +42,9 @@ void InitSortItem(inout SortItem item, uint id)
   vid.x = float(id % uint(uResolution.x));
   vid.y = float(id / uint(uResolution.x));
 
-  item.TexCoord = texture(USE_TEX5, (vid / uResolution) + Offset).rg;
-  item.SortVal = texture(USE_TEX1, item.TexCoord).w;
+  vec2 texCoord = (vid / uResolution) + Offset;
+  item.TexCoord = texture(USE_TEX5, texCoord).rg;
+  item.SortVal = texture(USE_TEX5, texCoord).b;
 }
 
 void main()
@@ -79,21 +77,5 @@ void main()
   vid.y = float(Id / uint(uResolution.x));
 
   oColor.rg = swap ? Other.TexCoord : Self.TexCoord;
-  oColor.b =  swap ? Other.SortVal : Self.SortVal;
-  oDebug.rg = Self.TexCoord;
-  oDebug.b = Self.SortVal;
-  // oDebug.g = Id;
-  // oDebug.b = float((isCompareValue) ? (Id - uStepDistance) : (Id + uStepDistance));
-  // oDebug.b = (isCompareValue) ? (Id - uStepDistance) : (Id + uStepDistance);
-  // InitSortItem(Self, Id);
-  // if(stageLength == stepLength)
-  //   InitSortItem(Other, (isCompareValue) ? (startSecondHalf + (startSecondHalf - Id - 1)) : startSecondHalf - (Id - startSecondHalf + 1));
-  // else
-  //   InitSortItem(Other, (isCompareValue) ? Id - uStepDistance : Id + uStepDistance);
-
-  // bool isSmaller = isCompareValue ? IsSmaller(Other, Self) : IsSmaller(Self, Other);
-
-  // bool swap = isSmaller;
-
-  // oColor = swap ? Other.IndexValue : Self.IndexValue;
+  oColor.b = swap ? Other.SortVal : Self.SortVal;
 }
