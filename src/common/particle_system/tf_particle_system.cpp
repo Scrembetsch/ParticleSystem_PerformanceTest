@@ -4,6 +4,15 @@
 #include "../gl/gl_util.h"
 #include <random>
 
+static const float sBasePlaneVertexData[] =
+{
+    // Coord
+    -1.0f,   -1.0f,
+    1.0f,   -1.0f,
+    -1.0f,   1.0f,
+    1.0f,   1.0f,
+};
+
 TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
     : mTransformFeedbackBuffer(0)
     , mQuery(0)
@@ -20,9 +29,12 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
     , mMaxLifetime(0.0f)
     , mMinStartVelocity(0.0f)
     , mMaxStartVelocity(0.0f)
-    , mLocalWorkGroupSize(256, 0, 0)
-    , mSortSsbo(0)
 {
+#if SORT
+    mResolutionX = sqrt(maxParticles);
+    mResolutionY = mResolutionX;
+#endif
+
     for (uint32_t i = 0; i < sBufferSize; i++)
     {
         mVbos[i] = 0;
@@ -58,12 +70,16 @@ TfParticleSystem::~TfParticleSystem()
     {
         glDeleteVertexArrays(sBufferSize, mVaos);
     }
-
-    if (mSortSsbo != 0)
+    if (mUpdateVbo != 0)
     {
-        glDeleteBuffers(1, &mSortSsbo);
+        glDeleteBuffers(1, &mUpdateVbo);
+        mUpdateVbo = 0;
     }
-
+    if (mUpdateVao != 0)
+    {
+        glDeleteVertexArrays(1, &mUpdateVao);
+        mUpdateVao = 0;
+    }
     for (uint32_t i = 0; i < mModules.size(); i++)
     {
         delete mModules[i];
@@ -114,18 +130,48 @@ bool TfParticleSystem::Init()
     replaceMapGs.emplace_back("MODULE_CALLS", callsGs);
 
     std::vector<std::pair<std::string, std::string>> replaceParts;
-    replaceParts.emplace_back("LOCAL_SIZE_X", std::to_string(mLocalWorkGroupSize.x));
+    replaceParts.emplace_back("MAX_PARTICLES", std::to_string(mNumMaxParticles));
+    replaceParts.emplace_back("DECL_TEX1", "layout (binding = 1) uniform sampler2D uIndexMap;");
+    replaceParts.emplace_back("USE_TEX1", "uIndexMap");
 
     success &= mUpdateShader.LoadAndCompile("shader/tf_particle/update.vs", Shader::SHADER_TYPE_VERTEX, replaceMapVs);
     success &= mUpdateShader.LoadAndCompile("shader/tf_particle/update.gs", Shader::SHADER_TYPE_GEOMETRY, replaceMapGs);
     success &= mUpdateShader.LoadAndCompile("shader/tf_particle/update.fs", Shader::SHADER_TYPE_FRAGMENT);
     success &= mUpdateShader.AttachLoadedShaders();
 
-    success &= mSortShader.LoadAndCompile("shader/tf_particle/sort.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
+    //success &= mSortShader.LoadAndCompile("shader/tf_particle/sort.cs", Shader::SHADER_TYPE_COMPUTE, replaceParts);
+    //success &= mSortShader.AttachLoadedShaders();
+    //success &= mSortShader.Link();
+
+#if SORT
+    glGenFramebuffers(1, &mSortBuffer);
+    for (uint32_t i = 0; i < 2; i++)
+    {
+        glGenTextures(1, &mIndexTex[i].mTex);
+        mIndexTex[i].mTexName = "uIndexMap";
+        mIndexTex[i].mTexLocation = GL_TEXTURE1;
+        glBindTexture(GL_TEXTURE_2D, mIndexTex[i].mTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, mResolutionX, mResolutionY, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    }
+
+    success &= mPrepSortShader.LoadAndCompile("shader/tf_particle/prep_sort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    success &= mPrepSortShader.LoadAndCompile("shader/tf_particle/prep_sort.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
+    success &= mPrepSortShader.AttachLoadedShaders();
+    success &= mPrepSortShader.Link();
+
+    success &= mSortShader.LoadAndCompile("shader/tf_particle/sort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+    success &= mSortShader.LoadAndCompile("shader/tf_particle/sort.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
     success &= mSortShader.AttachLoadedShaders();
     success &= mSortShader.Link();
 
+    success &= mRenderShader.LoadAndCompile("shader/tf_particle/render_sort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
+#else
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.vs", Shader::SHADER_TYPE_VERTEX);
+#endif
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.gs", Shader::SHADER_TYPE_GEOMETRY);
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
     success &= mRenderShader.AttachLoadedShaders();
@@ -148,6 +194,18 @@ bool TfParticleSystem::Init()
 
     glGenBuffers(sBufferSize, mVbos);
     glGenVertexArrays(sBufferSize, mVaos);
+
+    glGenVertexArrays(1, &mUpdateVao);
+    glBindVertexArray(mUpdateVao);
+    CHECK_GL_ERROR();
+
+    glGenBuffers(1, &mUpdateVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mUpdateVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sBasePlaneVertexData), sBasePlaneVertexData, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+    glBindVertexArray(0);
 
     mNumEmitters = static_cast<uint32_t>(std::ceil(static_cast<float>(mNumMaxParticles) / static_cast<float>(mMaxVertices)));
 
@@ -180,14 +238,6 @@ bool TfParticleSystem::Init()
     mNumParticles = mNumEmitters;
     delete[] initParticles;
 
-#if SORT
-    glGenBuffers(1, &mSortSsbo);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mSortSsbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(TfParticle) * mNumMaxParticles, nullptr, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(TfParticle), nullptr);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-#endif
-
     CHECK_GL_ERROR();
     return true;
 }
@@ -201,6 +251,12 @@ bool TfParticleSystem::AddModule(TfIModule* psModule)
 void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPos)
 {
     OPTICK_EVENT();
+
+    // toggle buffer
+    mCurrentReadBuffer = 1 - mCurrentReadBuffer;
+    mCurrentWriteBuffer = 1 - mCurrentReadBuffer;
+    mSortCurrentReadBuffer = mCurrentReadBuffer;
+    mSortCurrentWriteBuffer = mCurrentWriteBuffer;
 
     mUpdateShader.Use();
 
@@ -226,8 +282,7 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
 
     glBindVertexArray(mVaos[mCurrentReadBuffer]);
 
-    // 1 -  use other buffer
-    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, mVbos[1 - mCurrentReadBuffer]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, mVbos[mCurrentWriteBuffer]);
 
     glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, mQuery);
     glBeginTransformFeedback(GL_POINTS);
@@ -244,91 +299,87 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
     glDisable(GL_RASTERIZER_DISCARD);
     CHECK_GL_ERROR();
 
-    // toggle buffer
-    mCurrentReadBuffer = 1 - mCurrentReadBuffer;
-
 #if SORT
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, mVbos[mCurrentReadBuffer]);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mVbos[mCurrentReadBuffer]);
-
     Sort();
 
     CHECK_GL_ERROR();
 #endif
-
 }
 
 void TfParticleSystem::Sort()
 {
     OPTICK_EVENT();
+    CHECK_GL_ERROR();
+
+    // Save State
+    int32_t val = 0;
+#if _WIN32
+    glGetIntegerv(GL_DRAW_BUFFER, &val);
+#else
+    glGetIntegerv(GL_DRAW_BUFFER0, &val);
+#endif
+    int32_t viewPortDims[4];
+    glGetIntegerv(GL_VIEWPORT, viewPortDims);
+    glViewport(0, 0, mResolutionX, mResolutionY);
+    CHECK_GL_ERROR();
+
+    PrepSort();
 
     mSortShader.Use();
-    uint32_t h = mLocalWorkGroupSize.x * 2;
+    CHECK_GL_ERROR();
+    mSortShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    CHECK_GL_ERROR();
 
-    SortLocalBms(mNumMaxParticles, h);
+    glBindFramebuffer(GL_FRAMEBUFFER, mSortBuffer);
+    CHECK_GL_ERROR();
+    unsigned int baseattachments[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, baseattachments);
+    CHECK_GL_ERROR();
 
-    // we must now double h, as this happens before every flip
-    h *= 2;
+    for (uint32_t stageDistance = 1; stageDistance < mNumMaxParticles; stageDistance *= 2)
+    {
+        for (uint32_t stepDistance = stageDistance; stepDistance > 0; stepDistance /= 2)
+        {
+            mSortCurrentReadBuffer = 1 - mSortCurrentReadBuffer;
+            mSortCurrentWriteBuffer = 1 - mSortCurrentReadBuffer;
 
-    for (; h <= mNumMaxParticles; h *= 2) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mIndexTex[mSortCurrentWriteBuffer].mTex, 0);
+            CHECK_GL_ERROR();
 
-        SortBigFlip(mNumMaxParticles, h);
+            mIndexTex[mSortCurrentReadBuffer].Use(&mSortShader);
+            mSortShader.SetUInt("uStageDistance", stageDistance);
+            mSortShader.SetUInt("uStepDistance", stepDistance);
 
-        for (uint32_t hh = h / 2; hh > 1; hh /= 2) {
-
-            if (hh <= mLocalWorkGroupSize.x * 2) {
-                SortLocalDisperse(mNumMaxParticles, hh);
-                break;
-            }
-            else {
-                SortBigDisperse(mNumMaxParticles, hh);
-            }
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            CHECK_GL_ERROR();
         }
     }
+
+
+    // Restore State
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    unsigned int resetattach[1] = { GL_NONE };
+    resetattach[0] = val;
+    glDrawBuffers(1, resetattach);
+    glViewport(viewPortDims[0], viewPortDims[1], viewPortDims[2], viewPortDims[3]);
 }
 
-void TfParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
+void TfParticleSystem::PrepSort()
 {
-    mSortShader.SetUInt("uAlgorithm", 0);
-    mSortShader.SetUInt("uN", n);
-    mSortShader.SetUInt("uH", h);
+    glBindFramebuffer(GL_FRAMEBUFFER, mSortBuffer);
+    unsigned int baseattachments[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, baseattachments);
 
-    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, mVbos[mCurrentWriteBuffer]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mIndexTex[mSortCurrentWriteBuffer].mTex, 0);
 
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-}
+    mPrepSortShader.Use();
+    mPrepSortShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mPrepSortShader.SetUInt("uNumAliveParticles", mNumParticles);
 
-void TfParticleSystem::SortLocalDisperse(uint32_t n, uint32_t h)
-{
-    mSortShader.SetUInt("uAlgorithm", 1);
-    mSortShader.SetUInt("uN", n);
-    mSortShader.SetUInt("uH", h);
-
-    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
-
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-}
-
-void TfParticleSystem::SortBigFlip(uint32_t n, uint32_t h)
-{
-    mSortShader.SetUInt("uAlgorithm", 2);
-    mSortShader.SetUInt("uN", n);
-    mSortShader.SetUInt("uH", h);
-
-    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
-
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
-}
-
-void TfParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
-{
-    mSortShader.SetUInt("uAlgorithm", 3);
-    mSortShader.SetUInt("uN", n);
-    mSortShader.SetUInt("uH", h);
-
-    glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
-
-    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+    glBindVertexArray(mUpdateVao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    CHECK_GL_ERROR();
 }
 
 void TfParticleSystem::PrepareRender(Camera* camera)
@@ -355,7 +406,13 @@ void TfParticleSystem::RenderParticles()
     mRenderShader.SetVec3("uQuad2", mQuad2);
     glBindVertexArray(mVaos[mCurrentReadBuffer]);
 
+#if SORT
+    mRenderShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mIndexTex[mSortCurrentWriteBuffer].Use(&mRenderShader);
+    glDrawArrays(GL_POINTS, 0, mNumParticles - GetEmitters());
+#else
     glDrawArrays(GL_POINTS, 0, mNumParticles);
+#endif
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 

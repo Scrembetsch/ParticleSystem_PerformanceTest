@@ -3,6 +3,7 @@
 #include "gl.h"
 #include "../glm/glm.hpp"
 #include "../device/file_handler.h"
+#include "../gl/gl_util.h"
 #include "../logger.h"
 
 #include <fstream>
@@ -397,6 +398,7 @@ private:
     GLint GetLocation(const std::string& name) const
     {
         GLint location = glGetUniformLocation(mId, name.c_str());
+        CHECK_GL_ERROR();
         return location;
     }
 };

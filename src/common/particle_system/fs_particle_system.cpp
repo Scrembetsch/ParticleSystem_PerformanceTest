@@ -226,18 +226,6 @@ bool FsParticleSystem::Init()
     success &= mSortShader.Link();
 #endif
 
-    //success &= mSortColShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
-    //success &= mSortColShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort_Col.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
-    //success &= mSortColShader.AttachLoadedShaders();
-    //success &= mSortColShader.Link();
-    //success &= mSortRow01Shader.LoadAndCompile("shader/fs_particle/bitonicMergeSort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
-    //success &= mSortRow01Shader.LoadAndCompile("shader/fs_particle/bitonicMergeSort_Row01.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
-    //success &= mSortRow01Shader.AttachLoadedShaders();
-    //success &= mSortRow01Shader.Link();
-    //success &= mSortRowNShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
-    //success &= mSortRowNShader.LoadAndCompile("shader/fs_particle/bitonicMergeSort_RowN.fs", Shader::SHADER_TYPE_FRAGMENT, replaceParts);
-    //success &= mSortRowNShader.AttachLoadedShaders();
-    //success &= mSortRowNShader.Link();
     CHECK_GL_ERROR();
 
 

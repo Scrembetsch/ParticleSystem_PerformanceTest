@@ -2,6 +2,7 @@
 
 #include "../gl/shader.h"
 #include "../gl/camera.h"
+#include "../gl/texture_2d.h"
 #include "../util/random.h"
 #include "../defines.h"
 
@@ -48,6 +49,7 @@ protected:
     uint32_t mQuery;
 
     uint32_t mCurrentReadBuffer;
+    uint32_t mCurrentWriteBuffer;
 
     uint32_t mNumMaxParticles;
     uint32_t mNumParticles;
@@ -74,13 +76,18 @@ protected:
     std::vector<TfIModule*> mModules;
     std::vector<std::pair<std::string, std::string>> mRenderFsMap;
 
-    glm::uvec3 mLocalWorkGroupSize;
+    uint32_t mSortBuffer;
+    Texture2D mIndexTex[2];
     Shader mSortShader;
-    uint32_t mSortSsbo;
+    Shader mPrepSortShader;
+
+    uint32_t mUpdateVao;
+    uint32_t mUpdateVbo;
+    uint32_t mResolutionX;
+    uint32_t mResolutionY;
+    uint32_t mSortCurrentReadBuffer;
+    uint32_t mSortCurrentWriteBuffer;
 
     void Sort();
-    void SortLocalBms(uint32_t n, uint32_t h);
-    void SortBigFlip(uint32_t n, uint32_t h);
-    void SortLocalDisperse(uint32_t n, uint32_t h);
-    void SortBigDisperse(uint32_t n, uint32_t h);
+    void PrepSort();
 };
