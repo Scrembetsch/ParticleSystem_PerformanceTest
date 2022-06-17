@@ -36,14 +36,42 @@ layout(std430, binding=5) buffer Index
 uniform mat4 uProjection;
 uniform mat4 uView;
 
-out float vLifetimePass;
-out vec4 vColorPass;
+uniform vec3 uQuad1;
+uniform vec3 uQuad2;
+
+out vec2 vTexCoord;
+out vec4 vColor;
 
 void main()
 {
-    uint id = Indices[gl_VertexID].Idx;    
+    uint vertId = gl_InstanceID * 4 + gl_VertexID;
+    uint id = Indices[vertId / 4U].Idx;
+    // vId = id;
+    uint subId = uint(vertId) % 4U;
 
-    gl_Position = vec4(Positions[id].xyz, 1.0);
-    vLifetimePass = Lifetimes[id].x;
-    vColorPass = Colors[id];
+    vec3 position = Positions[id].xyz;
+
+    float bl = float(subId == 0U);
+    float br = float(subId == 1U);
+    float tl = float(subId == 2U);
+    float tr = float(subId == 3U);
+
+    float scale = 0.5;
+
+    float alive = float(Lifetimes[id].x > 0.0);
+    float notAlive = float(Lifetimes[id].x <= 0.0);
+
+    position += (-uQuad1 - uQuad2) * scale * bl;
+    position += (-uQuad1 + uQuad2) * scale * br;
+    position += (uQuad1 - uQuad2) * scale * tl;
+    position += (uQuad1 + uQuad2) * scale * tr;
+
+    vec3 offset = vec3(99999999) * notAlive;
+    gl_Position = uProjection * uView * vec4(position + offset, 1.0);
+    vTexCoord = vec2(0.0, 0.0);
+    vTexCoord += vec2(1.0, 0.0) * br;
+    vTexCoord += vec2(0.0, 1.0) * tl;
+    vTexCoord += vec2(1.0, 1.0) * tr;
+
+    vColor = Colors[id];
 }

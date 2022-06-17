@@ -8,8 +8,6 @@
 #include "particle_system/cpu_parallel_particle_system.h"
 #include "particle_system/cpu_parallel_instance_particle_system.h"
 
-#include "particle_system/tf_full_emit_particle_system.h"
-
 #include "particle_system/cpu_module_emission.h"
 #include "particle_system/cpu_module_velocity_over_lifetime.h"
 #include "particle_system/cpu_module_color_over_lifetime.h"
@@ -22,9 +20,6 @@
 #include "particle_system/fs_module_color_over_lifetime.h"
 #include "particle_system/fs_module_velocity_over_lifetime.h"
 
-#include "particle_system/cs_module_emission_struct.h"
-#include "particle_system/cs_module_velocity_over_lifetime_struct.h"
-#include "particle_system/cs_module_color_over_lifetime_struct.h"
 #include "particle_system/cs_module_emission.h"
 #include "particle_system/cs_module_velocity_over_lifetime.h"
 #include "particle_system/cs_module_color_over_lifetime.h"
@@ -56,8 +51,8 @@ bool TestApp::ReInit()
 
 	mNumSystems = 1;
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	//uint32_t testRuns[] = { 16 };
-	uint32_t testRuns[] = { 2048 * 2048 };
+	uint32_t testRuns[] = { 16 };
+	//uint32_t testRuns[] = { 2048 * 2048 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
@@ -80,11 +75,7 @@ bool TestApp::ReInit()
 		CpuIParticleSystem;
 #endif
 #if CS
-#if USE_STRUCT
-		CsParticleSystemStruct;
-#else
 		CsParticleSystem;
-#endif
 #endif
 #if TF
 		TfParticleSystem;
@@ -156,38 +147,16 @@ bool TestApp::ReInit()
 		success &= mParticleSystem->Init();
 #endif
 #if CS
-#if USE_STRUCT
-		mParticleSystem = new CsParticleSystemStruct(mMaxParticles, WORK_GROUP_SIZE);
-#else
 		mParticleSystem = new CsParticleSystem(mMaxParticles, WORK_GROUP_SIZE);
-#endif
 
 		mParticleSystem->SetMinLifetime(emitMulti);
 		mParticleSystem->SetMaxLifetime(emitMulti);
 		mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
 		mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 		mParticleSystem->SetRenderFragReplaceMap(replaceMap);
-		mParticleSystem->AddModule(
-#if USE_STRUCT
-			new CsModuleEmissionStruct
-#else
-			new CsModuleEmission
-#endif
-			(mParticleSystem, mEmitRate));
-		mParticleSystem->AddModule(
-#if USE_STRUCT
-			new CsModuleVelOverLifeStruct
-#else
-			new CsModuleVelOverLife
-#endif
-			(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
-		mParticleSystem->AddModule(
-#if USE_STRUCT
-			new CsModuleColorOverLifeStruct
-#else
-			new CsModuleColorOverLife
-#endif
-			(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+		mParticleSystem->AddModule(new CsModuleEmission(mParticleSystem, mEmitRate));
+		mParticleSystem->AddModule(new CsModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		mParticleSystem->AddModule(new CsModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 		success &= mParticleSystem->Init();
 #endif
 	}
@@ -336,9 +305,6 @@ void TestApp::Step()
 #endif
 #if CS
 			"CS (" + std::to_string(WORK_GROUP_SIZE) + ")";
-#if USE_STRUCT
-			mode += " (STRUCT)";
-#endif
 #endif
 #if SORT
 			mode += " (SORT)";

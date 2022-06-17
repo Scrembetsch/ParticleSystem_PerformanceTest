@@ -18,21 +18,24 @@ layout(binding = 1) uniform ParticleBuffer
 DECL_TEX1
 uniform vec2 uResolution;
 
-out float vTypePass;
-out vec4 vColorPass;
-out vec2 vIndexUV;
-out vec3 vIndex;
-out uint vUIndex;
+uniform mat4 uProjection;
+uniform mat4 uView;
+
+uniform vec3 uQuad1;
+uniform vec3 uQuad2;
+
+out vec2 vTexCoord;
+out vec4 vColor;
 
 vec2 getIndexUV()
 {
-   vec2 offset = (1.0 / uResolution) / 2.0;
+    vec2 offset = (1.0 / uResolution) / 2.0;
 
-   uvec2 uid = uvec2(0, 0);
-   uid.x = uint(gl_VertexID) % uint(uResolution.x);
-   uid.y = uint(gl_VertexID) / uint(uResolution.x);
+    uvec2 uid = uvec2(0, 0);
+    uid.x = uint(gl_InstanceID) % uint(uResolution.x);
+    uid.y = uint(gl_InstanceID) / uint(uResolution.x);
 
-   return vec2(uid / uResolution) + offset;
+    return vec2(uid / uResolution) + offset;
 }
 
 uint convertIndex(vec2 index)
@@ -45,14 +48,37 @@ uint convertIndex(vec2 index)
 
 void main()
 {
+    uint vertId = gl_InstanceID * 4 + gl_VertexID;
+
     vec2 indexUV = getIndexUV();
     vec3 index = texture(USE_TEX1, indexUV).rgb;
     uint uIndex = convertIndex(index.xy);
-    vIndex = index;
-    vIndexUV = indexUV;
-    vUIndex = uIndex;
 
-    gl_Position = vec4(Particles[uIndex].Position.xyz, 1.0);
-    vTypePass = Particles[uIndex].Data.z;
-    vColorPass = Particles[uIndex].Color;
+    uint subId = uint(vertId) % 4U;
+
+    vec3 position = Particles[uIndex].Position.xyz;
+
+    float bl = float(subId == 0U);
+    float br = float(subId == 1U);
+    float tl = float(subId == 2U);
+    float tr = float(subId == 3U);
+
+    float scale = 0.5;
+
+    float alive = float(Particles[uIndex].Data.x > 0.0);
+    float notAlive = float(Particles[uIndex].Data.x <= 0.0);
+
+    position += (-uQuad1 - uQuad2) * scale * bl;
+    position += (-uQuad1 + uQuad2) * scale * br;
+    position += (uQuad1 - uQuad2) * scale * tl;
+    position += (uQuad1 + uQuad2) * scale * tr;
+
+    vec3 offset = vec3(99999999) * notAlive;
+    gl_Position = uProjection * uView * vec4(position + offset, 1.0);
+    vTexCoord = vec2(0.0, 0.0);
+    vTexCoord += vec2(1.0, 0.0) * br;
+    vTexCoord += vec2(0.0, 1.0) * tl;
+    vTexCoord += vec2(1.0, 1.0) * tr;
+
+    vColor = Particles[uIndex].Color;
 }

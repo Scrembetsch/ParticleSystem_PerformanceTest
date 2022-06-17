@@ -5,7 +5,6 @@
 #include "particle_system/cpu_i_particle_system.h"
 #include "particle_system/tf_particle_system.h"
 
-#include "particle_system/cs_particle_system_struct.h"
 #include "particle_system/cs_particle_system.h"
 
 #include "particle_system/fs_particle_system.h"
@@ -59,11 +58,7 @@ private:
 	CpuIParticleSystem** mParticleSystems = nullptr;
 #endif
 #if CS
-	#if USE_STRUCT
-		CsParticleSystemStruct** mParticleSystems = nullptr;
-	#else
-		CsParticleSystem** mParticleSystems = nullptr;
-	#endif
+	CsParticleSystem** mParticleSystems = nullptr;
 #endif
 #if TF
 	TfParticleSystem** mParticleSystems = nullptr;

@@ -184,7 +184,6 @@ bool CsParticleSystem::Init()
     success &= mSortShader.AttachLoadedShaders();
     success &= mSortShader.Link();
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
-    success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.gs", Shader::SHADER_TYPE_GEOMETRY);
     success &= mRenderShader.LoadAndCompile("shader/cs_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
     success &= mRenderShader.AttachLoadedShaders();
     success &= mRenderShader.Link();
@@ -274,7 +273,7 @@ void CsParticleSystem::RenderParticles()
     mRenderShader.SetVec3("uQuad2", mQuad2);
 
     glBindVertexArray(mVao);
-    glDrawArrays(GL_POINTS, 0, mNumParticles);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles);
 
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);

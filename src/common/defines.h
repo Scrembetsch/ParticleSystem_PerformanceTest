@@ -15,18 +15,14 @@
 #define TF  1
 #define FS  0
 
-#define SORT 1
+#define SORT 0
 
 #if CPU
 	#define PARALLEL 0
 	#define INSTANCE 0
 #if not INSTANCE
-	#define INDEXED  0
+	#define INDEXED  1
 #endif
-#endif
-
-#if CS
-	#define USE_STRUCT 0
 #endif
 
 #define WORK_GROUP_SIZE 256

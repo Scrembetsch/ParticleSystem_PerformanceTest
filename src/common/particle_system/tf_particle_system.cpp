@@ -172,7 +172,6 @@ bool TfParticleSystem::Init()
 #else
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.vs", Shader::SHADER_TYPE_VERTEX);
 #endif
-    success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.gs", Shader::SHADER_TYPE_GEOMETRY);
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
     success &= mRenderShader.AttachLoadedShaders();
     success &= mRenderShader.Link();
@@ -231,6 +230,11 @@ bool TfParticleSystem::Init()
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)16);
         glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)32);
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)48);
+
+        glVertexAttribDivisor(0, 1);
+        glVertexAttribDivisor(1, 1);
+        glVertexAttribDivisor(2, 1);
+        glVertexAttribDivisor(3, 1);
     }
 
     glBindVertexArray(0);
@@ -406,12 +410,17 @@ void TfParticleSystem::RenderParticles()
     mRenderShader.SetVec3("uQuad2", mQuad2);
     glBindVertexArray(mVaos[mCurrentReadBuffer]);
 
+    glVertexAttribDivisor(0, 1);
+    glVertexAttribDivisor(1, 1);
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
+
 #if SORT
     mRenderShader.SetVec2("uResolution", mResolutionX, mResolutionY);
     mIndexTex[mSortCurrentWriteBuffer].Use(&mRenderShader);
-    glDrawArrays(GL_POINTS, 0, mNumParticles - GetEmitters());
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles - GetEmitters());
 #else
-    glDrawArrays(GL_POINTS, 0, mNumParticles);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles);
 #endif
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
