@@ -170,7 +170,7 @@ bool TfParticleSystem::Init()
 
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render_sort.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
 #else
-    success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.vs", Shader::SHADER_TYPE_VERTEX);
+    success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.vs", Shader::SHADER_TYPE_VERTEX, replaceParts);
 #endif
     success &= mRenderShader.LoadAndCompile("shader/tf_particle/render.fs", Shader::SHADER_TYPE_FRAGMENT, mRenderFsMap);
     success &= mRenderShader.AttachLoadedShaders();
@@ -230,11 +230,6 @@ bool TfParticleSystem::Init()
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)16);
         glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)32);
         glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(TfParticle), (void*)48);
-
-        glVertexAttribDivisor(0, 1);
-        glVertexAttribDivisor(1, 1);
-        glVertexAttribDivisor(2, 1);
-        glVertexAttribDivisor(3, 1);
     }
 
     glBindVertexArray(0);
@@ -409,11 +404,7 @@ void TfParticleSystem::RenderParticles()
     mRenderShader.SetVec3("uQuad1", mQuad1);
     mRenderShader.SetVec3("uQuad2", mQuad2);
     glBindVertexArray(mVaos[mCurrentReadBuffer]);
-
-    glVertexAttribDivisor(0, 1);
-    glVertexAttribDivisor(1, 1);
-    glVertexAttribDivisor(2, 1);
-    glVertexAttribDivisor(3, 1);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, mVbos[mCurrentWriteBuffer]);
 
 #if SORT
     mRenderShader.SetVec2("uResolution", mResolutionX, mResolutionY);

@@ -44,10 +44,9 @@ out vec4 vColor;
 
 void main()
 {
-    uint vertId = gl_InstanceID * 4 + gl_VertexID;
-    uint id = Indices[vertId / 4U].Idx;
+    uint id = Indices[gl_InstanceID].Idx;
     // vId = id;
-    uint subId = uint(vertId) % 4U;
+    uint subId = uint(gl_VertexID);
 
     vec3 position = Positions[id].xyz;
 

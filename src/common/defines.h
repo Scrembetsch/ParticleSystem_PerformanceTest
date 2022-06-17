@@ -15,7 +15,7 @@
 #define TF  1
 #define FS  0
 
-#define SORT 0
+#define SORT 1
 
 #if CPU
 	#define PARALLEL 0

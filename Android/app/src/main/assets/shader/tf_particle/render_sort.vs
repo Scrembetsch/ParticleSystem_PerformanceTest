@@ -48,13 +48,11 @@ uint convertIndex(vec2 index)
 
 void main()
 {
-    uint vertId = gl_InstanceID * 4 + gl_VertexID;
-
     vec2 indexUV = getIndexUV();
     vec3 index = texture(USE_TEX1, indexUV).rgb;
     uint uIndex = convertIndex(index.xy);
 
-    uint subId = uint(vertId) % 4U;
+    uint subId = gl_VertexID;
 
     vec3 position = Particles[uIndex].Position.xyz;
 
