@@ -14,10 +14,10 @@
 static const CpuRenderParticle sBasePlaneVertexData[] =
 {
     // Coord			// Color				// Tex Coord
-    CpuRenderParticle{glm::vec3(-0.5, -0.5,  0.0),	glm::Vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX1, TY1)},
-    CpuRenderParticle{glm::vec3(0.5, -0.5,  0.0),	glm::Vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX2, TY1)},
-    CpuRenderParticle{glm::vec3(-0.5,  0.5,  0.0),	glm::Vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX1, TY2)},
-    CpuRenderParticle{glm::vec3(0.5,  0.5,  0.0),	glm::Vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX2, TY2)}
+    CpuRenderParticle{glm::vec3(-0.5, -0.5,  0.0),	glm::vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX1, TY1)},
+    CpuRenderParticle{glm::vec3(0.5, -0.5,  0.0),	glm::vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX2, TY1)},
+    CpuRenderParticle{glm::vec3(-0.5,  0.5,  0.0),	glm::vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX1, TY2)},
+    CpuRenderParticle{glm::vec3(0.5,  0.5,  0.0),	glm::vec4(1.0, 1.0, 1.0, 1.0),		glm::vec2(TX2, TY2)}
 };
 static const uint32_t sPlaneIndices[] =
 { 0, 1, 2, 1, 3, 2 };

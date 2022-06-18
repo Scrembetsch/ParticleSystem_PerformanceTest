@@ -13,13 +13,18 @@ struct Particle
     bool Active = false;
     uint32_t Seed = 0;
 
-    float CameraDistance = 0.0f;
+    float CameraDistance = -1.0f;
 
     bool operator<(const Particle& other) const
     {
         // Sort in reverse order : far particles drawn first.
         return this->CameraDistance > other.CameraDistance;
         //return this->Lifetime > other.Lifetime;
+    }
+
+    bool operator>(const Particle& other) const
+    {
+        return other < *this;
     }
 };
 
