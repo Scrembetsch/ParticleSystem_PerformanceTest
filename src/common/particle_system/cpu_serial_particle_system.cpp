@@ -107,13 +107,30 @@ bool CpuSerialParticleSystem::Init()
 void CpuSerialParticleSystem::BuildParticleVertexData()
 {
     OPTICK_EVENT();
+    float scale = 0.5f;
 
 #if INDEXED
     const uint32_t verticesPerParticle = mNumIndexedVertices;
+    glm::vec3 quadPos[] = {
+    (-mQuad1 - mQuad2) * scale,
+    (-mQuad1 + mQuad2) * scale,
+    (mQuad1 - mQuad2) * scale,
+    (mQuad1 + mQuad2) * scale,
+};
 #else
     const uint32_t verticesPerParticle = mNumVertices;	// Currently no triangle strip
+    glm::vec3 quadPos[] = {
+    (-mQuad1 - mQuad2) * scale,
+    (-mQuad1 + mQuad2) * scale,
+    (mQuad1 - mQuad2) * scale,
+    (-mQuad1 + mQuad2)* scale,
+    (mQuad1 - mQuad2)* scale,
+    (mQuad1 + mQuad2) * scale,
+    };
 #endif
     size_t particlesToDraw = 0;
+
+
 
     for (size_t i = 0; i < mNumMaxParticles; i++)
     {
@@ -125,7 +142,7 @@ void CpuSerialParticleSystem::BuildParticleVertexData()
             {
                 size_t vertexIndex = j;
 
-                mParticleRenderData[particleIndex + vertexIndex].Position = mParticles[i].Position + sBasePlaneVertexData[vertexIndex].Position;
+                mParticleRenderData[particleIndex + vertexIndex].Position = mParticles[i].Position + quadPos[vertexIndex];
                 mParticleRenderData[particleIndex + vertexIndex].Color = mParticles[i].Color;
                 mParticleRenderData[particleIndex + vertexIndex].TexCoord = sBasePlaneVertexData[vertexIndex].TexCoord;
             }

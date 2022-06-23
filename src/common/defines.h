@@ -10,15 +10,15 @@
 	#define OPTICK_FRAME(...)
 #endif
 
-#define CPU 1
+#define CPU 0
 #define CS  0
-#define TF  0
+#define TF  1
 #define FS  0
 
-#define SORT 1
+#define SORT 0
 
 #if CPU
-	#define PARALLEL 1
+	#define PARALLEL 0
 	#define INSTANCE 0
 #if not INSTANCE
 	#define INDEXED  1
@@ -27,5 +27,5 @@
 
 #define WORK_GROUP_SIZE 256
 
-#define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)
-//#define NUM_CPU_THREADS 2
+//#define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)
+#define NUM_CPU_THREADS 2

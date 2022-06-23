@@ -51,8 +51,10 @@ bool TestApp::ReInit()
 
 	mNumSystems = 1;
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	//uint32_t testRuns[] = { 20 };
-	uint32_t testRuns[] = { 256 * 256 };
+	uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
+	//uint32_t testRuns[] = { 2500000 };
+	////uint32_t testRuns[] = { 20 };
+	//uint32_t testRuns[] = { 256 * 256 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
@@ -147,7 +149,7 @@ bool TestApp::ReInit()
 		success &= mParticleSystem->Init();
 #endif
 #if CS
-		mParticleSystem = new CsParticleSystem(mMaxParticles, WORK_GROUP_SIZE);
+		mParticleSystem = new CsParticleSystem(mMaxParticles, (mMaxParticles > WORK_GROUP_SIZE) ? WORK_GROUP_SIZE : mMaxParticles);
 
 		mParticleSystem->SetMinLifetime(emitMulti);
 		mParticleSystem->SetMaxLifetime(emitMulti);
@@ -232,10 +234,9 @@ void TestApp::Step()
 
 	for (uint32_t i = 0; i < mNumSystems; i++)
 	{
-
-		mParticleSystems[i]->UpdateParticles(deltaTime, mCamera.Position);
-
 #if CPU
+		mParticleSystems[i]->PrepareRender(&mCamera);
+		mParticleSystems[i]->UpdateParticles(deltaTime, mCamera.Position);
 		glm::mat4 projection = glm::perspective(glm::radians(mCamera.Zoom), mCamera.ViewWidth / mCamera.ViewHeight, 0.1f, 200.0f);
 		glm::mat4 view = mCamera.GetViewMatrix();
 
@@ -248,6 +249,8 @@ void TestApp::Step()
 		CHECK_GL_ERROR();
 #endif
 #if CS || TF || FS
+		mParticleSystems[i]->UpdateParticles(deltaTime, mCamera.Position);
+
 		mParticleSystems[i]->GetRenderShader()->Use();
 		mParticleTex.Use(mParticleSystems[i]->GetRenderShader());
 		mParticleSystems[i]->PrepareRender(&mCamera);
@@ -312,6 +315,7 @@ void TestApp::Step()
 		LOG("RESULT:", "\n\tMODE: %s\n\tEmit-Rate (Particles/s): %g\n\tTest Time: %g\n\tAvg. FPS: %g\n\tAvg. Frame-time: %g\n\tParticles: %d", mode.c_str(), mEmitRate, mRealTestTime, avgFps, avgFrameTime, particles);
 		//mTestFinished = true;
 		mCurrentTestRun++;
+		mTestResults.push_back(avgFrameTime);
 		if (mCurrentTestRun < mTestRuns)
 			ReInit();
 		else

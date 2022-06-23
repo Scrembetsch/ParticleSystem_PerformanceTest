@@ -23,6 +23,7 @@ public:
     virtual bool Init() = 0;
 
     virtual void UpdateParticles(float deltaTime, const glm::vec3& cameraPos) = 0;
+    virtual void PrepareRender(Camera* camera);
     virtual void RenderParticles() = 0;
 
     virtual void Emit(uint32_t numToGenerate);
@@ -53,6 +54,9 @@ protected:
 
     glm::vec3 mMinStartVelocity;
     glm::vec3 mMaxStartVelocity;
+
+    glm::vec3 mQuad1;
+    glm::vec3 mQuad2;
 
     std::vector<Particle> mParticles;
     std::vector<CpuIModule*> mModules;

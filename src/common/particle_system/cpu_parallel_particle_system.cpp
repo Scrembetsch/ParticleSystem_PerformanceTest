@@ -53,7 +53,7 @@ void CpuParallelParticleSystem::Worker::Run(uint32_t threadId, const glm::vec3& 
 		});
 
 #ifdef _WIN32
-	DWORD_PTR dw = SetThreadAffinityMask(mWorkerThread.native_handle(), DWORD_PTR(1) << (mThreadId + 1));
+	DWORD_PTR dw = SetThreadAffinityMask(mWorkerThread.native_handle(), DWORD_PTR(1) << (mThreadId));
 	if (dw == 0)
 	{
 		DWORD dwErr = GetLastError();
@@ -202,10 +202,9 @@ void CpuParallelParticleSystem::Worker::QuickSort(CpuParallelParticleSystem* ps,
 
 		if (ps->mThreadCounter.fetch_add(1) < ps->mWorkers.size())
 		{
-			uint32_t threadId = ps->mActiveThreads.fetch_add(1);
-
 			if (pi > 0)
 			{
+				uint32_t threadId = ps->mActiveThreads.fetch_add(1);
 #if USE_WORKERS
 				ps->mWorkers[threadId]->StartJob(JOB_SORT, begin, pi);
 #else
@@ -216,13 +215,11 @@ void CpuParallelParticleSystem::Worker::QuickSort(CpuParallelParticleSystem* ps,
 #endif
 			}
 			QuickSort(ps, pi + 1, end);
+			return;
 		}
-		else
-		{
-			std::sort(&ps->mParticles[begin], &ps->mParticles[pi]);
-			if(end > pi)
-				std::sort(&ps->mParticles[pi + 1], &ps->mParticles[end]);
-		}
+		std::sort(&ps->mParticles[begin], &ps->mParticles[pi]);
+		if(end > pi)
+			std::sort(&ps->mParticles[pi + 1], &ps->mParticles[end]);
 	}
 }
 
@@ -489,7 +486,7 @@ void CpuParallelParticleSystem::UpdateParticles(float deltaTime, const glm::vec3
 #else
 	mWorkers[0] = std::thread([this]()
 	{
-			Worker::QuickSort(this, 0, mNumMaxParticles - 1);
+		Worker::QuickSort(this, 0, mNumMaxParticles - 1);
 	});
 	for (uint32_t i = 0; i < mActiveThreads; i++)
 	{

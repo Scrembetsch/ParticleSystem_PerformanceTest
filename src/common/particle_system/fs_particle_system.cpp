@@ -39,6 +39,26 @@ FsParticleSystem::FsParticleSystem(uint32_t maxParticles)
         mResolutionX = sqrt;
         mResolutionY = sqrt;
     }
+    else
+    {
+        uint32_t res = std::ceil(std::sqrt(maxParticles));
+        for (uint32_t i = 0; true; i++)
+        {
+            uint32_t x = res + i;
+            uint32_t y = res - i;
+
+            if (x * y == maxParticles)
+            {
+                mResolutionX = x;
+                mResolutionY = y;
+                break;
+            }
+            if (y == 0)
+            {
+                break;
+            }
+        }
+    }
 }
 
 FsParticleSystem::~FsParticleSystem()

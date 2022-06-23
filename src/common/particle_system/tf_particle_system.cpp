@@ -31,8 +31,32 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
     , mMaxStartVelocity(0.0f)
 {
 #if SORT
-    mResolutionX = sqrt(maxParticles);
-    mResolutionY = mResolutionX;
+    uint32_t sqrt = std::sqrt(maxParticles);
+    if (sqrt * sqrt == maxParticles)
+    {
+        mResolutionX = sqrt;
+        mResolutionY = sqrt;
+    }
+    else
+    {
+        uint32_t res = std::ceil(std::sqrt(maxParticles));
+        for (uint32_t i = 0; true; i++)
+        {
+            uint32_t x = res + i;
+            uint32_t y = res - i;
+
+            if (x * y == maxParticles)
+            {
+                mResolutionX = x;
+                mResolutionY = y;
+                break;
+            }
+            if (y == 0)
+            {
+                break;
+            }
+        }
+    }
 #endif
 
     for (uint32_t i = 0; i < sBufferSize; i++)
