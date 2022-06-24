@@ -11,7 +11,7 @@ public:
 	float EmitRate;
 
 	void PreRun(float deltaTime) override;
-	void UpdateParticle(float deltaTime, Particle& particle) override;
+	void UpdateParticle(float deltaTime, Particle& particle, uint32_t index) override;
 
 private:
 	float mCurrentGenerateOffset;

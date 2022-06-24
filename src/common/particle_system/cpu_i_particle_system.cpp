@@ -8,6 +8,8 @@ CpuIParticleSystem::CpuIParticleSystem(uint32_t maxParticles)
 	, mMaxLifetime(0.0f)
 	, mMinStartVelocity(0)
 	, mMaxStartVelocity(0)
+	, mPosition(0.0f)
+	, mScale(1.0f)
 {
 	mParticles.resize(mNumMaxParticles);
 }
@@ -49,6 +51,31 @@ bool CpuIParticleSystem::AddModule(CpuIModule* psModule)
 uint32_t CpuIParticleSystem::GetCurrentParticles() const
 {
 	return mNumParticles;
+}
+
+uint32_t CpuIParticleSystem::GetMaxParticles() const
+{
+	return mNumMaxParticles;
+}
+
+void CpuIParticleSystem::SetPosition(const glm::vec3& position)
+{
+	mPosition = position;
+}
+
+glm::vec3 CpuIParticleSystem::GetPosition() const
+{
+	return mPosition;
+}
+
+void CpuIParticleSystem::SetScale(float scale)
+{
+	mScale = scale;
+}
+
+float CpuIParticleSystem::GetScale() const
+{
+	return mScale;
 }
 
 void CpuIParticleSystem::SortParticles()
@@ -97,9 +124,7 @@ void CpuIParticleSystem::InitParticle(Particle& particle, bool active)
 {
 	particle.Active = active;
 
-	particle.Position.x = 0.0f;
-	particle.Position.y = 0.0f;
-	particle.Position.z = 0.0f;
+	particle.Position = mPosition;
 
 	particle.Velocity.x = mRandom.Rand(mMinStartVelocity.x, mMaxStartVelocity.x);
 	particle.Velocity.y = mRandom.Rand(mMinStartVelocity.y, mMaxStartVelocity.y);
@@ -108,4 +133,6 @@ void CpuIParticleSystem::InitParticle(Particle& particle, bool active)
 	float lifetime = mRandom.Rand(mMinLifetime, mMaxLifetime);
 	particle.Lifetime = lifetime;
 	particle.BeginLifetime = lifetime;
+
+	particle.Seed = mRandom.Rand(0, mNumMaxParticles);
 }

@@ -1,7 +1,7 @@
 #include "random.h"
 
-Random::Random()
-    : mRng(std::default_random_engine::default_seed)
+Random::Random(uint32_t seed)
+    : mRng(seed)
     , mMax(static_cast<float>(mRng.max()))
 {
 }

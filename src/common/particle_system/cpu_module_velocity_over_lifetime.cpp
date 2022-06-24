@@ -18,7 +18,7 @@ void CpuModuleVelOverLife::PreRun(float deltaTime)
 {
 }
 
-void CpuModuleVelOverLife::UpdateParticle(float deltaTime, Particle& particle)
+void CpuModuleVelOverLife::UpdateParticle(float deltaTime, Particle& particle, uint32_t index)
 {
 	if (!Active | !particle.Active)
 		return;

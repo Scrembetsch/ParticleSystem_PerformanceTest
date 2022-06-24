@@ -9,7 +9,7 @@ public:
 	CpuModuleVelOverLife(CpuIParticleSystem* particleSystem, const glm::vec3& velBegin, const glm::vec3& velEnd);
 
 	void PreRun(float deltaTime) override;
-	void UpdateParticle(float deltaTime, Particle& particle) override;
+	void UpdateParticle(float deltaTime, Particle& particle, uint32_t index) override;
 
 	glm::vec3 VelocityBegin;
 	glm::vec3 VelocityEnd;

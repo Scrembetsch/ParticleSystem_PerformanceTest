@@ -20,6 +20,7 @@ uniform mat4 uView;
 
 uniform vec3 uQuad1;
 uniform vec3 uQuad2;
+uniform float uScale;
 
 out vec2 vTexCoord;
 out vec4 vColor;
@@ -35,15 +36,13 @@ void main()
    float tl = float(subId == 2U);
    float tr = float(subId == 3U);
 
-   float scale = 0.5;
-
    float alive = float(Particles[index].Data.x > 0.0 && Particles[index].Data.z == 0);
    float notAlive = float(Particles[index].Data.x <= 0.0 || Particles[index].Data.z > 0);
 
-   position += (-uQuad1 - uQuad2) * scale * bl;
-   position += (-uQuad1 + uQuad2) * scale * br;
-   position += (uQuad1 - uQuad2) * scale * tl;
-   position += (uQuad1 + uQuad2) * scale * tr;
+   position += (-uQuad1 - uQuad2) * uScale * bl;
+   position += (-uQuad1 + uQuad2) * uScale * br;
+   position += (uQuad1 - uQuad2) * uScale * tl;
+   position += (uQuad1 + uQuad2) * uScale * tr;
 
    vec3 offset = vec3(99999999) * notAlive;
    gl_Position = uProjection * uView * vec4(position + offset, 1.0);

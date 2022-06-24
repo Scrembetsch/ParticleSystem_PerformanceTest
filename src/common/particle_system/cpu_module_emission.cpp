@@ -32,6 +32,6 @@ void CpuModuleEmission::PreRun(float deltaTime)
 	ParticleSystem->Emit(numToGenerate);
 }
 
-void CpuModuleEmission::UpdateParticle(float deltaTime, Particle& particle)
+void CpuModuleEmission::UpdateParticle(float deltaTime, Particle& particle, uint32_t index)
 {
 }

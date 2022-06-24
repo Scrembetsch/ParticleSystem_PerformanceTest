@@ -16,23 +16,29 @@ public:
     TfParticleSystem(uint32_t maxParticles);
     virtual ~TfParticleSystem();
 
-    virtual bool Init();
+    bool Init();
 
-    virtual void UpdateParticles(float timeStep, const glm::vec3& cameraPos);
+    void UpdateParticles(float timeStep, const glm::vec3& cameraPos);
     void PrepareRender(Camera* camera);
     void RenderParticles();
 
-    virtual bool AddModule(TfIModule* psModule);
+    bool AddModule(TfIModule* psModule);
 
-    virtual uint32_t GetCurrentParticles() const;
+    uint32_t GetCurrentParticles() const;
 
-    virtual void SetMinLifetime(float minLifetime);
-    virtual void SetMaxLifetime(float maxLifetime);
+    void SetPosition(const glm::vec3& position);
+    glm::vec3 GetPosition() const;
 
-    virtual void SetMinStartVelocity(const glm::vec3& minVelocity);
-    virtual void SetMaxStartVelocity(const glm::vec3& maxVelocity);
+    void SetScale(float scale);
+    float GetScale() const;
 
-    virtual void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
+    void SetMinLifetime(float minLifetime);
+    void SetMaxLifetime(float maxLifetime);
+
+    void SetMinStartVelocity(const glm::vec3& minVelocity);
+    void SetMaxStartVelocity(const glm::vec3& maxVelocity);
+
+    void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
     Shader* GetRenderShader();
 
     int32_t GetMaxVerticesPerEmitter() const;
@@ -69,6 +75,9 @@ protected:
 
     glm::vec3 mMinStartVelocity;
     glm::vec3 mMaxStartVelocity;
+
+    glm::vec3 mPosition;
+    float mScale;
 
     Shader mRenderShader;
     Shader mUpdateShader;

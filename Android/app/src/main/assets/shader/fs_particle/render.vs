@@ -10,6 +10,11 @@ uniform mat4 uProjection;
 uniform mat4 uView;
 
 uniform float uCurrentTime;
+uniform float uScale;
+
+uniform vec3 uQuad1;
+uniform vec3 uQuad2;
+
 uniform vec2 uResolution;
 
 out vec2 vTexId;
@@ -38,10 +43,10 @@ void main()
     float alive = float(uCurrentTime < deathTime);
     float notAlive = float(uCurrentTime >= deathTime);
 
-    position += vec3(-scale, -scale, 0.0) * bl;
-    position += vec3(scale, -scale, 0.0) * br;
-    position += vec3(-scale, scale, 0.0) * tl;
-    position += vec3(scale, scale, 0.0) * tr;
+    position += (-uQuad1 - uQuad2) * uScale * bl;
+    position += (-uQuad1 + uQuad2) * uScale * br;
+    position += (uQuad1 - uQuad2) * uScale * tl;
+    position += (uQuad1 + uQuad2) * uScale * tr;
 
     gl_Position = uProjection * uView * vec4(position, 1.0);
     vTexCoord = vec2(0.0, 0.0);

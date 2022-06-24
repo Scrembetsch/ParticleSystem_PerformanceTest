@@ -153,7 +153,7 @@ void CpuSerialInstanceParticleSystem::UpdateParticles(float deltaTime, const glm
 
 		for (uint32_t j = 0; j < mModules.size(); j++)
 		{
-			mModules[j]->UpdateParticle(deltaTime, particle);
+			mModules[j]->UpdateParticle(deltaTime, particle, i);
 		}
 		particle.Position += particle.Velocity * deltaTime;
 

@@ -77,7 +77,7 @@ void CpuParallelInstanceParticleSystem::Worker::UpdateParticles()
 
 		for (uint32_t j = 0; j < modules.size(); j++)
 		{
-			modules[j]->UpdateParticle(mDeltaTime, particle);
+			modules[j]->UpdateParticle(mDeltaTime, particle, i);
 		}
 		particle.Position += particle.Velocity * mDeltaTime;
 	}

@@ -31,6 +31,13 @@ public:
     virtual bool AddModule(CpuIModule* psModule);
 
     virtual uint32_t GetCurrentParticles() const;
+    virtual uint32_t GetMaxParticles() const;
+
+    virtual void SetPosition(const glm::vec3& position);
+    virtual glm::vec3 GetPosition() const;
+
+    virtual void SetScale(float scale);
+    virtual float GetScale() const;
 
     virtual void SetMinLifetime(float minLifetime);
     virtual void SetMaxLifetime(float maxLifetime);
@@ -57,6 +64,9 @@ protected:
 
     glm::vec3 mQuad1;
     glm::vec3 mQuad2;
+
+    glm::vec3 mPosition;
+    float mScale;
 
     std::vector<Particle> mParticles;
     std::vector<CpuIModule*> mModules;

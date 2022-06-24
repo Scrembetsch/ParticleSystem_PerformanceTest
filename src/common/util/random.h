@@ -5,7 +5,7 @@
 class Random
 {
 public:
-    Random();
+    Random(uint32_t seed = std::default_random_engine::default_seed);
 
     float Rand01();
     float Rand(float min, float max);

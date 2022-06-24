@@ -11,11 +11,11 @@
 #endif
 
 #define CPU 0
-#define CS  0
-#define TF  1
+#define CS  1
+#define TF  0
 #define FS  0
 
-#define SORT 0
+#define SORT 1
 
 #if CPU
 	#define PARALLEL 0

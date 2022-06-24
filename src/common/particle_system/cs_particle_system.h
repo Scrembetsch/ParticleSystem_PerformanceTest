@@ -15,7 +15,7 @@ class CsParticleSystem
 {
 public:
 	CsParticleSystem(uint32_t maxParticles, uint32_t groupSize);
-	~CsParticleSystem();
+	virtual ~CsParticleSystem();
 
 	bool Init();
 
@@ -26,6 +26,12 @@ public:
 	bool AddModule(CsIModule* psModule);
 
 	uint32_t GetCurrentParticles() const;
+
+	void SetPosition(const glm::vec3& position);
+	glm::vec3 GetPosition() const;
+
+	void SetScale(float scale);
+	float GetScale() const;
 
 	void SetMinLifetime(float minLifetime);
 	void SetMaxLifetime(float maxLifetime);
@@ -75,6 +81,9 @@ private:
 
 	glm::vec3 mMinStartVelocity;
 	glm::vec3 mMaxStartVelocity;
+
+	glm::vec3 mPosition;
+	float mScale;
 
 	Shader mComputeShader;
 	Shader mSortShader;

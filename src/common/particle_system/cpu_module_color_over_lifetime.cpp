@@ -18,7 +18,7 @@ void CpuModuleColorOverLife::PreRun(float deltaTime)
 {
 }
 
-void CpuModuleColorOverLife::UpdateParticle(float deltaTime, Particle& particle)
+void CpuModuleColorOverLife::UpdateParticle(float deltaTime, Particle& particle, uint32_t index)
 {
 	if (!Active | !particle.Active)
 		return;

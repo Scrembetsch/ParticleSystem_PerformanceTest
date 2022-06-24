@@ -11,6 +11,7 @@
 #include "particle_system/cpu_module_emission.h"
 #include "particle_system/cpu_module_velocity_over_lifetime.h"
 #include "particle_system/cpu_module_color_over_lifetime.h"
+#include "particle_system/cpu_module_noise_position.h"
 
 #include "particle_system/tf_module_emission.h"
 #include "particle_system/tf_module_velocity_over_lifetime.h"
@@ -51,10 +52,11 @@ bool TestApp::ReInit()
 
 	mNumSystems = 1;
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
+	//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
 	//uint32_t testRuns[] = { 2500000 };
 	////uint32_t testRuns[] = { 20 };
-	//uint32_t testRuns[] = { 256 * 256 };
+	//uint32_t testRuns[] = { 32 * 32};
+	uint32_t testRuns[] = { 512 * 512 };
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
 	float emitMulti = 5.0f;
@@ -92,6 +94,7 @@ bool TestApp::ReInit()
 	for (uint32_t i = 0; i < mNumSystems; i++)
 	{
 		PSystem*& mParticleSystem = mParticleSystems[i];
+
 #if CPU
 		mParticleSystem = new
 #if PARALLEL
@@ -116,10 +119,10 @@ bool TestApp::ReInit()
 
 		mParticleSystem->SetMinLifetime(emitMulti);
 		mParticleSystem->SetMaxLifetime(emitMulti);
-		mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
-		mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
+		mParticleSystem->SetMinStartVelocity(glm::vec3(-0.5f, -0.5f, -1.0f));
+		mParticleSystem->SetMaxStartVelocity(glm::vec3(0.5f, 0.5f, 0.0f));
 		mParticleSystem->AddModule(new CpuModuleEmission(mParticleSystem, mEmitRate));
-		mParticleSystem->AddModule(new CpuModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		mParticleSystem->AddModule(new CpuModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.5f, 0.0f, 0.0f)));
 		mParticleSystem->AddModule(new CpuModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 #endif
 #if TF
@@ -127,11 +130,11 @@ bool TestApp::ReInit()
 
 		mParticleSystem->SetMinLifetime(emitMulti);
 		mParticleSystem->SetMaxLifetime(emitMulti);
-		mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
-		mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 		mParticleSystem->SetRenderFragReplaceMap(replaceMap);
+		mParticleSystem->SetMinStartVelocity(glm::vec3(-0.5f, -0.5f, -1.0f));
+		mParticleSystem->SetMaxStartVelocity(glm::vec3(0.5f, 0.5f, 0.0f));
 		mParticleSystem->AddModule(new TfModuleEmission(mParticleSystem, mEmitRate));
-		mParticleSystem->AddModule(new TfModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		mParticleSystem->AddModule(new TfModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.5f, 0.0f, 0.0f)));
 		mParticleSystem->AddModule(new TfModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 		success &= mParticleSystem->Init();
 #endif
@@ -140,11 +143,11 @@ bool TestApp::ReInit()
 
 		mParticleSystem->SetMinLifetime(emitMulti);
 		mParticleSystem->SetMaxLifetime(emitMulti);
-		mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
-		mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 		mParticleSystem->SetRenderFragReplaceMap(replaceMap);
+		mParticleSystem->SetMinStartVelocity(glm::vec3(-0.5f, -0.5f, -1.0f));
+		mParticleSystem->SetMaxStartVelocity(glm::vec3(0.5f, 0.5f, 0.0f));
 		mParticleSystem->AddModule(new FsModuleEmission(mParticleSystem, mEmitRate));
-		mParticleSystem->AddModule(new FsModuleVelocityOverLifetime(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		mParticleSystem->AddModule(new FsModuleVelocityOverLifetime(mParticleSystem, glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.5f, 0.0f, 0.0f)));
 		mParticleSystem->AddModule(new FsModuleColorOverLifetime(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 		success &= mParticleSystem->Init();
 #endif
@@ -153,14 +156,15 @@ bool TestApp::ReInit()
 
 		mParticleSystem->SetMinLifetime(emitMulti);
 		mParticleSystem->SetMaxLifetime(emitMulti);
-		mParticleSystem->SetMinStartVelocity(glm::vec3(-2.0f, -2.0f, -1.0f));
-		mParticleSystem->SetMaxStartVelocity(glm::vec3(2.0f, 2.0f, 0.0f));
 		mParticleSystem->SetRenderFragReplaceMap(replaceMap);
+		mParticleSystem->SetMinStartVelocity(glm::vec3(-0.5f, -0.5f, -1.0f));
+		mParticleSystem->SetMaxStartVelocity(glm::vec3(0.5f, 0.5f, 0.0f));
 		mParticleSystem->AddModule(new CsModuleEmission(mParticleSystem, mEmitRate));
-		mParticleSystem->AddModule(new CsModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f)));
+		mParticleSystem->AddModule(new CsModuleVelOverLife(mParticleSystem, glm::vec3(0.0f, 0.5f, 0.0f), glm::vec3(0.5f, 0.0f, 0.0f)));
 		mParticleSystem->AddModule(new CsModuleColorOverLife(mParticleSystem, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
 		success &= mParticleSystem->Init();
 #endif
+		mParticleSystem->SetScale(0.1f);
 	}
 	mFrameCount = 0;
 	mFrameTime = 0.0f;
@@ -234,6 +238,13 @@ void TestApp::Step()
 
 	for (uint32_t i = 0; i < mNumSystems; i++)
 	{
+		glm::vec3 position(0.0f);
+		position.x = std::sin(mTimeSinceStart * 3.14f * 0.75f) * 25.0f;
+		position.y = std::sin(mTimeSinceStart * 3.14f * 2.0f) * 15.0f;
+
+		position.x += 10.0f;
+		position.y -= 10.0f;
+		mParticleSystems[i]->SetPosition(position);
 #if CPU
 		mParticleSystems[i]->PrepareRender(&mCamera);
 		mParticleSystems[i]->UpdateParticles(deltaTime, mCamera.Position);

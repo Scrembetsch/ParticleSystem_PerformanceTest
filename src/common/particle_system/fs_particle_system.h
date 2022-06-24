@@ -17,7 +17,7 @@ class FsParticleSystem
 {
 public:
 	FsParticleSystem(uint32_t maxParticles);
-	~FsParticleSystem();
+	virtual ~FsParticleSystem();
 
 	bool Init();
 
@@ -36,6 +36,12 @@ public:
 
 	void SetMinStartVelocity(const glm::vec3& minVelocity);
 	void SetMaxStartVelocity(const glm::vec3& maxVelocity);
+
+	void SetPosition(const glm::vec3& position);
+	glm::vec3 GetPosition() const;
+
+	void SetScale(float scale);
+	float GetScale() const;
 
 	void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
 	Shader* GetRenderShader();
@@ -56,11 +62,11 @@ private:
 	uint32_t mUpdateVbo;
 
 	uint32_t mFramebuffer[2] = {0};
-	Texture2D mPosition[2];
-	Texture2D mVelocity[2];
-	Texture2D mColor[2];
-	Texture2D mIndex[2];
-	Texture2D mData0;
+	Texture2D mPositionTex[2];
+	Texture2D mVelocityTex[2];
+	Texture2D mColorTex[2];
+	Texture2D mIndexTex[2];
+	Texture2D mData0Tex;
 
 	uint32_t mResolutionX;
 	uint32_t mResolutionY;
@@ -85,6 +91,9 @@ private:
 
 	glm::vec3 mMinStartVelocity;
 	glm::vec3 mMaxStartVelocity;
+
+	glm::vec3 mPosition;
+	float mScale;
 
 	Shader mUpdateShader;
 	Shader mRenderShader;

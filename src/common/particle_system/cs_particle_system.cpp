@@ -40,6 +40,8 @@ CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     , mMinStartVelocity(0.0f)
     , mMaxStartVelocity(0.0f)
     , mCurrentGenerateOffset(0.0f)
+    , mPosition(0.0f)
+    , mScale(1.0f)
 {
 }
 
@@ -196,7 +198,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     OPTICK_EVENT();
 
     mComputeShader.Use();
-    mComputeShader.SetVec3("uPosition", glm::vec3(0.0f));
+    mComputeShader.SetVec3("uPosition", mPosition);
     mComputeShader.SetVec3("uCameraPos", cameraPos);
     mComputeShader.SetVec3("uRandomSeed", glm::vec3(mRandom.Rand(-10.0f, 20.0f), mRandom.Rand(-10.0f, 20.0f), mRandom.Rand(-10.0f, 20.0f)));
     mComputeShader.SetVec3("uVelocityMin", mMinStartVelocity);
@@ -269,8 +271,11 @@ void CsParticleSystem::RenderParticles()
     mRenderShader.Use();
     mRenderShader.SetMat4("uProjection", mProjection);
     mRenderShader.SetMat4("uView", mView);
+
     mRenderShader.SetVec3("uQuad1", mQuad1);
     mRenderShader.SetVec3("uQuad2", mQuad2);
+
+    mRenderShader.SetFloat("uScale", mScale);
 
     glBindVertexArray(mVao);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles);
@@ -372,6 +377,26 @@ void CsParticleSystem::SortBigDisperse(uint32_t n, uint32_t h)
 uint32_t CsParticleSystem::GetCurrentParticles() const
 {
     return mNumParticles;
+}
+
+void CsParticleSystem::SetPosition(const glm::vec3& position)
+{
+    mPosition = position;
+}
+
+glm::vec3 CsParticleSystem::GetPosition() const
+{
+    return mPosition;
+}
+
+void CsParticleSystem::SetScale(float scale)
+{
+    mScale = scale;
+}
+
+float CsParticleSystem::GetScale() const
+{
+    return mScale;
 }
 
 void CsParticleSystem::SetMinLifetime(float minLifetime)

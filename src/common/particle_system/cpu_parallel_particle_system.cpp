@@ -124,7 +124,7 @@ uint32_t CpuParallelParticleSystem::Worker::Update(std::vector<Particle>& partic
 
 		for (uint32_t j = 0; j < modules.size(); j++)
 		{
-			modules[j]->UpdateParticle(deltaTime, particle);
+			modules[j]->UpdateParticle(deltaTime, particle, i);
 		}
 		particle.Position += particle.Velocity * deltaTime;
 	}

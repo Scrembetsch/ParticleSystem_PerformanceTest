@@ -29,6 +29,8 @@ TfParticleSystem::TfParticleSystem(uint32_t maxParticles)
     , mMaxLifetime(0.0f)
     , mMinStartVelocity(0.0f)
     , mMaxStartVelocity(0.0f)
+    , mPosition(0.0f)
+    , mScale(1.0f)
 {
 #if SORT
     uint32_t sqrt = std::sqrt(maxParticles);
@@ -283,7 +285,7 @@ void TfParticleSystem::UpdateParticles(float timeStep, const glm::vec3& cameraPo
 
     mUpdateShader.Use();
 
-    mUpdateShader.SetVec3("uPosition", glm::vec3(0.0f));
+    mUpdateShader.SetVec3("uPosition", mPosition);
     mUpdateShader.SetVec3("uCameraPos", cameraPos);
     mUpdateShader.SetVec3("uVelocityMin", mMinStartVelocity);
     mUpdateShader.SetVec3("uVelocityRange", mMaxStartVelocity - mMinStartVelocity);
@@ -425,8 +427,11 @@ void TfParticleSystem::RenderParticles()
     mRenderShader.Use();
     mRenderShader.SetMat4("uProjection", mProjection);
     mRenderShader.SetMat4("uView", mView);
+
     mRenderShader.SetVec3("uQuad1", mQuad1);
     mRenderShader.SetVec3("uQuad2", mQuad2);
+
+    mRenderShader.SetFloat("uScale", mScale);
     glBindVertexArray(mVaos[mCurrentReadBuffer]);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, mVbos[mCurrentWriteBuffer]);
 
@@ -466,6 +471,26 @@ void TfParticleSystem::SetMinStartVelocity(const glm::vec3& minVelocity)
 void TfParticleSystem::SetMaxStartVelocity(const glm::vec3& maxVelocity)
 {
     mMaxStartVelocity = maxVelocity;
+}
+
+void TfParticleSystem::SetPosition(const glm::vec3& position)
+{
+    mPosition = position;
+}
+
+glm::vec3 TfParticleSystem::GetPosition() const
+{
+    return mPosition;
+}
+
+void TfParticleSystem::SetScale(float scale)
+{
+    mScale = scale;
+}
+
+float TfParticleSystem::GetScale() const
+{
+    return mScale;
 }
 
 void TfParticleSystem::SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap)

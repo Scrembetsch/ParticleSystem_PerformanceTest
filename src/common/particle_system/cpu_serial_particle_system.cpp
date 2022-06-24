@@ -107,25 +107,24 @@ bool CpuSerialParticleSystem::Init()
 void CpuSerialParticleSystem::BuildParticleVertexData()
 {
     OPTICK_EVENT();
-    float scale = 0.5f;
 
 #if INDEXED
     const uint32_t verticesPerParticle = mNumIndexedVertices;
     glm::vec3 quadPos[] = {
-    (-mQuad1 - mQuad2) * scale,
-    (-mQuad1 + mQuad2) * scale,
-    (mQuad1 - mQuad2) * scale,
-    (mQuad1 + mQuad2) * scale,
+    (-mQuad1 - mQuad2) * mScale,
+    (-mQuad1 + mQuad2) * mScale,
+    (mQuad1 - mQuad2) * mScale,
+    (mQuad1 + mQuad2) * mScale,
 };
 #else
     const uint32_t verticesPerParticle = mNumVertices;	// Currently no triangle strip
     glm::vec3 quadPos[] = {
-    (-mQuad1 - mQuad2) * scale,
-    (-mQuad1 + mQuad2) * scale,
-    (mQuad1 - mQuad2) * scale,
-    (-mQuad1 + mQuad2)* scale,
-    (mQuad1 - mQuad2)* scale,
-    (mQuad1 + mQuad2) * scale,
+    (-mQuad1 - mQuad2) * mScale,
+    (-mQuad1 + mQuad2) * mScale,
+    (mQuad1 - mQuad2) * mScale,
+    (-mQuad1 + mQuad2)* mScale,
+    (mQuad1 - mQuad2)* mScale,
+    (mQuad1 + mQuad2) * mScale,
     };
 #endif
     size_t particlesToDraw = 0;
@@ -195,7 +194,7 @@ void CpuSerialParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& 
 
         for (uint32_t j = 0; j < mModules.size(); j++)
         {
-            mModules[j]->UpdateParticle(deltaTime, particle);
+            mModules[j]->UpdateParticle(deltaTime, particle, i);
         }
         particle.Position += particle.Velocity * deltaTime;
 
