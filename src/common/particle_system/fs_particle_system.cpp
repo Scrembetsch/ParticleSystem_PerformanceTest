@@ -349,8 +349,8 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    unsigned int baseattachments[1] = { GL_NONE};
-    baseattachments[0] = val;
+    unsigned int baseattachments[1] = { GL_BACK };
+    //baseattachments[0] = val;
     glDrawBuffers(1, baseattachments);
     CHECK_GL_ERROR();
 

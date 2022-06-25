@@ -52,10 +52,10 @@ bool TestApp::ReInit()
 
 	mNumSystems = 1;
 	//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
-	uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
+	//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
 	//uint32_t testRuns[] = { 2500000 };
-	////uint32_t testRuns[] = { 20 };
-	//uint32_t testRuns[] = { 32 * 32};
+	uint32_t testRuns[] = { 32 * 32 };
+	//uint32_t testRuns[] = { 256 * 256};
 	//uint32_t testRuns[] = { 1<<21};
 	mTestRuns = sizeof(testRuns) / sizeof(uint32_t);
 
@@ -323,7 +323,7 @@ void TestApp::Step()
 #if SORT
 			mode += " (SORT)";
 #endif
-		LOG("RESULT:", "\n\tMODE: %s\n\tEmit-Rate (Particles/s): %g\n\tTest Time: %g\n\tAvg. FPS: %g\n\tAvg. Frame-time: %g\n\tParticles: %d", mode.c_str(), mEmitRate, mRealTestTime, avgFps, avgFrameTime, particles);
+		LOGE("RESULT:", "\n\tMODE: %s\n\tEmit-Rate (Particles/s): %g\n\tTest Time: %g\n\tAvg. FPS: %g\n\tAvg. Frame-time: %g\n\tParticles: %d", mode.c_str(), mEmitRate, mRealTestTime, avgFps, avgFrameTime, particles);
 		//mTestFinished = true;
 		mCurrentTestRun++;
 		mTestResults.push_back(avgFrameTime);
@@ -338,7 +338,7 @@ void TestApp::Step()
 				result += "\n";
 				result += std::to_string(*it);
 			}
-			LOG("SUMMARY: ", "%s", result.c_str());
+			LOGE("SUMMARY: ", "%s", result.c_str());
 		}
 	}
 

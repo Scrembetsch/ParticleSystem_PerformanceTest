@@ -15,7 +15,7 @@ struct IndexStruct
     float Distance;
 };
 
-layout(std430, binding=5) buffer Index
+layout(std430, binding=2) buffer Index
 {
     IndexStruct Indices[];
 };

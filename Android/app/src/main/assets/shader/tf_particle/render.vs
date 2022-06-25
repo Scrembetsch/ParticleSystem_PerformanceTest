@@ -27,8 +27,8 @@ out vec4 vColor;
 
 void main()
 {
-   uint index = gl_InstanceID;
-   uint subId = gl_VertexID;
+   uint index = uint(gl_InstanceID);
+   uint subId = uint(gl_VertexID);
    vec3 position = Particles[index].Position.xyz;
 
    float bl = float(subId == 0U);
@@ -36,8 +36,8 @@ void main()
    float tl = float(subId == 2U);
    float tr = float(subId == 3U);
 
-   float alive = float(Particles[index].Data.x > 0.0 && Particles[index].Data.z == 0);
-   float notAlive = float(Particles[index].Data.x <= 0.0 || Particles[index].Data.z > 0);
+   float alive = float(Particles[index].Data.x > 0.0 && Particles[index].Data.z == 0.0);
+   float notAlive = float(Particles[index].Data.x <= 0.0 || Particles[index].Data.z > 0.0);
 
    position += (-uQuad1 - uQuad2) * uScale * bl;
    position += (-uQuad1 + uQuad2) * uScale * br;

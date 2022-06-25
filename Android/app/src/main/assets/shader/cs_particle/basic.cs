@@ -6,24 +6,13 @@ layout(local_size_x = LOCAL_SIZE_X) in;
 
 MODULE_ATOMIC_COUNTERS
 
-layout(std430, binding=1) buffer Position
+struct BufferParticle
 {
-    vec4 Positions[];
-};
-
-layout(std430, binding=2) buffer Velocity
-{
-    vec4 Velocities[];
-};
-
-layout(std430, binding=3) buffer Color
-{
-    vec4 Colors[];
-};
-
-layout(std430, binding=4) buffer Lifetime
-{
-    vec2 Lifetimes[];
+    vec3 Position;
+    float Lifetime;
+    vec3 Velocity;
+    float BeginLifetime;
+    vec4 Color;
 };
 
 struct IndexStruct
@@ -32,7 +21,12 @@ struct IndexStruct
     float Distance;
 };
 
-layout(std430, binding=5) buffer Index
+layout(std430, binding=1) buffer ParticleBuffer
+{
+    BufferParticle Particles[];
+};
+
+layout(std430, binding=2) buffer Index
 {
     IndexStruct Indices[];
 };
@@ -84,11 +78,11 @@ void InitLocalParticle()
 {
     uint gid = gl_GlobalInvocationID.x;
 
-    lParticle.Position = Positions[gid].xyz;
-    lParticle.Velocity = Velocities[gid].xyz;
-    lParticle.Color = Colors[gid].rgba;
-    lParticle.CurrentLifetime = Lifetimes[gid].x - uDeltaTime;
-    lParticle.BeginLifetime = Lifetimes[gid].y;
+    lParticle.Position = Particles[gid].Position.xyz;
+    lParticle.Velocity = Particles[gid].Velocity.xyz;
+    lParticle.Color = Particles[gid].Color.rgba;
+    lParticle.CurrentLifetime = Particles[gid].Lifetime - uDeltaTime;
+    lParticle.BeginLifetime = Particles[gid].BeginLifetime;
     lParticle.LifetimeT = clamp(lParticle.CurrentLifetime / lParticle.BeginLifetime, 0.0, 1.0);
     lParticle.Alive = lParticle.CurrentLifetime > 0.0;
     lParticle.AliveF = float(lParticle.Alive);
@@ -98,10 +92,11 @@ void WriteParticleToStorage()
 {
     uint gid = gl_GlobalInvocationID.x;
 
-    Positions[gid].xyz = lParticle.Position;
-    Velocities[gid].xyz = lParticle.Velocity;
-    Colors[gid] = lParticle.Color;
-    Lifetimes[gid].xy = vec2(lParticle.CurrentLifetime, lParticle.BeginLifetime);
+    Particles[gid].Position.xyz = lParticle.Position;
+    Particles[gid].Velocity.xyz = lParticle.Velocity;
+    Particles[gid].Color = lParticle.Color;
+    Particles[gid].Lifetime = lParticle.CurrentLifetime;
+    Particles[gid].BeginLifetime = lParticle.BeginLifetime;
 }
 
 void InitParticle()

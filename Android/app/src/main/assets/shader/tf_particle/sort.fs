@@ -54,12 +54,12 @@ void main()
 
   Id = uint(floor(uId.x + uId.y * uResolution.x));
 
-  uint stageLength = uStageDistance * 2;
-  uint stepLength = uStepDistance * 2;
+  uint stageLength = uStageDistance * 2U;
+  uint stepLength = uStepDistance * 2U;
 
   uint stagePartId = Id / stageLength;
   uint stepPartId = (Id / stepLength) % (stageLength / stepLength);
-  bool descending = stagePartId % 2 == 0;
+  bool descending = stagePartId % 2U == 0U;
 
   uint startFirstHalf = stagePartId * stageLength + stepPartId * stepLength;
   uint startSecondHalf = startFirstHalf + uStepDistance;

@@ -23,10 +23,7 @@ glUnmapBuffer(GL_ARRAY_BUFFER)
 CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     : mVao(0)
     , mAtomicBuffer(0)
-    , mPosSsbo(0)
-    , mVelSsbo(0)
-    , mColSsbo(0)
-    , mLifeSsbo(0)
+    , mParticleSsbo(0)
     , mIndexSsbo(0)
     , mNumMaxParticles(maxParticles)
     , mNumParticles(0)
@@ -52,25 +49,10 @@ CsParticleSystem::~CsParticleSystem()
         glDeleteBuffers(1, &mAtomicBuffer);
         mAtomicBuffer = 0;
     }
-    if (mPosSsbo != 0)
+    if (mParticleSsbo != 0)
     {
-        glDeleteBuffers(1, &mPosSsbo);
-        mPosSsbo = 0;
-    }
-    if (mVelSsbo != 0)
-    {
-        glDeleteBuffers(1, &mVelSsbo);
-        mVelSsbo = 0;
-    }
-    if (mColSsbo != 0)
-    {
-        glDeleteBuffers(1, &mColSsbo);
-        mColSsbo = 0;
-    }
-    if (mLifeSsbo != 0)
-    {
-        glDeleteBuffers(1, &mLifeSsbo);
-        mLifeSsbo = 0;
+        glDeleteBuffers(1, &mParticleSsbo);
+        mParticleSsbo = 0;
     }
     if (mIndexSsbo != 0)
     {
@@ -115,24 +97,18 @@ bool CsParticleSystem::Init()
     }
     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
 
-    CREATE_BUFFER(mPosSsbo, mNumMaxParticles, 1, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(0.0f);
-    INIT_BUFFER_END();
+    struct BufferParticle
+    {
+        glm::vec4 Data0;
+        glm::vec4 Data1;
+        glm::vec4 Color;
+    };
 
-    CREATE_BUFFER(mVelSsbo, mNumMaxParticles, 2, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(0.0f);
-    INIT_BUFFER_END();
-
-    CREATE_BUFFER(mColSsbo, mNumMaxParticles, 3, glm::vec4);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec4)
-        buffer[i] = glm::vec4(1.0f);
-    INIT_BUFFER_END();
-
-    CREATE_BUFFER(mLifeSsbo, mNumMaxParticles, 4, glm::vec2);
-    INIT_BUFFER_BEGIN(mNumMaxParticles, glm::vec2)
-        buffer[i] = glm::vec2(0.0f);
+    CREATE_BUFFER(mParticleSsbo, mNumMaxParticles, 1, BufferParticle);
+    INIT_BUFFER_BEGIN(mNumMaxParticles, BufferParticle)
+        buffer[i].Data0 = glm::vec4(0.0f);
+        buffer[i].Data1 = glm::vec4(0.0f);
+        buffer[i].Color = glm::vec4(0.0f);
     INIT_BUFFER_END();
 
     struct IndexStruct
@@ -141,7 +117,7 @@ bool CsParticleSystem::Init()
         float Distance;
     };
 
-    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 5, IndexStruct);
+    CREATE_BUFFER(mIndexSsbo, mNumMaxParticles, 2, IndexStruct);
     INIT_BUFFER_BEGIN(mNumMaxParticles, IndexStruct)
         buffer[i].Index = 0;
         buffer[i].Distance = -1.0f;
@@ -222,17 +198,12 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     CHECK_GL_ERROR();
 
     glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, mAtomicBuffer);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mPosSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mVelSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mColSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLifeSsbo);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, mIndexSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mParticleSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mIndexSsbo);
 
     CHECK_GL_ERROR();
 
     glDispatchCompute(GetDispatchSize(), 1, 1);
-    CHECK_GL_ERROR();
-    glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
     CHECK_GL_ERROR();
 
     ReadbackAtomicData();

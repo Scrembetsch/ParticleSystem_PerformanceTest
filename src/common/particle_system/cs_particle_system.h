@@ -58,10 +58,7 @@ private:
 	uint32_t mVao;
 
 	uint32_t mAtomicBuffer;
-	uint32_t mPosSsbo;
-	uint32_t mVelSsbo;
-	uint32_t mColSsbo;
-	uint32_t mLifeSsbo;
+	uint32_t mParticleSsbo;
 	uint32_t mIndexSsbo;
 
 	uint32_t mNumMaxParticles;
