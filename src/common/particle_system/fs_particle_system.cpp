@@ -43,23 +43,44 @@ FsParticleSystem::FsParticleSystem(uint32_t maxParticles)
     }
     else
     {
-        uint32_t res = std::ceil(std::sqrt(maxParticles));
-        for (uint32_t i = 0; true; i++)
-        {
-            uint32_t x = res + i;
-            uint32_t y = res - i;
+        uint32_t temp = std::ceil(std::sqrt(maxParticles));
+        // Next power of two
+        temp--;
+        temp |= temp >> 1;
+        temp |= temp >> 2;
+        temp |= temp >> 4;
+        temp |= temp >> 8;
+        temp |= temp >> 16;
+        temp++;
 
-            if (x * y == maxParticles)
+        if (temp * (temp >> 1) == maxParticles)
+        {
+            mResolutionX = temp;
+            mResolutionY = temp >> 1;
+        }
+        else
+        {
+            uint32_t res = std::ceil(std::sqrt(maxParticles));
+
+            for (uint32_t i = 0; true; i++)
             {
-                mResolutionX = x;
-                mResolutionY = y;
-                break;
-            }
-            if (y == 0)
-            {
-                break;
+                uint32_t x = res + i;
+                uint32_t y = res - i;
+
+                if (x * y == maxParticles)
+                {
+                    mResolutionX = x;
+                    mResolutionY = y;
+                    break;
+                }
+                if (y == 0)
+                {
+                    LOG("ERROR", "Error creating Texture with size %d", maxParticles);
+                    break;
+                }
             }
         }
+
     }
 }
 
@@ -175,6 +196,11 @@ bool FsParticleSystem::Init()
     }
     CHECK_GL_ERROR();
 
+    uint32_t e = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (e != GL_FRAMEBUFFER_COMPLETE)
+    {
+        printf("Framebuffer Error: 0x%08x\n", e);
+    }
     mData0Array = new glm::vec4[mNumMaxParticles];
     for (uint32_t i = 0; i < mNumMaxParticles; i++)
     {
@@ -311,6 +337,8 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     CHECK_GL_ERROR();
 
     glBindVertexArray(mUpdateVao);
+    CHECK_GL_ERROR();
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     CHECK_GL_ERROR();
 
