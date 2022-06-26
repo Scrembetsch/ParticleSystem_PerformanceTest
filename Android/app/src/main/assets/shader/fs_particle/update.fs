@@ -5,7 +5,7 @@ precision mediump float;
 layout (location = 0) out vec4 oPosition;
 layout (location = 1) out vec4 oVelocity;
 layout (location = 2) out vec4 oColor;
-layout (location = 3) out vec3 oIndex;
+layout (location = 3) out vec4 oIndex;
 
 DECL_TEX1
 DECL_TEX2
@@ -95,13 +95,15 @@ void SetOutputValues()
 
 void main()
 {
-  lLocalSeed = vRand;
+  lLocalSeed = vRand + vec3(vTexCoord, 0.5);
 
   InitLocalParticle();
 
-  if(uCurrentTime == lParticle.BirthTime)
+  if(abs(uCurrentTime - lParticle.BirthTime) < uDeltaTime)
   {
     InitParticle();
+    SetOutputValues();
+    return;
   }
 
   MODULE_CALLS

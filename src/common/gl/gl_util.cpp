@@ -17,19 +17,54 @@ bool GlUtil::CheckGlError(const char *functionName)
         switch (error)
         {
         case GL_INVALID_ENUM:
-            errorName = "INVALID ENUM";
+            errorName = "GL_INVALID_ENUM";
             break;
 
         case GL_INVALID_VALUE:
-            errorName = "INVALID_VALUE";
+            errorName = "GL_INVALID_VALUE";
             break;
 
         case GL_INVALID_OPERATION:
-            errorName = "INVALID OPERATION";
+            errorName = "IGL_INVALID_OPERATION";
             break;
 
         default:
             break;
+        }
+        LOGE("GL_UTIL", "GL error after %s(): 0x%08x, %s\n", functionName, error, errorName);
+        return true;
+    }
+    while ((error = glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        const char* errorName = "Error not found!";
+        switch (error)
+        {
+            case GL_FRAMEBUFFER_UNDEFINED:
+                errorName = "GL_FRAMEBUFFER_UNDEFINED";
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+                errorName = "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+                errorName = "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+                break;
+
+            case GL_FRAMEBUFFER_UNSUPPORTED:
+                errorName = "GL_FRAMEBUFFER_UNSUPPORTED";
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+                errorName = "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
+                break;
+
+            case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+                errorName = "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
+                break;
+
+            default:
+                break;
         }
         LOGE("GL_UTIL", "GL error after %s(): 0x%08x, %s\n", functionName, error, errorName);
         return true;

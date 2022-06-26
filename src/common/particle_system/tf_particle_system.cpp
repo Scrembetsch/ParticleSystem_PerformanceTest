@@ -358,11 +358,8 @@ void TfParticleSystem::Sort()
 
     // Save State
     int32_t val = 0;
-#if _WIN32
-    glGetIntegerv(GL_DRAW_BUFFER, &val);
-#else
     glGetIntegerv(GL_DRAW_BUFFER0, &val);
-#endif
+
     int32_t viewPortDims[4];
     glGetIntegerv(GL_VIEWPORT, viewPortDims);
     glViewport(0, 0, mResolutionX, mResolutionY);
@@ -377,7 +374,7 @@ void TfParticleSystem::Sort()
 
     glBindFramebuffer(GL_FRAMEBUFFER, mSortBuffer);
     CHECK_GL_ERROR();
-    unsigned int baseattachments[1] = { GL_COLOR_ATTACHMENT0 };
+    unsigned int baseattachments[] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, baseattachments);
     CHECK_GL_ERROR();
 
@@ -403,16 +400,17 @@ void TfParticleSystem::Sort()
 
     // Restore State
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    unsigned int resetattach[1] = { GL_NONE };
+    unsigned int resetattach[] = { GL_NONE };
     resetattach[0] = val;
     glDrawBuffers(1, resetattach);
+
     glViewport(viewPortDims[0], viewPortDims[1], viewPortDims[2], viewPortDims[3]);
 }
 
 void TfParticleSystem::PrepSort()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mSortBuffer);
-    unsigned int baseattachments[1] = { GL_COLOR_ATTACHMENT0 };
+    unsigned int baseattachments[] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, baseattachments);
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, mVbos[mCurrentWriteBuffer]);

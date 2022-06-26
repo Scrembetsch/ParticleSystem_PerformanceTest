@@ -41,7 +41,6 @@ public:
             {
                 shader->SetInt(mTexName, location - GL_TEXTURE0);
                 CHECK_GL_ERROR();
-
             }
             glBindTexture(GL_TEXTURE_2D, mTex);
             CHECK_GL_ERROR();

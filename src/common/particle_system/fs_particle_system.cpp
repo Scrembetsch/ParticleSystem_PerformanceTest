@@ -145,7 +145,6 @@ bool FsParticleSystem::Init()
     {
         glGenFramebuffers(1, &mFramebuffer[i]);
         glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer[i]);
-        CHECK_GL_ERROR();
 
         glGenTextures(1, &mPositionTex[i].mTex);
         mPositionTex[i].mTexName = "uPositionMap";
@@ -175,7 +174,7 @@ bool FsParticleSystem::Init()
         mColorTex[i].mTexName = "uColorMap";
         mColorTex[i].mTexLocation = GL_TEXTURE3;
         glBindTexture(GL_TEXTURE_2D, mColorTex[i].mTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mResolutionX, mResolutionY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mResolutionX, mResolutionY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -187,12 +186,13 @@ bool FsParticleSystem::Init()
         mIndexTex[i].mTexName = "uIndexMap";
         mIndexTex[i].mTexLocation = GL_TEXTURE5;
         glBindTexture(GL_TEXTURE_2D, mIndexTex[i].mTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, mResolutionX, mResolutionY, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mResolutionX, mResolutionY, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, mIndexTex[i].mTex, 0);
+        CHECK_GL_ERROR();
     }
     CHECK_GL_ERROR();
 
@@ -221,8 +221,8 @@ bool FsParticleSystem::Init()
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     std::vector<std::pair<std::string, std::string>> replaceParts;
     for (auto it = mRenderFsMap.begin(); it != mRenderFsMap.end(); it++)
@@ -285,14 +285,10 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     mCurrentTime += deltaTime;
 
     int32_t val = 0;
-#if _WIN32
-    glGetIntegerv(GL_DRAW_BUFFER, &val);
-#else
     glGetIntegerv(GL_DRAW_BUFFER0, &val);
-#endif
+
     int32_t viewPortDims[4];
     glGetIntegerv(GL_VIEWPORT, viewPortDims);
-    glViewport(0, 0, mResolutionX, mResolutionY);
 
     mCurrentReadBuffer = 1 - mCurrentReadBuffer;
     mCurrentWriteBuffer = 1 - mCurrentReadBuffer;
@@ -304,14 +300,16 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     {
         mModules[i]->PreRun(mCurrentTime, deltaTime);
     }
+    CHECK_GL_ERROR();
 
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer[mCurrentWriteBuffer]);
     unsigned int attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-    glDrawBuffers(4, attachments);
+    glDrawBuffers(sizeof(attachments) / sizeof(attachments[0]), attachments);
+    glViewport(0, 0, mResolutionX, mResolutionY);
     CHECK_GL_ERROR();
 
     mUpdateShader.Use();
-    mUpdateShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mUpdateShader.SetVec2("uResolution", glm::vec2(mResolutionX, mResolutionY));
     mUpdateShader.SetFloat("uCurrentTime", mCurrentTime);
     mUpdateShader.SetFloat("uDeltaTime", deltaTime);
     mUpdateShader.SetVec3("uCameraPos", cameraPos);
@@ -349,14 +347,10 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    unsigned int baseattachments[1] = { GL_BACK };
-    //baseattachments[0] = val;
+    unsigned int baseattachments[] = { GL_BACK };
+    baseattachments[0] = val;
     glDrawBuffers(1, baseattachments);
-    CHECK_GL_ERROR();
 
-#if _WIN32
-    glDrawBuffer(val);
-#endif
     CHECK_GL_ERROR();
 
     glViewport(viewPortDims[0], viewPortDims[1], viewPortDims[2], viewPortDims[3]);
@@ -385,7 +379,7 @@ void FsParticleSystem::RenderParticles()
     mRenderShader.SetFloat("uCurrentTime", mCurrentTime);
     mRenderShader.SetFloat("uScale", mScale);
 
-    mRenderShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mRenderShader.SetVec2("uResolution", glm::vec2(mResolutionX, mResolutionY));
 
     mRenderShader.SetMat4("uProjection", mProjection);
 
