@@ -197,7 +197,7 @@ bool TfParticleSystem::Init()
         mIndexTex[i].mTexName = "uIndexMap";
         mIndexTex[i].mTexLocation = GL_TEXTURE1;
         glBindTexture(GL_TEXTURE_2D, mIndexTex[i].mTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, mResolutionX, mResolutionY, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, mResolutionX, mResolutionY, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -369,7 +369,7 @@ void TfParticleSystem::Sort()
 
     mSortShader.Use();
     CHECK_GL_ERROR();
-    mSortShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mSortShader.SetVec2("uResolution", glm::vec2(mResolutionX, mResolutionY));
     CHECK_GL_ERROR();
 
     glBindFramebuffer(GL_FRAMEBUFFER, mSortBuffer);
@@ -417,7 +417,7 @@ void TfParticleSystem::PrepSort()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mIndexTex[mSortCurrentWriteBuffer].mTex, 0);
 
     mPrepSortShader.Use();
-    mPrepSortShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mPrepSortShader.SetVec2("uResolution", glm::vec2(mResolutionX, mResolutionY));
     mPrepSortShader.SetUInt("uNumAliveParticles", mNumParticles);
 
     glBindVertexArray(mUpdateVao);
@@ -438,10 +438,6 @@ void TfParticleSystem::RenderParticles()
 {
     OPTICK_EVENT();
 
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     mRenderShader.Use();
     mRenderShader.SetMat4("uProjection", mProjection);
     mRenderShader.SetMat4("uView", mView);
@@ -450,18 +446,16 @@ void TfParticleSystem::RenderParticles()
     mRenderShader.SetVec3("uQuad2", mQuad2);
 
     mRenderShader.SetFloat("uScale", mScale);
-    glBindVertexArray(mVaos[mCurrentReadBuffer]);
+    glBindVertexArray(mVaos[mCurrentWriteBuffer]);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, mVbos[mCurrentWriteBuffer]);
 
 #if SORT
-    mRenderShader.SetVec2("uResolution", mResolutionX, mResolutionY);
+    mRenderShader.SetVec2("uResolution", glm::vec2(mResolutionX, mResolutionY));
     mIndexTex[mSortCurrentWriteBuffer].Use(&mRenderShader);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles - GetEmitters());
 #else
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles);
 #endif
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
 
     CHECK_GL_ERROR();
 }

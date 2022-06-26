@@ -10,10 +10,10 @@
 	#define OPTICK_FRAME(...)
 #endif
 
-#define CPU 0
+#define CPU 1
 #define CS  0
 #define TF  0
-#define FS  1
+#define FS  0
 
 #define SORT 0
 

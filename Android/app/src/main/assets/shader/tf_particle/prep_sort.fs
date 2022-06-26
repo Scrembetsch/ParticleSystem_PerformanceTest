@@ -19,7 +19,7 @@ layout(binding = 1) uniform ParticleBuffer
   Particle Particles[MAX_PARTICLES];
 };
 
-out vec3 oIndex;
+out vec4 oIndex;
 
 void main()
 {
@@ -34,4 +34,6 @@ void main()
     oIndex.z = Particles[index].Position.w;
   else
     oIndex.z = -1.0;
+
+    oIndex.a = 1.0;
 }

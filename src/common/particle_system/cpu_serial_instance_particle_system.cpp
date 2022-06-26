@@ -178,16 +178,9 @@ void CpuSerialInstanceParticleSystem::RenderParticles()
 
 	if (mNumParticles > 0)
 	{
-		glEnable(GL_BLEND);
-		glDepthMask(GL_FALSE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 		glBindVertexArray(mVao);
 		glDrawArraysInstanced(GL_TRIANGLES, 0, mNumVertices, mNumParticles);
 		glBindVertexArray(0);
-
-		glDepthMask(GL_TRUE);
-		glDisable(GL_BLEND);
 	}
 	CHECK_GL_ERROR();
 }

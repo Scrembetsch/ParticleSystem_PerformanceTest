@@ -560,10 +560,6 @@ void CpuParallelParticleSystem::RenderParticles()
 
 	if (mNumParticles > 0)
 	{
-		glEnable(GL_BLEND);
-		glDepthMask(GL_FALSE);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 		glBindVertexArray(mVao);
 #if INDEXED
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVeo);
@@ -572,9 +568,6 @@ void CpuParallelParticleSystem::RenderParticles()
 		glDrawArrays(GL_TRIANGLES, 0, mNumParticles * mNumVertices);
 #endif
 		glBindVertexArray(0);
-
-		glDepthMask(GL_TRUE);
-		glDisable(GL_BLEND);
 	}
 	CHECK_GL_ERROR();
 }

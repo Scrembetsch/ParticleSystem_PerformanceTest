@@ -16,6 +16,7 @@ layout(binding = 1) uniform ParticleBuffer
 };
 
 DECL_TEX1
+
 uniform vec2 uResolution;
 
 uniform mat4 uProjection;
@@ -28,15 +29,22 @@ uniform float uScale;
 out vec2 vTexCoord;
 out vec4 vColor;
 
+out vec2 vIndexUV;
+out vec3 vIndex;
+out uint vUIndex;
+
 vec2 getIndexUV()
 {
     vec2 offset = (1.0 / uResolution) / 2.0;
+
 
     uvec2 uid = uvec2(0, 0);
     uid.x = uint(gl_InstanceID) % uint(uResolution.x);
     uid.y = uint(gl_InstanceID) / uint(uResolution.x);
 
-    return vec2(uid / uvec2(uResolution)) + offset;
+  vIndex = vec3(uid, 0.0);
+
+    return vec2(uid.xy) / uResolution + offset;
 }
 
 uint convertIndex(vec2 index)
@@ -52,6 +60,8 @@ void main()
     vec2 indexUV = getIndexUV();
     vec3 index = texture(USE_TEX1, indexUV).rgb;
     uint uIndex = convertIndex(index.xy);
+
+    vIndexUV = indexUV;
 
     uint subId = uint(gl_VertexID);
 

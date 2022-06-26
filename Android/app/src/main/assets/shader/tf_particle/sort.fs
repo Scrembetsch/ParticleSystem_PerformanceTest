@@ -10,7 +10,7 @@ uniform vec2 uResolution;
 uniform uint uStageDistance;
 uniform uint uStepDistance;
 
-out vec3 oColor;
+out vec4 oColor;
 
 struct SortItem
 {
@@ -78,4 +78,5 @@ void main()
 
   oColor.rg = swap ? Other.TexCoord : Self.TexCoord;
   oColor.b = swap ? Other.SortVal : Self.SortVal;
+  oColor.a = 1.0;
 }

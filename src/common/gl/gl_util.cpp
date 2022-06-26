@@ -25,7 +25,7 @@ bool GlUtil::CheckGlError(const char *functionName)
             break;
 
         case GL_INVALID_OPERATION:
-            errorName = "IGL_INVALID_OPERATION";
+            errorName = "GL_INVALID_OPERATION";
             break;
 
         default:

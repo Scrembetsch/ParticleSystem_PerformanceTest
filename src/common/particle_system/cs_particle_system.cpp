@@ -235,9 +235,8 @@ void CsParticleSystem::RenderParticles()
 {
     OPTICK_EVENT();
 
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mParticleSsbo);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mIndexSsbo);
 
     mRenderShader.Use();
     mRenderShader.SetMat4("uProjection", mProjection);
@@ -250,9 +249,6 @@ void CsParticleSystem::RenderParticles()
 
     glBindVertexArray(mVao);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles);
-
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
 }
 
 void CsParticleSystem::ReadbackAtomicData()

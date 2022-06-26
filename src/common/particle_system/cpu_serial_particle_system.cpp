@@ -129,8 +129,6 @@ void CpuSerialParticleSystem::BuildParticleVertexData()
 #endif
     size_t particlesToDraw = 0;
 
-
-
     for (size_t i = 0; i < mNumMaxParticles; i++)
     {
         size_t particleIndex = particlesToDraw * verticesPerParticle;
@@ -157,6 +155,7 @@ void CpuSerialParticleSystem::BuildParticleVertexData()
     if (mNumParticles > 0)
     {
         glBindVertexArray(mVao);
+        glBindBuffer(GL_ARRAY_BUFFER, mVbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, CpuRenderParticle::ParticleRealSize * mNumParticles * verticesPerParticle, &mParticleRenderData[0]);
     }
     CHECK_GL_ERROR();
@@ -218,10 +217,6 @@ void CpuSerialParticleSystem::RenderParticles()
 
     if (mNumParticles > 0)
     {
-        glEnable(GL_BLEND);
-        glDepthMask(GL_FALSE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         glBindVertexArray(mVao);
 #if INDEXED
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVeo);
@@ -230,9 +225,6 @@ void CpuSerialParticleSystem::RenderParticles()
         glDrawArrays(GL_TRIANGLES, 0, mNumParticles * mNumVertices);
 #endif
         glBindVertexArray(0);
-
-        glDepthMask(GL_TRUE);
-        glDisable(GL_BLEND);
     }
     CHECK_GL_ERROR();
 }

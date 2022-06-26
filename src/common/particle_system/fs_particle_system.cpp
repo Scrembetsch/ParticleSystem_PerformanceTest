@@ -346,8 +346,9 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     glBindVertexArray(0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    CHECK_GL_ERROR();
 
-    unsigned int baseattachments[] = { GL_BACK };
+    unsigned int baseattachments[] = { GL_NONE };
     baseattachments[0] = val;
     glDrawBuffers(1, baseattachments);
 
@@ -370,10 +371,6 @@ void FsParticleSystem::PrepareRender(Camera* camera)
 void FsParticleSystem::RenderParticles()
 {
     OPTICK_EVENT();
-
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     mRenderShader.Use();
     mRenderShader.SetFloat("uCurrentTime", mCurrentTime);
@@ -400,11 +397,6 @@ void FsParticleSystem::RenderParticles()
 #else
     glDrawArrays(GL_TRIANGLES, 0, mNumMaxParticles * 6);
 #endif
-    CHECK_GL_ERROR();
-
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-
     CHECK_GL_ERROR();
 }
 
