@@ -413,7 +413,6 @@ void FsParticleSystem::Sort()
 
     unsigned int baseattachments[] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, baseattachments);
-    CHECK_GL_ERROR();
 
     for (uint32_t stageDistance = 1; stageDistance < mNumMaxParticles; stageDistance *= 2)
     {

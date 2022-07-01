@@ -16,7 +16,7 @@ class TestApp
 {
 public:
 	TestApp();
-	~TestApp() = default;
+	~TestApp();
 
 	void Resize(uint32_t width, uint32_t height);
 	bool Init();
@@ -42,6 +42,7 @@ private:
 	float mTestStartTime = 15.0f;
 	float mTestEndTime = 25.0f;
 	float mRealTestTime = 0.0f;
+	float mQueryTestTime = 0.0f;
 	int32_t mTestFrameCount = 0;
 	bool mTestFinished = false;
 	uint32_t mTestRuns = 0;

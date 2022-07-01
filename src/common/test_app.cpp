@@ -36,6 +36,10 @@ TestApp::TestApp()
 	OPTICK_THREAD("MainThread");
 }
 
+TestApp::~TestApp()
+{
+}
+
 void TestApp::Resize(uint32_t width, uint32_t height)
 {
 	mCamera.ViewWidth = static_cast<float>(width);
@@ -56,20 +60,24 @@ bool TestApp::ReInit()
 	bool systemsTest = true;
 	if (systemsTest)
 	{
-		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, /*1 << 5, 1 << 6, 1 << 7, 1 << 8*/ };
-		uint32_t testSystems[] = { 1 << 8 };
+		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1<< 8, 1 << 9 };
+		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6};
+		uint32_t testSystems[] = {1 << 9 };
 		mTestRuns = sizeof(testSystems) / sizeof(testSystems[0]);
 
 		numSystems = testSystems[mCurrentTestRun];
 		numParticles = 1024;
+		//numParticles = 1 << 18;
 	}
 	else
 	{
 		//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
+		//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19 };
 		//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
-		//uint32_t testRuns[] = { 2500000 };
-		//uint32_t testRuns[] = { 32 * 32 };
-		uint32_t testRuns[] = { 1024 };
+		//uint32_t testRuns[] = { 1 << 22, 1 << 23, 1 << 24 };
+		//uint32_t testRuns[] = { 1 << 25, 1 << 26 };
+		uint32_t testRuns[] = { 1 << 20, 1 << 21, 1 << 22 };
+		//uint32_t testRuns[] = { 1 << 19 };
 		mTestRuns = sizeof(testRuns) / sizeof(testRuns[0]);
 
 		numParticles = testRuns[mCurrentTestRun];
@@ -193,6 +201,7 @@ bool TestApp::ReInit()
 	mTestEndTime = 25.0f;
 	mRealTestTime = 0.0f;
 	mTestFrameCount = 0;
+	mQueryTestTime = 0.0f;
 	mTestFinished = false;
 
 	return success;
@@ -248,6 +257,7 @@ void TestApp::Step()
 	std::chrono::duration<float> elapsedSeconds = now - mLastFrameTime;
 	float deltaTime = elapsedSeconds.count();
 	mTimeSinceStart += deltaTime;
+
 
 	//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -317,13 +327,20 @@ void TestApp::Step()
 		&& mTestTime <= mTestEndTime)
 	{
 		mRealTestTime += deltaTime;
+		mTimeSinceStart += deltaTime;
 		mTestFrameCount++;
+
+		auto now_ = std::chrono::system_clock::now();
+		std::chrono::duration<float> elSeconds = now_ - now;
+		float qTime = elSeconds.count();
+		mQueryTestTime += qTime;
 	}
 	if (mTestTime > mTestEndTime
 		&& !mTestFinished)
 	{
 		float avgFps = mTestFrameCount / mRealTestTime;
 		float avgFrameTime = 1.0f / avgFps;
+		float avgQueryTime = (mQueryTestTime / mTestFrameCount);
 		std::string mode =
 #if CPU
 			"CPU";
@@ -349,16 +366,21 @@ void TestApp::Step()
 #if SORT
 			mode += " (SORT)";
 #endif
-		LOGE("RESULT:", "\n\tMODE: %s\n\tEmit-Rate (Particles/s): %g\n\tTest Time: %g\n\tAvg. FPS: %g\n\tAvg. Frame-time: %g\n\tParticles: %d\n\tNumSystems: %d", mode.c_str(), mEmitRate, mRealTestTime, avgFps, avgFrameTime, particles, mNumSystems);
+		LOGE("RESULT:", "\n\tMODE: %s\n\tEmit-Rate (Particles/s): %g\n\tTest Time: %g\n\tAvg. FPS: %g\n\tAvg. Frame-time: %g\n\tAvg. Query-Time: %g\n\tParticles: %d\n\tNumSystems: %d", mode.c_str(), mEmitRate, mRealTestTime, avgFps, avgFrameTime, avgQueryTime, particles, mNumSystems);
 		//mTestFinished = true;
 		mCurrentTestRun++;
+#if _WIN32
 		mTestResults.push_back(avgFrameTime);
+#else
+		mTestResults.push_back(avgQueryTime);
+#endif
 		if (mCurrentTestRun < mTestRuns)
 			ReInit();
 		else
 		{
 			mTestFinished = true;
 			std::string result;
+            result += "\n";
 			for (auto it = mTestResults.begin(); it != mTestResults.end(); it++)
 			{
 				result += "\n";
