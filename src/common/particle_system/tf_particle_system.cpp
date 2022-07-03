@@ -434,6 +434,11 @@ void TfParticleSystem::PrepareRender(Camera* camera)
     mQuad2 = glm::normalize(glm::cross(camera->Front, mQuad1));
 }
 
+void TfParticleSystem::LateUpdate()
+{
+
+}
+
 void TfParticleSystem::RenderParticles()
 {
     OPTICK_EVENT();

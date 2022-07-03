@@ -57,12 +57,12 @@ bool TestApp::ReInit()
 	uint32_t numParticles = 0;
 	uint32_t numSystems = 0;
 
-	bool systemsTest = true;
+	bool systemsTest = false;
 	if (systemsTest)
 	{
 		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1<< 8, 1 << 9 };
 		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6};
-		uint32_t testSystems[] = {1 << 9 };
+		uint32_t testSystems[] = {1 << 5 };
 		mTestRuns = sizeof(testSystems) / sizeof(testSystems[0]);
 
 		numSystems = testSystems[mCurrentTestRun];
@@ -76,8 +76,8 @@ bool TestApp::ReInit()
 		//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
 		//uint32_t testRuns[] = { 1 << 22, 1 << 23, 1 << 24 };
 		//uint32_t testRuns[] = { 1 << 25, 1 << 26 };
-		uint32_t testRuns[] = { 1 << 20, 1 << 21, 1 << 22 };
-		//uint32_t testRuns[] = { 1 << 19 };
+		//uint32_t testRuns[] = { 1 << 20, 1 << 21, 1 << 22 };
+		uint32_t testRuns[] = { 1 << 5 };
 		mTestRuns = sizeof(testRuns) / sizeof(testRuns[0]);
 
 		numParticles = testRuns[mCurrentTestRun];
@@ -276,9 +276,14 @@ void TestApp::Step()
 
 		mParticleSystems[i]->PrepareRender(&mCamera);
 		mParticleSystems[i]->UpdateParticles(deltaTime, mCamera.Position);
-		particles += mParticleSystems[i]->GetCurrentParticles();
 
 		CHECK_GL_ERROR();
+	}
+
+	for (uint32_t i = 0; i < mNumSystems; i++)
+	{
+		mParticleSystems[i]->LateUpdate();
+		particles += mParticleSystems[i]->GetCurrentParticles();
 	}
 
 	for (uint32_t i = 0; i < mNumSystems; i++)
@@ -301,8 +306,7 @@ void TestApp::Step()
 		mParticleTex.Use(mParticleSystems[i]->GetRenderShader());
 		CHECK_GL_ERROR();
 #endif
-		//if(i == 1)
-			mParticleSystems[i]->RenderParticles();
+		mParticleSystems[i]->RenderParticles();
 		CHECK_GL_ERROR();
 
 		glDepthMask(GL_TRUE);

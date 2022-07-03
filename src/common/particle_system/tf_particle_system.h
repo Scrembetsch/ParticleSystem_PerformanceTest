@@ -21,6 +21,7 @@ public:
     void UpdateParticles(float timeStep, const glm::vec3& cameraPos);
     void PrepareRender(Camera* camera);
     void RenderParticles();
+    void LateUpdate();
 
     bool AddModule(TfIModule* psModule);
 

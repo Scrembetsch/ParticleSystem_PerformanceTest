@@ -368,6 +368,10 @@ void FsParticleSystem::PrepareRender(Camera* camera)
     mQuad2 = glm::normalize(glm::cross(camera->Front, mQuad1));
 }
 
+void FsParticleSystem::LateUpdate()
+{
+}
+
 void FsParticleSystem::RenderParticles()
 {
     OPTICK_EVENT();

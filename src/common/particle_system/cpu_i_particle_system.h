@@ -25,6 +25,7 @@ public:
     virtual void UpdateParticles(float deltaTime, const glm::vec3& cameraPos) = 0;
     virtual void PrepareRender(Camera* camera);
     virtual void RenderParticles() = 0;
+    virtual void LateUpdate();
 
     virtual void Emit(uint32_t numToGenerate);
 

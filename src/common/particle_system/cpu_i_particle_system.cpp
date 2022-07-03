@@ -90,6 +90,10 @@ void CpuIParticleSystem::PrepareRender(Camera* camera)
 	mQuad2 = glm::normalize(glm::cross(camera->Front, mQuad1));
 }
 
+void CpuIParticleSystem::LateUpdate()
+{
+}
+
 void CpuIParticleSystem::Emit(uint32_t numToGenerate)
 {
 	// Remembering last position would partially interfere with other optimizations

@@ -9,6 +9,11 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
+layout(std430, binding=0) readonly buffer AtomicCounters
+{
+    uint Counters[];
+};
+
 struct IndexStruct
 {
     uint Idx;
@@ -160,13 +165,15 @@ void main(){
     //
 	uint offset = gl_WorkGroupSize.x * 2U * gl_WorkGroupID.x; 
 
+	uint numAlive = Counters[0];
+
 	if (uAlgorithm <= eLocalDisperse){
 		if(uAlgorithm == eLocalBms)
 		{
 			local_indices[t*2U]   = Indices[offset+t*2U];
 			local_indices[t*2U+1U] = Indices[offset+t*2U+1U];
-			local_indices[t*2U].Distance = (offset+t*2U) < uAliveParticles ?local_indices[t*2U].Distance : -1.0;
-			local_indices[t*2U+1U].Distance = (offset+t*2U+1U) < uAliveParticles ? local_indices[t*2U+1U].Distance : -1.0;
+			local_indices[t*2U].Distance = (offset+t*2U) < numAlive ? local_indices[t*2U].Distance : -1.0;
+			local_indices[t*2U+1U].Distance = (offset+t*2U+1U) < numAlive ? local_indices[t*2U+1U].Distance : -1.0;
 		}
 		else
 		{

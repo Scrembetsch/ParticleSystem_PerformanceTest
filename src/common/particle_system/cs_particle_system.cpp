@@ -205,8 +205,7 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     glDispatchCompute(GetDispatchSize(), 1, 1);
     CHECK_GL_ERROR();
-
-    ReadbackAtomicData();
+    glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 
 #if SORT
     Sort();
@@ -214,6 +213,11 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     CHECK_GL_ERROR();
+}
+
+void CsParticleSystem::LateUpdate()
+{
+    ReadbackAtomicData();
 }
 
 void CsParticleSystem::PrepareRender(Camera* camera)
@@ -274,6 +278,8 @@ void CsParticleSystem::Sort()
 
     uint32_t particlesToSort = mNumMaxParticles;
 
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mAtomicBuffer);
+
     SortLocalBms(particlesToSort, h);
 
     // we must now double h, as this happens before every flip
@@ -301,7 +307,6 @@ void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
     mSortShader.SetUInt("uAlgorithm", 0);
     mSortShader.SetUInt("uN", n);
     mSortShader.SetUInt("uH", h);
-    mSortShader.SetUInt("uAliveParticles", mNumParticles);
 
     glDispatchCompute(n / (mLocalWorkGroupSize.x * 2), 1, 1);
 

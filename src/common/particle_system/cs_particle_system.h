@@ -21,6 +21,7 @@ public:
 
 	void UpdateParticles(float deltaTime, const glm::vec3& cameraPos);
 	void PrepareRender(Camera* camera);
+	void LateUpdate();
 	void RenderParticles();
 
 	bool AddModule(CsIModule* psModule);
