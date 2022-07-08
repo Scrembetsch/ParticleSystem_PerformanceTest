@@ -57,12 +57,12 @@ bool TestApp::ReInit()
 	uint32_t numParticles = 0;
 	uint32_t numSystems = 0;
 
-	bool systemsTest = false;
+	bool systemsTest = true;
 	if (systemsTest)
 	{
-		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1<< 8, 1 << 9 };
+		uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1<< 8, 1 << 9};
 		//uint32_t testSystems[] = { 1 << 0, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6};
-		uint32_t testSystems[] = {1 << 5 };
+		//uint32_t testSystems[] = { 4 };
 		mTestRuns = sizeof(testSystems) / sizeof(testSystems[0]);
 
 		numSystems = testSystems[mCurrentTestRun];
@@ -72,12 +72,16 @@ bool TestApp::ReInit()
 	else
 	{
 		//uint32_t testRuns[] = { 10, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 1500000, 2000000 };
+		//uint32_t testRuns[] = { 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1 << 8, 1 << 9, 1 << 10 };
+		//uint32_t testRuns[] = { 1<<10};
 		//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19 };
+		uint32_t testRuns[] = { 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1 << 8, 1 << 9, 1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 21, 1 << 22, 1 << 23};
 		//uint32_t testRuns[] = { 1<<2, 1<<3, 1<<4, 1<<5, 1<<6, 1<<7, 1<<8, 1<<9, 1<<10, 1<<11, 1<<12, 1<<13, 1<<14, 1<<15, 1<<16, 1<<17, 1<<18, 1<<19, 1<<20, 1<<21 };
 		//uint32_t testRuns[] = { 1 << 22, 1 << 23, 1 << 24 };
 		//uint32_t testRuns[] = { 1 << 25, 1 << 26 };
-		//uint32_t testRuns[] = { 1 << 20, 1 << 21, 1 << 22 };
-		uint32_t testRuns[] = { 1 << 5 };
+		//uint32_t testRuns[] = { 1 << 16, 1 << 17, 1 << 18, 1 << 19, 1 << 20, 1 << 21, 1 << 22 };
+		//uint32_t testRuns[] = { 1 << 14, 1 << 15, 1 << 16, 1 << 17, 1 << 18, 1 << 19 };
+		//uint32_t testRuns[] = { 1 << 3 };
 		mTestRuns = sizeof(testRuns) / sizeof(testRuns[0]);
 
 		numParticles = testRuns[mCurrentTestRun];
@@ -253,24 +257,48 @@ bool TestApp::Init()
 void TestApp::Step()
 {
 	OPTICK_FRAME("Frame");
+
+#if not _WIN32
+	// Is required for performance testing on mobile, without it CS & TF still suffer form VSYNC
+//	std::this_thread::sleep_for(std::chrono::duration<float>(0.01f));
+#endif
+
 	auto now = std::chrono::system_clock::now();
 	std::chrono::duration<float> elapsedSeconds = now - mLastFrameTime;
 	float deltaTime = elapsedSeconds.count();
 	mTimeSinceStart += deltaTime;
 
+	LogTestTime(deltaTime);
 
 	//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	uint32_t particles = 0;
+	UpdateParticleSystems(deltaTime);
+
+	LateUpdateParticleSystems(particles);
+
+	DrawParticleSystems();
+	glFinish();
+	LogQueryTime(now);
+
+	LogDebugFrameTime();
+
+	LogTest(particles);
+
+	mLastFrameTime = now;
+}
+
+void TestApp::UpdateParticleSystems(float deltaTime)
+{
 
 	for (uint32_t i = 0; i < mNumSystems; i++)
 	{
 		glm::vec3 position(0.0f);
 		float offset = (float(i) / mNumSystems);
-		position.x = std::sin(offset* 3.14 * 2.0 + mTimeSinceStart * 3.14f * 0.75f) * 16.0f * 3.0f;
-		position.y = std::sin(offset* 3.14 * 2.0 + mTimeSinceStart * 3.14f * 2.0f) * 9.0f * 3.0f;
+		position.x = std::sin(offset * 3.14 * 2.0 + mTimeSinceStart * 3.14f * 0.75f) * 16.0f * 3.0f;
+		position.y = std::sin(offset * 3.14 * 2.0 + mTimeSinceStart * 3.14f * 2.0f) * 9.0f * 3.0f;
 
 		mParticleSystems[i]->SetPosition(position);
 
@@ -279,13 +307,19 @@ void TestApp::Step()
 
 		CHECK_GL_ERROR();
 	}
+}
 
+void TestApp::LateUpdateParticleSystems(uint32_t& particles)
+{
 	for (uint32_t i = 0; i < mNumSystems; i++)
 	{
 		mParticleSystems[i]->LateUpdate();
 		particles += mParticleSystems[i]->GetCurrentParticles();
 	}
+}
 
+void TestApp::DrawParticleSystems()
+{
 	for (uint32_t i = 0; i < mNumSystems; i++)
 	{
 		glEnable(GL_BLEND);
@@ -312,9 +346,10 @@ void TestApp::Step()
 		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
+}
 
-	mFrameTime += deltaTime;
-	mFrameCount++;
+void TestApp::LogDebugFrameTime()
+{
 	if (mFrameTime > 0.5f)
 	{
 		int fps = static_cast<int>(round(static_cast<float>(mFrameCount) / mFrameTime));
@@ -325,6 +360,12 @@ void TestApp::Step()
 		mFrameTime -= 0.5f;
 		mFrameCount = 0;
 	}
+}
+
+void TestApp::LogTestTime(float deltaTime)
+{
+	mFrameTime += deltaTime;
+	mFrameCount++;
 
 	mTestTime += deltaTime;
 	if (mTestTime >= mTestStartTime
@@ -333,12 +374,28 @@ void TestApp::Step()
 		mRealTestTime += deltaTime;
 		mTimeSinceStart += deltaTime;
 		mTestFrameCount++;
+	}
+}
 
+void TestApp::LogQueryTime(std::chrono::system_clock::time_point& now)
+{
+	if (mTestTime >= mTestStartTime
+		&& mTestTime <= mTestEndTime)
+	{
+#if MEASURE_SORT_TIME && (CS || FS)
+		mQueryTestTime += mParticleSystems[0]->GetSortTime();
+#else
 		auto now_ = std::chrono::system_clock::now();
 		std::chrono::duration<float> elSeconds = now_ - now;
 		float qTime = elSeconds.count();
+
 		mQueryTestTime += qTime;
+#endif
 	}
+}
+
+void TestApp::LogTest(uint32_t& particles)
+{
 	if (mTestTime > mTestEndTime
 		&& !mTestFinished)
 	{
@@ -349,31 +406,31 @@ void TestApp::Step()
 #if CPU
 			"CPU";
 #if PARALLEL
-			mode += " (PARALLEL)";
+		mode += " (PARALLEL)";
 #endif
 #if INSTANCE
-			mode += " (INSTANCE)";
+		mode += " (INSTANCE)";
 #endif
 #if INDEXED
-			mode += " (INDEXED)";
+		mode += " (INDEXED)";
 #endif
 #endif
 #if TF
-			"TF";
+		"TF";
 #endif
 #if FS
-			"FS";
+		"FS";
 #endif
 #if CS
-			"CS (" + std::to_string(WORK_GROUP_SIZE) + ")";
+		"CS (" + std::to_string(WORK_GROUP_SIZE) + ")";
 #endif
 #if SORT
-			mode += " (SORT)";
+		mode += " (SORT)";
 #endif
 		LOGE("RESULT:", "\n\tMODE: %s\n\tEmit-Rate (Particles/s): %g\n\tTest Time: %g\n\tAvg. FPS: %g\n\tAvg. Frame-time: %g\n\tAvg. Query-Time: %g\n\tParticles: %d\n\tNumSystems: %d", mode.c_str(), mEmitRate, mRealTestTime, avgFps, avgFrameTime, avgQueryTime, particles, mNumSystems);
 		//mTestFinished = true;
 		mCurrentTestRun++;
-#if _WIN32
+#if _WIN32 && !(MEASURE_SORT_TIME && (CS || FS))
 		mTestResults.push_back(avgFrameTime);
 #else
 		mTestResults.push_back(avgQueryTime);
@@ -384,7 +441,7 @@ void TestApp::Step()
 		{
 			mTestFinished = true;
 			std::string result;
-            result += "\n";
+			result += "\n";
 			for (auto it = mTestResults.begin(); it != mTestResults.end(); it++)
 			{
 				result += "\n";
@@ -393,8 +450,6 @@ void TestApp::Step()
 			LOGE("SUMMARY: ", "%s", result.c_str());
 		}
 	}
-
-	mLastFrameTime = now;
 }
 
 bool TestApp::ShouldClose() const

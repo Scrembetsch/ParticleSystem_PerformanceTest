@@ -47,6 +47,8 @@ public:
 	void SetRenderFragReplaceMap(const std::vector<std::pair<std::string, std::string>>& replaceMap);
 	Shader* GetRenderShader();
 
+	float GetSortTime() const;
+
 private:
 	void CheckForDeadParticles();
 
@@ -55,7 +57,11 @@ private:
 	void Sort();
 	uint32_t mSortBuffer = 0;
 	Shader mSortShader;
+
+	uint32_t mQuery;
 #endif
+
+	uint32_t mSortTime;
 
 	uint32_t mEmptyVao;
 	uint32_t mEmptyVbo;

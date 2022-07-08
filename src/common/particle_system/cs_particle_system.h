@@ -44,6 +44,9 @@ public:
 	Shader* GetRenderShader();
 
 	uint32_t GetAtomicLocation(const std::string& name) const;
+
+	float GetSortTime() const;
+
 private:
 	void Sort();
 	void SortLocalBms(uint32_t n, uint32_t h);
@@ -64,6 +67,9 @@ private:
 
 	uint32_t mNumMaxParticles;
 	uint32_t mNumParticles;
+
+	uint32_t mQuery;
+	uint32_t mSortTime;
 
 	glm::uvec3 mLocalWorkGroupSize;
 

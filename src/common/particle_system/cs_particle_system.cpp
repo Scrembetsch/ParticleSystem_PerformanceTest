@@ -39,6 +39,7 @@ CsParticleSystem::CsParticleSystem(uint32_t maxParticles, uint32_t groupSize)
     , mCurrentGenerateOffset(0.0f)
     , mPosition(0.0f)
     , mScale(1.0f)
+    , mSortTime(0)
 {
 }
 
@@ -65,6 +66,12 @@ CsParticleSystem::~CsParticleSystem()
         mVao = 0;
     }
 
+    if (mQuery != 0)
+    {
+        glDeleteQueries(1, &mQuery);
+        mQuery = 0;
+    }
+
     for (size_t i = 0; i < mModules.size(); i++)
     {
         delete mModules[i];
@@ -82,6 +89,8 @@ bool CsParticleSystem::Init()
             mAtomicLocations.emplace_back(atomics[j], mAtomicLocations.size());
         }
     }
+
+    glGenQueries(1, &mQuery);
 
     glGenVertexArrays(1, &mVao);
     glBindVertexArray(mVao);
@@ -205,13 +214,12 @@ void CsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 
     glDispatchCompute(GetDispatchSize(), 1, 1);
     CHECK_GL_ERROR();
-    glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 
 #if SORT
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     Sort();
 #endif
 
-    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
     CHECK_GL_ERROR();
 }
 
@@ -255,9 +263,10 @@ void CsParticleSystem::RenderParticles()
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mNumParticles);
 }
 
+// This is very slow and is only needed to read number of particles back (not much performance difference to drawing "more particles")
 void CsParticleSystem::ReadbackAtomicData()
 {
-    OPTICK_EVENT();
+    //OPTICK_EVENT();
 
     uint32_t* atomicPtr = static_cast<uint32_t*>(glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, GetAtomicSize() * sizeof(uint32_t), GL_MAP_READ_BIT));
     mNumParticles = atomicPtr[0];
@@ -272,6 +281,10 @@ void CsParticleSystem::ReadbackAtomicData()
 void CsParticleSystem::Sort()
 {
     OPTICK_EVENT();
+
+#if MEASURE_SORT_TIME
+    glBeginQuery(GL_TIME_ELAPSED, mQuery);
+#endif
 
     mSortShader.Use();
     uint32_t h = mLocalWorkGroupSize.x * 2;
@@ -300,6 +313,11 @@ void CsParticleSystem::Sort()
             }
         }
     }
+
+#if MEASURE_SORT_TIME
+    glEndQuery(GL_TIME_ELAPSED);
+    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &mSortTime);
+#endif
 }
 
 void CsParticleSystem::SortLocalBms(uint32_t n, uint32_t h)
@@ -422,4 +440,9 @@ uint32_t CsParticleSystem::GetDispatchSize() const
 uint32_t CsParticleSystem::GetAtomicSize() const
 {
     return static_cast<uint32_t>(mAtomicLocations.size());
+}
+
+float CsParticleSystem::GetSortTime() const
+{
+    return float(mSortTime) / 1000 / 1000 / 1000;
 }

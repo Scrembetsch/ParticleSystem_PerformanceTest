@@ -358,7 +358,9 @@ void TfParticleSystem::Sort()
 
     // Save State
     int32_t val = 0;
+    int32_t fbo = 0;
     glGetIntegerv(GL_DRAW_BUFFER0, &val);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
 
     int32_t viewPortDims[4];
     glGetIntegerv(GL_VIEWPORT, viewPortDims);
@@ -399,7 +401,7 @@ void TfParticleSystem::Sort()
 
 
     // Restore State
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     unsigned int resetattach[] = { GL_NONE };
     resetattach[0] = val;
     glDrawBuffers(1, resetattach);

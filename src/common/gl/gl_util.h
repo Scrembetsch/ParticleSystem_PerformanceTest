@@ -4,7 +4,7 @@
 
 #include <string>
 
-#if not _DEBUG
+#if not (_DEBUG && _WIN32)
 #define CHECK_GL_ERROR() GlUtil::CheckGlError((std::string(__FILE__) + std::to_string(__LINE__)).c_str())
 #else
 #define CHECK_GL_ERROR() //GlUtil::CheckGlError((std::string(__FILE__) + std::to_string(__LINE__)).c_str())

@@ -25,7 +25,9 @@
 #endif
 #endif
 
-#define WORK_GROUP_SIZE 256
+#define MEASURE_SORT_TIME 0
+
+#define WORK_GROUP_SIZE 512
 
 //#define NUM_CPU_THREADS (std::thread::hardware_concurrency() / 2)
 #define NUM_CPU_THREADS 2

@@ -3,6 +3,7 @@ package at.tributsch.particlesystem_performancetest;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.opengl.GLSurfaceView;
+import android.view.Choreographer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -20,7 +21,8 @@ public class OpenGlView extends GLSurfaceView {
         public static AssetManager sAssetManager;
 
         @Override
-        public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
+        public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig)
+        {
             if(!JniBridge.Init(sAssetManager))
             {
                 throw new ExceptionInInitializerError();

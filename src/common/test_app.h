@@ -22,6 +22,18 @@ public:
 	bool Init();
 	void Step();
 
+	void UpdateParticleSystems(float deltaTime);
+
+	void LateUpdateParticleSystems(uint32_t& particles);
+
+	void DrawParticleSystems();
+
+	void LogDebugFrameTime();
+
+	void LogTestTime(float deltaTime);
+
+	void LogQueryTime(std::chrono::system_clock::time_point& now);
+
 	void ProcessLookInput(float deltaX, float deltaY);
 	void Zoom(float zoom);
 
@@ -29,6 +41,8 @@ public:
 
 private:
 	bool ReInit();
+
+	void LogTest(uint32_t& particles);
 
 	std::chrono::time_point<std::chrono::system_clock> mLastFrameTime;
 	Camera mCamera;

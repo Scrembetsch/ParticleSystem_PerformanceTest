@@ -114,6 +114,8 @@ FsParticleSystem::~FsParticleSystem()
 #if SORT
     glDeleteFramebuffers(1, &mSortBuffer);
     mSortBuffer = 0;
+    glDeleteQueries(1, &mQuery);
+    mQuery = 0;
 #endif
 }
 
@@ -138,6 +140,7 @@ bool FsParticleSystem::Init()
     glBindVertexArray(0);
 
 #if SORT
+    glGenQueries(1, &mQuery);
     glGenFramebuffers(1, &mSortBuffer);
 #endif
 
@@ -285,7 +288,9 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
     mCurrentTime += deltaTime;
 
     int32_t val = 0;
+    int32_t fbo = 0;
     glGetIntegerv(GL_DRAW_BUFFER0, &val);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
 
     int32_t viewPortDims[4];
     glGetIntegerv(GL_VIEWPORT, viewPortDims);
@@ -345,7 +350,7 @@ void FsParticleSystem::UpdateParticles(float deltaTime, const glm::vec3& cameraP
 #endif
 
     glBindVertexArray(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     CHECK_GL_ERROR();
 
     unsigned int baseattachments[] = { GL_NONE };
@@ -407,6 +412,10 @@ void FsParticleSystem::RenderParticles()
 #if SORT
 void FsParticleSystem::Sort()
 {
+#if MEASURE_SORT_TIME
+    glBeginQuery(GL_TIME_ELAPSED, mQuery);
+#endif
+
     mSortShader.Use();
     mSortShader.SetVec2("uResolution", mResolutionX, mResolutionY);
 
@@ -435,6 +444,11 @@ void FsParticleSystem::Sort()
             CHECK_GL_ERROR();
         }
     }
+
+#if MEASURE_SORT_TIME
+    glEndQuery(GL_TIME_ELAPSED);
+    glGetQueryObjectuiv(mQuery, GL_QUERY_RESULT, &mSortTime);
+#endif
 }
 #endif
 
@@ -539,3 +553,9 @@ Shader* FsParticleSystem::GetRenderShader()
 {
     return &mRenderShader;
 }
+
+float FsParticleSystem::GetSortTime() const
+{
+    return float(mSortTime) / 1000 / 1000 / 1000;
+}
+
