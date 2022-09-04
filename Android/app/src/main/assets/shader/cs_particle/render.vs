@@ -17,12 +17,17 @@ struct IndexStruct
     float Distance;
 };
 
-layout(std430, binding=1) buffer Particle
+layout(std140, binding=0) readonly buffer AtomicCounters
+{
+    uint Counters[];
+};
+
+layout(std140, binding=1) buffer Particle
 {
     BufferParticle Particles[];
 };
 
-layout(std430, binding=2) buffer Index
+layout(std140, binding=2) buffer Index
 {
     IndexStruct Indices[];
 };
@@ -49,8 +54,8 @@ void main()
     float tl = float(subId == 2U);
     float tr = float(subId == 3U);
 
-    float alive = float(Particles[id].Lifetime > 0.0);
-    float notAlive = float(Particles[id].Lifetime <= 0.0);
+    float alive = float(gl_InstanceID < Counters[0]);
+    float notAlive = 1.0 - alive;
 
     position += (-uQuad1 - uQuad2) * uScale * bl;
     position += (-uQuad1 + uQuad2) * uScale * br;

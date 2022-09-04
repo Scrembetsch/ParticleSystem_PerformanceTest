@@ -1,5 +1,7 @@
 #version VERSION
 
+// Code is based on https://poniesandlight.co.uk/reflect/bitonic_merge_sort/
+
 #define eLocalBms      0U
 #define eLocalDisperse 1U
 #define eBigFlip       2U
@@ -9,7 +11,7 @@ precision mediump float;
 
 layout(local_size_x = LOCAL_SIZE_X) in;
 
-layout(std430, binding=0) readonly buffer AtomicCounters
+layout(std140, binding=0) readonly buffer AtomicCounters
 {
     uint Counters[];
 };
@@ -20,7 +22,7 @@ struct IndexStruct
     float Distance;
 };
 
-layout(std430, binding=2) buffer Index
+layout(std140, binding=2) buffer Index
 {
     IndexStruct Indices[];
 };

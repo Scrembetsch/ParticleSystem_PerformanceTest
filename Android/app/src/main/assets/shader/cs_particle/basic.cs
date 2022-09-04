@@ -21,12 +21,12 @@ struct IndexStruct
     float Distance;
 };
 
-layout(std430, binding=1) buffer ParticleBuffer
+layout(std140, binding=1) buffer ParticleBuffer
 {
     BufferParticle Particles[];
 };
 
-layout(std430, binding=2) buffer Index
+layout(std140, binding=2) buffer Index
 {
     IndexStruct Indices[];
 };
@@ -132,7 +132,8 @@ void main()
     lParticle.Position = lParticle.Position + lParticle.Velocity * uDeltaTime;
 
     Indices[index].Idx = gid;
-    Indices[index].Distance = distance(lParticle.Position, uCameraPos);
+    vec3 camPosToParticlePos = lParticle.Position - uCameraPos;
+    Indices[index].Distance = dot(camPosToParticlePos, camPosToParticlePos);
 
     WriteParticleToStorage();
 }
